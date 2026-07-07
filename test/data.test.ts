@@ -9,7 +9,7 @@ import {
 Deno.test("EveSOFDataParameter: faithful defaults + schema registration", () => {
   const p = new EveSOFDataParameter();
   assert.equal(p.name, "");
-  assert.deepEqual(p.value, [0, 0, 0, 0]);
+  assert.deepEqual([...p.value], [0, 0, 0, 0]);
   // class registered under its carbon name (family "sof" set via the class decorator)
   assert.equal(CjsSchema.getClass("EveSOFDataParameter"), EveSOFDataParameter);
   // field types mapped from carbon m_name (BlueSharedString) / m_value (Vector4)
@@ -36,8 +36,9 @@ Deno.test("EveSOFDataTexture: faithful defaults + schema registration", () => {
 
 Deno.test("EveSOFDataTransform: identity defaults + schema registration", () => {
   const x = new EveSOFDataTransform();
-  assert.deepEqual(x.position, [0, 0, 0]);
-  assert.deepEqual(x.rotation, [0, 0, 0, 1]);
+  assert.deepEqual([...x.position], [0, 0, 0]);
+  assert.deepEqual([...x.rotation], [0, 0, 0, 1]);
+  assert.deepEqual([...x.scaling], [1, 1, 1]);
   assert.equal(
     CjsSchema.getField(EveSOFDataTransform, "position").type.kind,
     "vec3",

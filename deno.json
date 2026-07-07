@@ -1,6 +1,7 @@
 {
   "name": "@carbonenginejs/runtime-sof",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "license": "MIT",
   "exports": "./src/index.ts",
   "fmt": {
     "include": ["src/", "test/"]
@@ -15,6 +16,11 @@
     "check": "deno check src/index.ts test/data.test.ts"
   },
   "imports": {
-    "@carbonenginejs/core-types/schema": "../core-types/src/schema/index.js"
+    "@carbonenginejs/core-types/schema": "../core-types/src/schema/index.js",
+    "@carbonenginejs/core-math/vec3": "../core-math/src/vec3.js",
+    "@carbonenginejs/core-math/vec4": "../core-math/src/vec4.js",
+    "@carbonenginejs/core-math/quat": "../core-math/src/quat.js",
+    "@carbonenginejs/core-math/types": "../core-math/src/types.ts",
+    "gl-matrix/": "../core-math/node_modules/gl-matrix/"
   }
 }

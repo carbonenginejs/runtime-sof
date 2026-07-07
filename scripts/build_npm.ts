@@ -33,6 +33,26 @@ await build({
       version: "^0.4.1",
       subPath: "schema",
     },
+    "../core-math/src/vec3.js": {
+      name: "@carbonenginejs/core-math",
+      version: "^0.1.3",
+      subPath: "vec3",
+    },
+    "../core-math/src/vec4.js": {
+      name: "@carbonenginejs/core-math",
+      version: "^0.1.3",
+      subPath: "vec4",
+    },
+    "../core-math/src/quat.js": {
+      name: "@carbonenginejs/core-math",
+      version: "^0.1.3",
+      subPath: "quat",
+    },
+    "../core-math/src/types.ts": {
+      name: "@carbonenginejs/core-math",
+      version: "^0.1.3",
+      subPath: "types",
+    },
   },
   importMap: "./deno.json",
   compilerOptions: {
@@ -41,7 +61,7 @@ await build({
   },
   package: {
     name: "@carbonenginejs/runtime-sof",
-    version: "0.1.0",
+    version: "0.1.1",
     description:
       "CarbonEngineJS Space Object Factory (SOF) data classes and JSON contract.",
     license: "MIT",
@@ -50,6 +70,7 @@ await build({
     engines: { node: ">=18" },
     dependencies: {
       "@carbonenginejs/core-types": "^0.4.1",
+      "@carbonenginejs/core-math": "^0.1.3",
     },
     repository: {
       type: "git",
@@ -58,13 +79,12 @@ await build({
     publishConfig: { access: "public" },
   },
   async postBuild() {
-    // README/NOTICE ship with the package if present.
-    try {
-      await Deno.copyFile("README.md", "npm/README.md");
-    } catch { /* optional */ }
-    try {
-      await Deno.copyFile("NOTICE", "npm/NOTICE");
-    } catch { /* optional */ }
+    // README/NOTICE/LICENSE ship with the package if present.
+    for (const file of ["README.md", "NOTICE", "LICENSE"]) {
+      try {
+        await Deno.copyFile(file, `npm/${file}`);
+      } catch { /* optional */ }
+    }
   },
 });
 
