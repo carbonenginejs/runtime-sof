@@ -1,25 +1,25 @@
 @carbonenginejs/runtime-sof
 ===========================
 
-This package ports the CarbonEngine Space Object Factory (SOF) data model and
-builder to TypeScript, targeting a serializable Trinity Graph output.
+TypeScript re-implementation of the CarbonEngine Space Object Factory (SOF)
+data model and builder, targeting a serializable Trinity Graph output.
 
-Provenance and ownership
-------------------------
-CarbonEngine and the EVE Online runtime are the work of Fenris Creations / CCP
-Games (CCP ehf.). Class names, field shapes, schema semantics, DNA/SOF data
-formats, and build behavior mirrored here are derived from CarbonEngine C++
-source used as the authoritative reference (`SpaceObjectFactory/*`), with the
-ccpwgl JavaScript library consulted only as optional reference material.
+Attribution
+-----------
+Portions of this package are derived from CarbonEngine, released by CCP Games
+under the MIT License:
 
-Each ported file carries a `// Source:` header pointing at the CarbonEngine
-class it faithfully mirrors.
+    CarbonEngine — https://github.com/carbonengine
+    MIT License, Copyright (c) 2026 CCP Games
+
+Ported classes carry a `// Ported from CarbonEngine ...` header pointing at the
+upstream file. Other portions are original work by the CarbonEngineJS authors
+(TypeScript/JS structure, schema wiring, and independent improvements built up
+over years of working with this library). The ccpwgl JavaScript library was
+consulted only as optional reference material.
 
 Non-affiliation
 ---------------
 This package is not affiliated with, endorsed by, or sponsored by CCP Games /
-CCP ehf. or Fenris Creations. "EVE Online" and related marks are the property of
-their respective owners. No CarbonEngine or CCP Games source code, proprietary
-tools, shaders, or game assets are redistributed in this package; only
-independently reimplemented data-shape and behavior derived from studying the
-reference material.
+CCP ehf. "EVE Online" and related marks are the property of their respective
+owners. No game assets are redistributed in this package.

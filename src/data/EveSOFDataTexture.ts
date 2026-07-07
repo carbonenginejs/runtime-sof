@@ -1,5 +1,5 @@
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFData.h
-//         BLUE_CLASS( EveSOFDataTexture ) : public IRoot
+// Ported from CarbonEngine (MIT, © 2026 CCP Games) — https://github.com/carbonengine/trinity
+//   trinity/Eve/SpaceObjectFactory/EveSOFData.h (EveSOFDataTexture)
 import { type } from "@carbonenginejs/core-types/schema";
 
 /** A named texture resource reference. */

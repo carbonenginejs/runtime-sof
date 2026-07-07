@@ -1,5 +1,5 @@
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFData.h
-//         BLUE_CLASS( EveSOFDataTransform ) : public IRoot
+// Ported from CarbonEngine (MIT, © 2026 CCP Games) — https://github.com/carbonengine/trinity
+//   trinity/Eve/SpaceObjectFactory/EveSOFData.h (EveSOFDataTransform)
 import { type } from "@carbonenginejs/core-types/schema";
 
 /** A local transform (position / rotation / scale) with an optional bone binding. */

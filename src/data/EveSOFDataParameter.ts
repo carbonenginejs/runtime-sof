@@ -1,5 +1,5 @@
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFData.h
-//         BLUE_CLASS( EveSOFDataParameter ) : public IRoot
+// Ported from CarbonEngine (MIT, © 2026 CCP Games) — https://github.com/carbonengine/trinity
+//   trinity/Eve/SpaceObjectFactory/EveSOFData.h (EveSOFDataParameter)
 // Carbon parent IRoot is Blue ref-counting infrastructure, not a domain base, so per the
 // Runtime Port Base-Class Rule this class extends nothing (schema/registry glue lives in core-types).
 import { type } from "@carbonenginejs/core-types/schema";
