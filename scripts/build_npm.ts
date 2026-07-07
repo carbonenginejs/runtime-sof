@@ -41,7 +41,7 @@ await build({
   },
   package: {
     name: "@carbonenginejs/runtime-sof",
-    version: "0.0.0",
+    version: "0.1.0",
     description:
       "CarbonEngineJS Space Object Factory (SOF) data classes and JSON contract.",
     license: "MIT",
