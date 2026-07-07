@@ -1,0 +1,25 @@
+@carbonenginejs/runtime-sof
+===========================
+
+This package ports the CarbonEngine Space Object Factory (SOF) data model and
+builder to TypeScript, targeting a serializable Trinity Graph output.
+
+Provenance and ownership
+------------------------
+CarbonEngine and the EVE Online runtime are the work of Fenris Creations / CCP
+Games (CCP ehf.). Class names, field shapes, schema semantics, DNA/SOF data
+formats, and build behavior mirrored here are derived from CarbonEngine C++
+source used as the authoritative reference (`SpaceObjectFactory/*`), with the
+ccpwgl JavaScript library consulted only as optional reference material.
+
+Each ported file carries a `// Source:` header pointing at the CarbonEngine
+class it faithfully mirrors.
+
+Non-affiliation
+---------------
+This package is not affiliated with, endorsed by, or sponsored by CCP Games /
+CCP ehf. or Fenris Creations. "EVE Online" and related marks are the property of
+their respective owners. No CarbonEngine or CCP Games source code, proprietary
+tools, shaders, or game assets are redistributed in this package; only
+independently reimplemented data-shape and behavior derived from studying the
+reference material.
