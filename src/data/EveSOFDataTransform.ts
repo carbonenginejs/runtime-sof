@@ -1,5 +1,6 @@
 // Ported from CarbonEngine (MIT, © 2026 CCP Games) — https://github.com/carbonengine/trinity
 //   trinity/Eve/SpaceObjectFactory/EveSOFData.h (EveSOFDataTransform)
+import { CjsModel } from "@carbonenginejs/core-types/model";
 import { type } from "@carbonenginejs/core-types/schema";
 import { quat } from "@carbonenginejs/core-math/quat";
 import { vec3 } from "@carbonenginejs/core-math/vec3";
@@ -7,7 +8,8 @@ import type { Quat, Vec3 } from "@carbonenginejs/core-math/types";
 
 /** A local transform (position / rotation / scale) with an optional bone binding. */
 @type.define({ className: "EveSOFDataTransform", family: "sof" })
-export class EveSOFDataTransform {
+export class EveSOFDataTransform extends CjsModel
+{
   /** m_position (Vector3) */
   @type.vec3
   position: Vec3 = vec3.create();
