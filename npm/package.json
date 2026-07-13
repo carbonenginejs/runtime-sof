@@ -6,6 +6,8 @@
   "exports": {
     ".": "./dist/index.js",
     "./data": "./dist/data/index.js",
+    "./sof": "./dist/sof/index.js",
+    "./sof/*": "./dist/sof/*/index.js",
     "./generated": "./dist/generated/index.js",
     "./generated/EveSOF": "./dist/sof/EveSOF.js",
     "./generated/EveSOFDNA": "./dist/sof/EveSOFDNA.js",

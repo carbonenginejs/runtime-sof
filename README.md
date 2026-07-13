@@ -7,7 +7,7 @@ Ports/adapts from CarbonEngine (https://github.com/carbonengine, MIT); ccpwgl co
 
 ## Status
 
-The package provides the generated SOF data surface, a map-backed
+The package provides the SOF data surface, a map-backed
 `EveSOFDataMgr`, Carbon DNA parsing and validation through `EveSOFDNA`, and a
 first `EveSOF.BuildFromDNA` slice. The builder emits a versioned
 `carbon.document` graph that hydrates through `runtime-trinity`. Current output
@@ -102,6 +102,15 @@ resolver. Remaining specialized stages are still in progress.
 
 Decorated JavaScript under `src` is canonical source. `npm run build:npm`
 produces consumer ESM under `npm/dist`.
+
+### Source promotion
+
+`src/generated` is intentionally a queue of schema shells whose legacy SOF
+behavior has not yet been ported. Once a class has its complete applicable
+behavior—or is verified to have been field-only in the donor library—its single
+decorated implementation moves into the matching `src/sof/<domain>` folder.
+The domain folders and root package export are therefore the completed runtime
+surface; generated files must not be treated as completed classes.
 
 ## Async boundary
 

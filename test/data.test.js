@@ -7,11 +7,12 @@ import {
   EveSOFDataTransform,
 } from "../npm/dist/data/index.js";
 import { EveSOFDataPatternLayerProperties } from "../npm/dist/generated/EveSOFDataPatternLayerProperties.js";
-import { EveSOFDataHullExtensionPlacement } from "../npm/dist/generated/EveSOFDataHullExtensionPlacement.js";
-import { EveSOFDataHullExtensionPlacementDistributionDepletionCounter } from "../npm/dist/generated/EveSOFDataHullExtensionPlacementDistributionDepletionCounter.js";
-import { EveSOFDataHullExtensionPlacementDistributionMapGraphicSettings } from "../npm/dist/generated/EveSOFDataHullExtensionPlacementDistributionMapGraphicSettings.js";
-import { EveSOFDataHullExtensionPlacementDistributionParentMatch } from "../npm/dist/generated/EveSOFDataHullExtensionPlacementDistributionParentMatch.js";
-import { EveSOFDataHullExtensionPlacementDistributionRandomChance } from "../npm/dist/generated/EveSOFDataHullExtensionPlacementDistributionRandomChance.js";
+import { EveSOFDataBlink, EveSOFDataBlinkType } from "../npm/dist/sof/shared/index.js";
+import { EveSOFDataHullExtensionPlacement } from "../npm/dist/sof/layout/EveSOFDataHullExtensionPlacement.js";
+import { EveSOFDataHullExtensionPlacementDistributionDepletionCounter } from "../npm/dist/sof/layout/EveSOFDataHullExtensionPlacementDistributionDepletionCounter.js";
+import { EveSOFDataHullExtensionPlacementDistributionMapGraphicSettings } from "../npm/dist/sof/layout/EveSOFDataHullExtensionPlacementDistributionMapGraphicSettings.js";
+import { EveSOFDataHullExtensionPlacementDistributionParentMatch } from "../npm/dist/sof/layout/EveSOFDataHullExtensionPlacementDistributionParentMatch.js";
+import { EveSOFDataHullExtensionPlacementDistributionRandomChance } from "../npm/dist/sof/layout/EveSOFDataHullExtensionPlacementDistributionRandomChance.js";
 
 test("EveSOFDataParameter: faithful defaults + schema registration", () => {
   const p = new EveSOFDataParameter();
@@ -28,6 +29,25 @@ test("EveSOFDataParameter: faithful defaults + schema registration", () => {
     CjsSchema.getField(EveSOFDataParameter, "value").type.kind,
     "vec4",
   );
+});
+
+test("SOF blink data exposes Carbon enum values and lookup behavior", () => {
+  const blink = new EveSOFDataBlink();
+  const blinkTypes = new EveSOFDataBlinkType();
+
+  assert.equal(blink.IsEmpty(), true);
+  assert.deepEqual(EveSOFDataBlinkType.Type, {
+    STATIC: 0,
+    BLINK: 1,
+    FADE_IN: 2,
+    FADE_OUT: 3,
+    CYCLE: 4,
+  });
+  assert.equal(Object.isFrozen(EveSOFDataBlinkType.Type), true);
+  assert.equal(blinkTypes.GetByType(EveSOFDataBlinkType.Type.STATIC), null);
+  blinkTypes.Blink = blink;
+  assert.equal(blinkTypes.GetByType(EveSOFDataBlinkType.Type.BLINK), blink);
+  assert.equal(CjsSchema.getClass("EveSOFDataBlink"), EveSOFDataBlink);
 });
 
 test("EveSOFDataTexture: faithful defaults + schema registration", () => {

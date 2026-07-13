@@ -28,11 +28,12 @@ const lightSetItemFields = [
 function entryText(kind) {
   const generatedBase = kind === "source" ? "../../src/generated" : "../../npm/dist/generated";
   const sofBase = kind === "source" ? "../../src/sof" : "../../npm/dist/sof";
+  const hullBase = `${sofBase}/hull`;
   return `
 import { CjsSchema } from "@carbonenginejs/core-types/schema";
 import { EveSOFDataTransform } from "${generatedBase}/EveSOFDataTransform.js";
 import { EveSOFDataMgr } from "${sofBase}/EveSOFDataMgr.js";
-import { EveSOFDataHullLightSetItem } from "${generatedBase}/EveSOFDataHullLightSetItem.js";
+import { EveSOFDataHullLightSetItem } from "${hullBase}/EveSOFDataHullLightSetItem.js";
 
 const fields = ${JSON.stringify(fields, null, 2)};
 const lightSetItemFields = ${JSON.stringify(lightSetItemFields, null, 2)};

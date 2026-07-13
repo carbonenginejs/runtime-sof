@@ -4,16 +4,20 @@ import path from "node:path";
 
 const external = id => id.startsWith("@carbonenginejs/") || id.startsWith("node:");
 const generatedDir = path.resolve("src/generated");
-const promotedClasses = new Set(["EveSOF.js", "EveSOFDNA.js", "EveSOFDataMgr.js"]);
 const generatedInputs = fs.readdirSync(generatedDir)
-  .filter(file => file.endsWith(".js") && !promotedClasses.has(file))
+  .filter(file => file.endsWith(".js"))
   .map(file => path.join("src/generated", file));
+const sofDir = path.resolve("src/sof");
+const sofDomainInputs = fs.readdirSync(sofDir, { withFileTypes: true })
+  .filter(entry => entry.isDirectory() && fs.existsSync(path.join(sofDir, entry.name, "index.js")))
+  .map(entry => path.join("src/sof", entry.name, "index.js"));
 
 export default {
   input: [
     "src/index.js",
     "src/data/index.js",
     "src/sof/index.js",
+    ...sofDomainInputs,
     ...generatedInputs
   ],
   external,
