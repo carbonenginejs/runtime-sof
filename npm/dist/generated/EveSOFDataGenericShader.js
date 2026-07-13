@@ -1,0 +1,46 @@
+import { applyDecs2311 as _applyDecs2311 } from '../_virtual/_rollupPluginBabelHelpers.js';
+import { io, type } from '@carbonenginejs/core-types/schema';
+import { CjsModel } from '@carbonenginejs/core-types/model';
+
+let _initClass, _init_parameters, _init_extra_parameters, _init_defaultParameters, _init_extra_defaultParameters, _init_defaultTextures, _init_extra_defaultTextures, _init_transparencyTextureName, _init_extra_transparencyTextureName, _init_doGenerateDepthArea, _init_extra_doGenerateDepthArea, _init_shader, _init_extra_shader;
+
+/** EveSOFDataGenericShader (eve) - generated from schema shapeHash 54379592.... */
+let _EveSOFDataGenericSha;
+class EveSOFDataGenericShader extends CjsModel {
+  static {
+    ({
+      e: [_init_parameters, _init_extra_parameters, _init_defaultParameters, _init_extra_defaultParameters, _init_defaultTextures, _init_extra_defaultTextures, _init_transparencyTextureName, _init_extra_transparencyTextureName, _init_doGenerateDepthArea, _init_extra_doGenerateDepthArea, _init_shader, _init_extra_shader],
+      c: [_EveSOFDataGenericSha, _initClass]
+    } = _applyDecs2311(this, [type.define({
+      className: "EveSOFDataGenericShader",
+      family: "eve"
+    })], [[[io, io.persist, void 0, type.list("EveSOFDataGenericString")], 16, "parameters"], [[io, io.persist, void 0, type.list("EveSOFDataParameter")], 16, "defaultParameters"], [[io, io.persist, void 0, type.list("EveSOFDataTexture")], 16, "defaultTextures"], [[io, io.persist, type, type.string], 16, "transparencyTextureName"], [[io, io.persist, type, type.boolean], 16, "doGenerateDepthArea"], [[io, io.persist, type, type.string], 16, "shader"]], 0, void 0, CjsModel));
+  }
+  constructor(...args) {
+    super(...args);
+    _init_extra_shader(this);
+  }
+  /** m_parameters (PEveSOFDataGenericStringVector) [READ, PERSIST] */
+  parameters = _init_parameters(this, []);
+
+  /** m_defaultParameters (PEveSOFDataParameterVector) [READ, PERSIST] */
+  defaultParameters = (_init_extra_parameters(this), _init_defaultParameters(this, []));
+
+  /** m_defaultTextures (PEveSOFDataTextureVector) [READ, PERSIST] */
+  defaultTextures = (_init_extra_defaultParameters(this), _init_defaultTextures(this, []));
+
+  /** m_transparencyTextureName (BlueSharedString) [READWRITE, PERSIST] */
+  transparencyTextureName = (_init_extra_defaultTextures(this), _init_transparencyTextureName(this, ""));
+
+  /** m_doGenerateDepthArea (bool) [READWRITE, PERSIST] */
+  doGenerateDepthArea = (_init_extra_transparencyTextureName(this), _init_doGenerateDepthArea(this, true));
+
+  /** m_shader (BlueSharedString) [READWRITE, PERSIST] */
+  shader = (_init_extra_doGenerateDepthArea(this), _init_shader(this, ""));
+  static {
+    _initClass();
+  }
+}
+
+export { _EveSOFDataGenericSha as EveSOFDataGenericShader };
+//# sourceMappingURL=EveSOFDataGenericShader.js.map

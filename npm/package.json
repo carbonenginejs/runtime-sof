@@ -1,0 +1,28 @@
+{
+  "name": "@carbonenginejs/runtime-sof",
+  "version": "0.1.3",
+  "description": "CarbonEngineJS Space Object Factory (SOF) data classes and JSON contract.",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./data": "./dist/data/index.js",
+    "./generated": "./dist/generated/index.js",
+    "./generated/EveSOF": "./dist/sof/EveSOF.js",
+    "./generated/EveSOFDNA": "./dist/sof/EveSOFDNA.js",
+    "./generated/EveSOFDataMgr": "./dist/sof/EveSOFDataMgr.js",
+    "./generated/*": "./dist/generated/*.js"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@carbonenginejs/core-math": "^0.1.3",
+    "@carbonenginejs/core-types": "^0.4.6",
+    "@carbonenginejs/runtime-const": "^0.1.0"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}
