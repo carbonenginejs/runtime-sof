@@ -45,6 +45,18 @@ class EveSOFDataHullChild extends CjsModel {
 
   /** m_groupIndex (int32_t) [READWRITE, PERSIST] */
   groupIndex = (_init_extra_id(this), _init_groupIndex(this, -1));
+  GetName() {
+    const slash = this.redFilePath.lastIndexOf("/");
+    if (slash === -1) {
+      return "";
+    }
+    let result = this.redFilePath.substring(slash + 1);
+    const dot = result.lastIndexOf(".");
+    if (dot !== -1) {
+      result = result.substring(0, dot);
+    }
+    return result;
+  }
   static {
     _initClass();
   }

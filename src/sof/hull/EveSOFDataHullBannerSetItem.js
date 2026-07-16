@@ -5,6 +5,7 @@ import { io, schema, type } from "@carbonenginejs/core-types/schema";
 import { CjsModel } from "@carbonenginejs/core-types/model";
 import { quat } from "@carbonenginejs/core-math/quat";
 import { vec3 } from "@carbonenginejs/core-math/vec3";
+import { EveSOFDataHullBanner } from "./EveSOFDataHullBanner.js";
 
 /** EveSOFDataHullBannerSetItem (eve) - generated from schema shapeHash 5b7ae35e.... */
 @type.define({ className: "EveSOFDataHullBannerSetItem", family: "eve" })
@@ -43,7 +44,7 @@ export class EveSOFDataHullBannerSetItem extends CjsModel
   @io.persist
   @type.int32
   @schema.enum("Usage")
-  usage = 0;
+  usage = 3;
 
   /** m_boneIndex (int32_t) [READWRITE, PERSIST] */
   @io.persist
@@ -89,5 +90,94 @@ export class EveSOFDataHullBannerSetItem extends CjsModel
   @io.readwrite
   @type.boolean
   maintainAspectRatio = true;
+
+  GetTargetAspectRatio()
+  {
+    const { Usage } = EveSOFDataHullBannerSetItem;
+    switch (this.usage)
+    {
+      case Usage.VERTICAL_BANNER:
+      case Usage.TARGET_SYSTEM_VERTICAL_BANNER:
+      case Usage.CURRENT_SYSTEM_VERTICAL_BANNER:
+        return 0.25;
+      case Usage.PUBLICITY_POSTER:
+        return 3 / 4;
+      case Usage.HORIZONTAL_BANNER:
+      case Usage.TARGET_SYSTEM_HORIZONTAL_BANNER:
+      case Usage.CURRENT_SYSTEM_HORIZONTAL_BANNER:
+      case Usage.TARGET_SYSTEM_STATUS:
+        return 4;
+      default:
+        return 1;
+    }
+  }
+
+  GetAspectRatio()
+  {
+    return EveSOFDataHullBanner.GetBannerAspectRatio({
+      position: vec3.create(),
+      rotation: quat.create(),
+      scaling: this.scaling,
+      angleX: this.angleX,
+      angleY: this.angleY
+    });
+  }
+
+  GetAngleX()
+  {
+    return this.angleX;
+  }
+
+  SetAngleX(angle)
+  {
+    this.angleX = angle;
+    if (this.maintainAspectRatio)
+    {
+      this.scaling[1] *= this.GetAspectRatio() / this.GetTargetAspectRatio();
+    }
+  }
+
+  GetAngleY()
+  {
+    return this.angleY;
+  }
+
+  SetAngleY(angle)
+  {
+    this.angleY = angle;
+    if (this.maintainAspectRatio)
+    {
+      const ratio = this.GetAspectRatio();
+      if (ratio !== 0)
+      {
+        this.scaling[0] *= this.GetTargetAspectRatio() / ratio;
+      }
+    }
+  }
+
+  GetScaling()
+  {
+    return vec3.clone(this.scaling);
+  }
+
+  SetScaling(scaling)
+  {
+    vec3.copy(this.scaling, scaling);
+    if (this.maintainAspectRatio)
+    {
+      const ratio = this.GetAspectRatio();
+      if (this.GetTargetAspectRatio() < 1)
+      {
+        if (ratio !== 0)
+        {
+          this.scaling[0] *= this.GetTargetAspectRatio() / ratio;
+        }
+      }
+      else
+      {
+        this.scaling[1] *= ratio / this.GetTargetAspectRatio();
+      }
+    }
+  }
 
 }

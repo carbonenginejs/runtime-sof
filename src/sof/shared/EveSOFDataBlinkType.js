@@ -9,22 +9,6 @@ import { CjsModel } from "@carbonenginejs/core-types/model";
 export class EveSOFDataBlinkType extends CjsModel
 {
 
-  static Type = Object.freeze({
-    STATIC: 0,
-    BLINK: 1,
-    FADE_IN: 2,
-    FADE_OUT: 3,
-    CYCLE: 4
-  });
-
-  static Types = Object.freeze([
-    null,
-    "Blink",
-    "FadeIn",
-    "FadeOut",
-    "Cycle"
-  ]);
-
   /** m_blinkType[TYPE_BLINK] (EveSOFDataBlinkPtr) [READWRITE, PERSIST] */
   @io.persist
   @type.objectRef("EveSOFDataBlink")
@@ -51,5 +35,21 @@ export class EveSOFDataBlinkType extends CjsModel
     const property = this.constructor.Types[blinkType];
     return property ? this[property] ?? null : null;
   }
+
+  static Type = Object.freeze({
+    STATIC: 0,
+    BLINK: 1,
+    FADE_IN: 2,
+    FADE_OUT: 3,
+    CYCLE: 4
+  });
+
+  static Types = Object.freeze([
+    null,
+    "Blink",
+    "FadeIn",
+    "FadeOut",
+    "Cycle"
+  ]);
 
 }

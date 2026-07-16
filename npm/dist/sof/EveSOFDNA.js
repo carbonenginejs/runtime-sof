@@ -2,8 +2,9 @@ import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../_virt
 import { CjsModel } from '@carbonenginejs/core-types/model';
 import { type, carbon, impl } from '@carbonenginejs/core-types/schema';
 import { TriBatchType, ReflectionMode } from '@carbonenginejs/runtime-const/graphics';
-import { EveSOFDataArea as _EveSOFDataArea } from '../generated/EveSOFDataArea.js';
-import { EveSOFDataHull as _EveSOFDataHull } from '../generated/EveSOFDataHull.js';
+import { EveSOFDataHull as _EveSOFDataHull } from './hull/EveSOFDataHull.js';
+import { EveSOFDataArea as _EveSOFDataArea } from './shared/EveSOFDataArea.js';
+import { EveSOFUtilsParameterName } from './shared/EveSOFUtilsParameterName.js';
 
 let _initProto, _initClass, _init_dna, _init_extra_dna, _init_dataMgr, _init_extra_dataMgr, _init_hullDatas, _init_extra_hullDatas, _init_factionData, _init_extra_factionData, _init_raceData, _init_extra_raceData, _init_genericData, _init_extra_genericData, _init_patternData, _init_extra_patternData, _init_layoutData, _init_extra_layoutData, _init_customHullData, _init_extra_customHullData, _init_hullNames, _init_extra_hullNames, _init_factionName, _init_extra_factionName, _init_raceName, _init_extra_raceName, _init_parentBoundingSphere, _init_extra_parentBoundingSphere, _init_parentHullShapeEllipsoid, _init_extra_parentHullShapeEllipsoid, _init_isSkinned, _init_extra_isSkinned;
 const COMMAND_NAMES = Object.freeze(["invalid", "material", "mesh", "respathinsert", "variant", "class", "pattern", "layout"]);
@@ -20,7 +21,7 @@ new class extends _identity {
       } = _applyDecs2311(this, [type.define({
         className: "EveSOFDNA",
         family: "eve"
-      })], [[[type, type.string], 16, "dna"], [type.objectRef("EveSOFDataMgr"), 0, "dataMgr"], [type.list("EveSOFDataMgr::HullData"), 0, "hullDatas"], [type.objectRef("EveSOFDataMgr::FactionData"), 0, "factionData"], [type.objectRef("EveSOFDataMgr::RaceData"), 0, "raceData"], [type.objectRef("EveSOFDataMgr::GenericData"), 0, "genericData"], [type.objectRef("EveSOFDataMgr::PatternData"), 0, "patternData"], [type.list("EveSOFDataMgr::LayoutData"), 0, "layoutData"], [type.list("EveSOFDataMgr::HullData"), 0, "customHullData"], [type.list("std::string"), 0, "hullNames"], [[type, type.string], 16, "factionName"], [[type, type.string], 16, "raceName"], [type.rawStruct("CcpMath::Sphere"), 0, "parentBoundingSphere"], [type.rawStruct("CcpMath::AxisAlignedEllipsoid"), 0, "parentHullShapeEllipsoid"], [[type, type.boolean], 16, "isSkinned"], [[carbon, carbon.method, impl, impl.implemented], 18, "Setup"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsValid"], [[carbon, carbon.method, impl, impl.implemented], 18, "ValidateContent"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDnaString"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetMultiHullCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullNames"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetBuildClass"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullGeometryResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullMeshAreas"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullDecalSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullLightSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSpriteSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSpotlightSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionSpotlightSetData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullPlaneSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionPlaneSetData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSpriteLineSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullHazeSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBanners"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBannerSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullChildren"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullChildSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullInstancedMeshes"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullAnimations"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSoundEmitters"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullControllers"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetModelRotationCurvePath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetModelTranslationCurvePath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionChildData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericBannerShaderData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHighestMeshAreaIndex"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullTurretLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullLocatorSetNames"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPlacementLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLayoutCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLayoutData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLocatorCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullNextSubsystemOffset"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullAudioPosition"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetAreaShaderLocationResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDecalShaderLocationResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetShaderPrefix"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetCompleteShaderPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericAreaShaderData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericDecalShaderData"], [[carbon, carbon.method, impl, impl.adapted], 18, "GetHullTextureWithMeshIndex"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericDamageData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericHullDamageData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetRaceDamageData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetRaceBoosterData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBoosterData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBoosterCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetImpactEffectType"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetImpactShieldShader"], [[carbon, carbon.method, impl, impl.implemented], 18, "ModifyTextureResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetColorSet"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLogo"], [[carbon, carbon.method, impl, impl.implemented], 18, "HasLogoSet"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsInVisibilityData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetMeshAreaParameter"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionTurretParameters"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPatternLayerCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionalPatternApplicationData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullPatternApplicationData"], [[carbon, carbon.method, impl, impl.adapted], 18, "GetPatternApplicationData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPatternProjectionData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPatternLayerData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetMaterialTargets"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsPatternLayerApplicableToArea"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetReflectionMode"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBoundingSphere"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullShapeEllipsoid"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsHullAnimated"], [[carbon, carbon.method, impl, impl.implemented], 18, "DisableAnimation"], [[carbon, carbon.method, impl, impl.implemented], 18, "DynamicBoundingSphereEnabled"], [[carbon, carbon.method, impl, impl.implemented], 18, "CastShadow"], [[carbon, carbon.method, impl, impl.implemented], 18, "HasDnaCommand"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDnaCommandArgs"], [[carbon, carbon.method, impl, impl.implemented], 18, "UsingSof6"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionName"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetRaceName"]], 0, void 0, CjsModel));
+      })], [[[type, type.string], 16, "dna"], [type.objectRef("EveSOFDataMgr"), 0, "dataMgr"], [type.list("EveSOFDataMgr::HullData"), 0, "hullDatas"], [type.objectRef("EveSOFDataMgr::FactionData"), 0, "factionData"], [type.objectRef("EveSOFDataMgr::RaceData"), 0, "raceData"], [type.objectRef("EveSOFDataMgr::GenericData"), 0, "genericData"], [type.objectRef("EveSOFDataMgr::PatternData"), 0, "patternData"], [type.list("EveSOFDataMgr::LayoutData"), 0, "layoutData"], [type.list("EveSOFDataMgr::HullData"), 0, "customHullData"], [type.list("std::string"), 0, "hullNames"], [[type, type.string], 16, "factionName"], [[type, type.string], 16, "raceName"], [type.rawStruct("CcpMath::Sphere"), 0, "parentBoundingSphere"], [type.rawStruct("CcpMath::AxisAlignedEllipsoid"), 0, "parentHullShapeEllipsoid"], [[type, type.boolean], 16, "isSkinned"], [[carbon, carbon.method, impl, impl.implemented], 18, "Setup"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsValid"], [[carbon, carbon.method, impl, impl.implemented], 18, "ValidateContent"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDnaString"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetMultiHullCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullNames"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetBuildClass"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullGeometryResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullMeshAreas"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullDecalSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullLightSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSpriteSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSpotlightSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionSpotlightSetData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullPlaneSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionPlaneSetData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSpriteLineSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullHazeSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBanners"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBannerSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullChildren"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullChildSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullInstancedMeshes"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullAnimations"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullSoundEmitters"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullControllers"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetModelRotationCurvePath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetModelTranslationCurvePath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionChildData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericBannerShaderData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDecalMinScreenSize"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHighestMeshAreaIndex"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullTurretLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullLocatorSetNames"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPlacementLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLayoutCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLayoutData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLocatorCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullNextSubsystemOffset"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullAudioPosition"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetAreaShaderLocationResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDecalShaderLocationResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDecalShader"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsHullUsingDecalSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetShaderPrefix"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetCompleteShaderPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericAreaShaderData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericDecalShaderData"], [[carbon, carbon.method, impl, impl.adapted], 18, "GetHullTextureWithMeshIndex"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericDamageData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericHullDamageData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetGenericSwarmProperties"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetRaceDamageData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetRaceBoosterData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBoosterData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBoosterCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetImpactEffectType"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetImpactShieldShader"], [[carbon, carbon.method, impl, impl.implemented], 18, "ModifyTextureResPath"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetColorSet"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetLogo"], [[carbon, carbon.method, impl, impl.implemented], 18, "HasLogoSet"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsInVisibilityData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetMeshAreaParameter"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionTurretParameters"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPatternLayerCount"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionalPatternApplicationData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullPatternApplicationData"], [[carbon, carbon.method, impl, impl.adapted], 18, "GetPatternApplicationData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPatternProjectionData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetPatternLayerData"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetMaterialTargets"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsPatternLayerApplicableToArea"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetReflectionMode"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullBoundingSphere"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetHullShapeEllipsoid"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetParentBoundingSphere"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetParentHullShapeEllipsoid"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetParentBoundingSphere"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetParentShapeEllipsoidInfo"], [[carbon, carbon.method, impl, impl.implemented], 18, "IsHullAnimated"], [[carbon, carbon.method, impl, impl.implemented], 18, "DisableAnimation"], [[carbon, carbon.method, impl, impl.implemented], 18, "DynamicBoundingSphereEnabled"], [[carbon, carbon.method, impl, impl.implemented], 18, "CastShadow"], [[carbon, carbon.method, impl, impl.implemented], 18, "HasDnaCommand"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetDnaCommandArgs"], [[carbon, carbon.method, impl, impl.implemented], 18, "UsingSof6"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetFactionName"], [[carbon, carbon.method, impl, impl.implemented], 18, "GetRaceName"]], 0, void 0, CjsModel));
     }
     dna = (_initProto(this), _init_dna(this, ""));
     dataMgr = (_init_extra_dna(this), _init_dataMgr(this, null));
@@ -214,6 +215,11 @@ new class extends _identity {
     GetGenericBannerShaderData() {
       return this.genericData?.bannerShader ?? null;
     }
+
+    /** Returns Carbon's decal minimum screen size for one HullDecalSetItem Usage. */
+    GetDecalMinScreenSize(usage) {
+      return this.genericData?.decalMinScreenSize?.[Number(usage)];
+    }
     GetHighestMeshAreaIndex(batchType, hullIndex = 0) {
       if (batchType !== TriBatchType.TRIBATCHTYPE_OPAQUE) return 0;
       let highest = 0;
@@ -262,6 +268,14 @@ new class extends _identity {
     GetDecalShaderLocationResPath() {
       return this.genericData?.decalShaderLocation ?? "";
     }
+
+    /** Carbon returns constant decal shader 0. */
+    GetDecalShader() {
+      return 0;
+    }
+    IsHullUsingDecalSets() {
+      return this.hullDatas[0]?.isUsingDecalSets === true;
+    }
     GetShaderPrefix(isAnimated) {
       return isAnimated ? this.genericData?.shaderPrefixAnimated ?? "" : this.genericData?.shaderPrefix ?? "";
     }
@@ -289,6 +303,9 @@ new class extends _identity {
     }
     GetGenericHullDamageData() {
       return this.genericData?.hullDamage ?? null;
+    }
+    GetGenericSwarmProperties() {
+      return this.genericData?.swarmBehavior ?? null;
     }
     GetRaceDamageData() {
       return this.raceData?.damage ?? null;
@@ -354,32 +371,34 @@ new class extends _identity {
       let value;
       const materialArgs = this.GetDnaCommandArgs(_EveSOFDNA.DnaCommand.CMD_MATERIAL);
       if (materialArgs) {
-        info = parameterInfo(this.genericData.materialPrefixes, parameterName);
-        if (info.materialIndex !== -1 && info.materialIndex < materialArgs.length && info.materialIndex < 32) {
-          const blocked = blockedMaterials >>> 0 & 1 << info.materialIndex;
+        info = new EveSOFUtilsParameterName(this.genericData.materialPrefixes, parameterName);
+        const materialIndex = info.GetMaterialIdx();
+        if (materialIndex !== -1 && materialIndex < materialArgs.length && materialIndex < 32) {
+          const blocked = blockedMaterials >>> 0 & 1 << materialIndex;
           if (!blocked) {
-            value = findMaterialParameter(this.dataMgr, materialArgs[info.materialIndex], info.shortName);
+            value = findMaterialParameter(this.dataMgr, materialArgs[materialIndex], info.GetShortName());
             if (value) return value;
           }
         }
       }
       const patternArgs = this.GetDnaCommandArgs(_EveSOFDNA.DnaCommand.CMD_PATTERN);
       if (patternArgs) {
-        info = parameterInfo(this.genericData.patternMaterialPrefixes, parameterName);
-        if (info.materialIndex !== -1 && 1 + info.materialIndex < patternArgs.length) {
-          value = findMaterialParameter(this.dataMgr, patternArgs[1 + info.materialIndex], info.shortName);
+        info = new EveSOFUtilsParameterName(this.genericData.patternMaterialPrefixes, parameterName);
+        const materialIndex = info.GetMaterialIdx();
+        if (materialIndex !== -1 && 1 + materialIndex < patternArgs.length) {
+          value = findMaterialParameter(this.dataMgr, patternArgs[1 + materialIndex], info.GetShortName());
           if (value) return value;
         }
       }
-      info = parameterInfo(this.genericData.patternMaterialPrefixes, parameterName);
-      if (info.materialIndex === 0) {
-        value = findMaterialParameter(this.dataMgr, this.factionData.defaultPatternLayer1MaterialName, info.shortName);
+      info = new EveSOFUtilsParameterName(this.genericData.patternMaterialPrefixes, parameterName);
+      if (info.GetMaterialIdx() === 0) {
+        value = findMaterialParameter(this.dataMgr, this.factionData.defaultPatternLayer1MaterialName, info.GetShortName());
         if (value) return value;
-      } else if (info.materialIndex === 1 && this.UsingSof6()) {
-        value = findMaterialParameter(this.dataMgr, this.factionData.defaultPatternLayer2MaterialName, info.shortName);
+      } else if (info.GetMaterialIdx() === 1 && this.UsingSof6()) {
+        value = findMaterialParameter(this.dataMgr, this.factionData.defaultPatternLayer2MaterialName, info.GetShortName());
         if (value) return value;
       }
-      info = parameterInfo(this.genericData.materialPrefixes, parameterName);
+      info = new EveSOFUtilsParameterName(this.genericData.materialPrefixes, parameterName);
       if (areaType === _EveSOFDataArea.AreaType.TYPE_WRECK) {
         value = findAreaMaterialParameter(this.dataMgr, this.GetColorSet(), this.genericData.genericWreckMaterialData, areaType, info);
         if (value) return value;
@@ -395,14 +414,13 @@ new class extends _identity {
 
     /** Resolves a turret shader parameter after applying the faction's material-usage remap. */
     GetFactionTurretParameters(parameterName) {
-      const info = parameterInfo(this.genericData?.materialPrefixes ?? [], parameterName);
-      let fullName = info.fullName;
-      if (info.materialIndex !== -1) {
-        const usageIndex = Number(this.factionData?.materialUsageList?.[info.materialIndex] ?? info.materialIndex);
-        const prefix = this.genericData?.materialPrefixes?.[usageIndex];
-        if (prefix !== undefined) fullName = `${prefix}${info.shortName}`;
+      const info = new EveSOFUtilsParameterName(this.genericData?.materialPrefixes ?? [], parameterName);
+      if (info.IsMaterialIdxValid()) {
+        const materialIndex = info.GetMaterialIdx();
+        const usageIndex = Number(this.factionData?.materialUsageList?.[materialIndex] ?? materialIndex);
+        info.ChangeMaterialIdx(this.genericData, usageIndex);
       }
-      return this.GetMeshAreaParameter(Number(this.genericData?.turretAreaType ?? _EveSOFDataArea.AreaType.TYPE_PRIMARY), fullName);
+      return this.GetMeshAreaParameter(Number(this.genericData?.turretAreaType ?? _EveSOFDataArea.AreaType.TYPE_PRIMARY), info.GetFullName());
     }
     GetPatternLayerCount() {
       if (this.HasDnaCommand(_EveSOFDNA.DnaCommand.CMD_PATTERN) && !this.patternData) return 0;
@@ -490,6 +508,18 @@ new class extends _identity {
         radius: hull.shapeEllipsoidRadius ?? null
       };
     }
+    GetParentBoundingSphere() {
+      return _EveSOFDNA.#CopySphere(this.parentBoundingSphere);
+    }
+    GetParentHullShapeEllipsoid() {
+      return this.parentHullShapeEllipsoid;
+    }
+    SetParentBoundingSphere(boundingSphere) {
+      this.parentBoundingSphere = _EveSOFDNA.#CopySphere(boundingSphere);
+    }
+    SetParentShapeEllipsoidInfo(ellipsoid) {
+      this.parentHullShapeEllipsoid = _EveSOFDNA.#CopyEllipsoid(ellipsoid);
+    }
     IsHullAnimated() {
       return this.isSkinned;
     }
@@ -567,7 +597,7 @@ new class extends _identity {
       this.genericData = dataMgr.GetGenericData();
       if (this.HasDnaCommand(_EveSOFDNA.DnaCommand.CMD_VARIANT)) this.#setupCustomData();
       this.parentBoundingSphere = this.GetHullBoundingSphere();
-      this.parentHullShapeEllipsoid = this.hullDatas[0]?.shapeEllipsoid ?? null;
+      this.parentHullShapeEllipsoid = _EveSOFDNA.#CopyEllipsoid(this.GetHullShapeEllipsoid());
       this.isSkinned = this.hullDatas[0]?.isSkinned === true;
     }
     #setupFromDescriptor(layoutName, descriptor, parent, dataMgr) {
@@ -622,8 +652,8 @@ new class extends _identity {
       for (const name of [...this.#commands.keys()].sort()) {
         this.dna += `:${name}?${this.#commands.get(name).join(";")}`;
       }
-      this.parentBoundingSphere = parent.parentBoundingSphere;
-      this.parentHullShapeEllipsoid = parent.parentHullShapeEllipsoid;
+      this.parentBoundingSphere = parent.GetParentBoundingSphere();
+      this.parentHullShapeEllipsoid = _EveSOFDNA.#CopyEllipsoid(parent.GetParentHullShapeEllipsoid());
       this.isSkinned = this.hullDatas[0]?.isSkinned === true;
     }
     #inheritCommand(parent, command) {
@@ -633,24 +663,8 @@ new class extends _identity {
     #setupCustomData() {
       const args = this.GetDnaCommandArgs(_EveSOFDNA.DnaCommand.CMD_VARIANT);
       if (!args?.length) return;
-      const variant = this.genericData?.variants?.get(args[0]);
-      if (!variant?.hullAreaData) return;
-      this.customHullData = this.hullDatas.map(hull => {
-        const copy = {
-          ...hull,
-          opaqueAreas: [],
-          transparentAreas: []
-        };
-        const target = variant.isTransparent ? copy.transparentAreas : copy.opaqueAreas;
-        for (const area of hull.opaqueAreas ?? []) {
-          target.push({
-            ...variant.hullAreaData,
-            index: area.index,
-            count: area.count
-          });
-        }
-        return copy;
-      });
+      const variant = this.genericData?.variants?.get(args[0]) ?? null;
+      this.customHullData = this.hullDatas.map(hull => createCustomHullData(hull, variant));
       this.hullDatas = this.customHullData;
     }
     #reset(dna, dataMgr) {
@@ -684,10 +698,115 @@ new class extends _identity {
     CMD_LAYOUT: 7,
     CMD_MAX: 8
   });
+  #CopySphere(sphere) {
+    return sphere ? Array.from(sphere) : null;
+  }
+  #CopyEllipsoid(ellipsoid) {
+    if (!ellipsoid) return null;
+    return {
+      center: ellipsoid.center ? Array.from(ellipsoid.center) : null,
+      radius: ellipsoid.radius ? Array.from(ellipsoid.radius) : null
+    };
+  }
   constructor() {
     super(_EveSOFDNA), _initClass();
   }
 }();
+function createCustomHullData(source, variant) {
+  const shapeCenter = copyArrayValue(source?.shapeEllipsoid?.center ?? source?.shapeEllipsoidCenter, [0, 0, 0]);
+  const shapeRadius = copyArrayValue(source?.shapeEllipsoid?.radius ?? source?.shapeEllipsoidRadius, [-1, -1, -1]);
+  const result = {
+    buildClass: Number(source?.buildClass ?? 0),
+    geometryResFilePath: String(source?.geometryResFilePath ?? ""),
+    boundingSphere: copyArrayValue(source?.boundingSphere, [0, 0, 0, 0]),
+    shapeEllipsoidCenter: shapeCenter.slice(),
+    shapeEllipsoidRadius: shapeRadius.slice(),
+    shapeEllipsoid: {
+      center: shapeCenter,
+      radius: shapeRadius
+    },
+    isSkinned: source?.isSkinned === true,
+    isUsingDecalSets: false,
+    enableDynamicBoundingSphere: source?.enableDynamicBoundingSphere === true,
+    castShadow: source?.castShadow === true,
+    sof6: false,
+    audioPosition: copyArrayValue(source?.audioPosition, [0, 0, 0]),
+    spriteSets: [],
+    spotlightSets: [],
+    planeSets: [],
+    spriteLineSets: [],
+    hazeSets: [],
+    banners: [],
+    bannerSets: [],
+    hullDecalSets: [],
+    hullLightSets: [],
+    childSets: [],
+    defaultPattern: {
+      enabled: false,
+      position: [0, 0, 0],
+      scaling: [0, 0, 0],
+      rotation: [0, 0, 0, 1],
+      isMirrored: false
+    },
+    impactEffectType: _EveSOFDataHull.ImpactEffectType.IMPACTEFFECT_NONE,
+    opaqueAreas: [],
+    decalAreas: [],
+    transparentAreas: [],
+    additiveAreas: [],
+    distortionAreas: [],
+    boosters: {
+      alwaysOn: false,
+      hasTrails: false,
+      items: []
+    },
+    locatorTurrets: [],
+    locatorSets: new Map(),
+    children: [],
+    instancedMeshes: [],
+    animations: [],
+    soundEmitters: [],
+    controllers: [],
+    modelRotationCurvePath: "",
+    modelTranslationCurvePath: "",
+    meshIndexToOpaqueAreaLookup: new Map(),
+    category: ""
+  };
+  if (variant?.hullAreaData) {
+    const target = variant.isTransparent ? result.transparentAreas : result.opaqueAreas;
+    for (const sourceArea of source?.opaqueAreas ?? []) {
+      target.push(cloneVariantHullArea(variant.hullAreaData, sourceArea));
+    }
+  }
+  return result;
+}
+function cloneVariantHullArea(value, sourceArea) {
+  const textures = new Map();
+  if (value?.textures instanceof Map) {
+    for (const [name, texture] of value.textures) {
+      textures.set(name, {
+        resFilePath: String(texture?.resFilePath ?? "")
+      });
+    }
+  }
+  const parameters = new Map();
+  if (value?.parameters instanceof Map) {
+    for (const [name, parameter] of value.parameters) {
+      parameters.set(name, copyArrayValue(parameter, [0, 0, 0, 0]));
+    }
+  }
+  return {
+    index: Number(sourceArea?.index ?? 0),
+    count: Number(sourceArea?.count ?? 1),
+    blockedMaterials: Number(value?.blockedMaterials ?? 0),
+    shader: String(value?.shader ?? ""),
+    areaType: Number(value?.areaType ?? 0),
+    textures,
+    parameters
+  };
+}
+function copyArrayValue(value, fallback) {
+  return value && typeof value.length === "number" ? Array.from(value) : fallback.slice();
+}
 function commandName(command) {
   if (typeof command === "string") return command;
   if (!Number.isInteger(command) || command <= _EveSOFDNA.DnaCommand.CMD_INVALID || command >= _EveSOFDNA.DnaCommand.CMD_MAX) {
@@ -715,36 +834,17 @@ function includeSphere(current, next) {
   const factor = (radius - current[3]) / distance;
   return [current[0] + dx * factor, current[1] + dy * factor, current[2] + dz * factor, radius];
 }
-function parameterInfo(prefixes, parameterName) {
-  const fullName = String(parameterName);
-  const lowerName = fullName.toLowerCase();
-  for (let index = 0; index < prefixes.length; index++) {
-    const prefix = String(prefixes[index]);
-    if (lowerName.startsWith(prefix.toLowerCase())) {
-      return {
-        fullName,
-        shortName: fullName.slice(prefix.length),
-        materialIndex: index
-      };
-    }
-  }
-  return {
-    fullName,
-    shortName: fullName,
-    materialIndex: -1
-  };
-}
 function findMaterialParameter(dataMgr, materialName, parameterName) {
   return dataMgr.GetMaterialData(materialName)?.parameters?.get(parameterName) ?? null;
 }
 function findAreaMaterialParameter(dataMgr, colors, areaMaterials, areaType, info) {
   if (!areaMaterials) return null;
   let value = null;
-  if (info.materialIndex !== -1) {
-    const materialName = areaMaterials.materialNames.get(`${areaType}:${info.materialIndex}`);
-    if (materialName) value = findMaterialParameter(dataMgr, materialName, info.shortName);
+  if (info.IsMaterialIdxValid()) {
+    const materialName = areaMaterials.materialNames.get(`${areaType}:${info.GetMaterialIdx()}`);
+    if (materialName) value = findMaterialParameter(dataMgr, materialName, info.GetShortName());
   } else {
-    const colorType = areaMaterials.glowColor.get(`${areaType}:${info.fullName}`);
+    const colorType = areaMaterials.glowColor.get(`${areaType}:${info.GetFullName()}`);
     if (colorType !== undefined) value = colors[colorType] ?? null;
   }
   if (value) return value;

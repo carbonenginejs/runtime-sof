@@ -31,7 +31,7 @@ new class extends _identity {
     skinned = (_init_extra_name(this), _init_skinned(this, false));
 
     /** m_visibilityGroup (BlueSharedString) [READWRITE, PERSIST] */
-    visibilityGroup = (_init_extra_skinned(this), _init_visibilityGroup(this, ""));
+    visibilityGroup = (_init_extra_skinned(this), _init_visibilityGroup(this, "primary"));
 
     /** m_items (PEveSOFDataHullHazeSetItemVector) [READ, PERSIST] */
     items = (_init_extra_visibilityGroup(this), _init_items(this, []));

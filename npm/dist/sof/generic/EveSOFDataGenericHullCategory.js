@@ -1,6 +1,7 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
 import { io, type, schema } from '@carbonenginejs/core-types/schema';
 import { CjsModel } from '@carbonenginejs/core-types/model';
+import { ReflectionMode } from '@carbonenginejs/runtime-const/graphics';
 
 let _initClass, _init_reflectionMode, _init_extra_reflectionMode, _init_name, _init_extra_name;
 
@@ -21,7 +22,7 @@ class EveSOFDataGenericHullCategory extends CjsModel {
     _init_extra_name(this);
   }
   /** m_reflectionMode (EntityComponents::ReflectionMode - enum ReflectionMode) [READWRITE, PERSIST, ENUM] */
-  reflectionMode = _init_reflectionMode(this, 0);
+  reflectionMode = _init_reflectionMode(this, ReflectionMode.REFLECT_NEVER);
 
   /** m_categoryName (BlueSharedString) [READWRITE, PERSIST] */
   name = (_init_extra_reflectionMode(this), _init_name(this, ""));

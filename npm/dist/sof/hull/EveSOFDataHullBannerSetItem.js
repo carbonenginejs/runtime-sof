@@ -3,6 +3,7 @@ import { io, type, schema } from '@carbonenginejs/core-types/schema';
 import { CjsModel } from '@carbonenginejs/core-types/model';
 import { quat } from '@carbonenginejs/core-math/quat';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
+import { EveSOFDataHullBanner as _EveSOFDataHullBanner$1 } from './EveSOFDataHullBanner.js';
 
 let _initClass, _init_usage, _init_extra_usage, _init_boneIndex, _init_extra_boneIndex, _init_scaling, _init_extra_scaling, _init_angleX, _init_extra_angleX, _init_angleY, _init_extra_angleY, _init_name, _init_extra_name, _init_position, _init_extra_position, _init_rotation, _init_extra_rotation, _init_light, _init_extra_light, _init_maintainAspectRatio, _init_extra_maintainAspectRatio;
 
@@ -24,7 +25,7 @@ new class extends _identity {
       _init_extra_maintainAspectRatio(this);
     }
     /** m_usage (Usage - enum Usage) [READWRITE, PERSIST, ENUM] */
-    usage = _init_usage(this, 0);
+    usage = _init_usage(this, 3);
 
     /** m_boneIndex (int32_t) [READWRITE, PERSIST] */
     boneIndex = (_init_extra_usage(this), _init_boneIndex(this, -1));
@@ -52,6 +53,72 @@ new class extends _identity {
 
     /** m_maintainAspectRatio (bool) [READWRITE] */
     maintainAspectRatio = (_init_extra_light(this), _init_maintainAspectRatio(this, true));
+    GetTargetAspectRatio() {
+      const {
+        Usage
+      } = _EveSOFDataHullBanner;
+      switch (this.usage) {
+        case Usage.VERTICAL_BANNER:
+        case Usage.TARGET_SYSTEM_VERTICAL_BANNER:
+        case Usage.CURRENT_SYSTEM_VERTICAL_BANNER:
+          return 0.25;
+        case Usage.PUBLICITY_POSTER:
+          return 3 / 4;
+        case Usage.HORIZONTAL_BANNER:
+        case Usage.TARGET_SYSTEM_HORIZONTAL_BANNER:
+        case Usage.CURRENT_SYSTEM_HORIZONTAL_BANNER:
+        case Usage.TARGET_SYSTEM_STATUS:
+          return 4;
+        default:
+          return 1;
+      }
+    }
+    GetAspectRatio() {
+      return _EveSOFDataHullBanner$1.GetBannerAspectRatio({
+        position: vec3.create(),
+        rotation: quat.create(),
+        scaling: this.scaling,
+        angleX: this.angleX,
+        angleY: this.angleY
+      });
+    }
+    GetAngleX() {
+      return this.angleX;
+    }
+    SetAngleX(angle) {
+      this.angleX = angle;
+      if (this.maintainAspectRatio) {
+        this.scaling[1] *= this.GetAspectRatio() / this.GetTargetAspectRatio();
+      }
+    }
+    GetAngleY() {
+      return this.angleY;
+    }
+    SetAngleY(angle) {
+      this.angleY = angle;
+      if (this.maintainAspectRatio) {
+        const ratio = this.GetAspectRatio();
+        if (ratio !== 0) {
+          this.scaling[0] *= this.GetTargetAspectRatio() / ratio;
+        }
+      }
+    }
+    GetScaling() {
+      return vec3.clone(this.scaling);
+    }
+    SetScaling(scaling) {
+      vec3.copy(this.scaling, scaling);
+      if (this.maintainAspectRatio) {
+        const ratio = this.GetAspectRatio();
+        if (this.GetTargetAspectRatio() < 1) {
+          if (ratio !== 0) {
+            this.scaling[0] *= this.GetTargetAspectRatio() / ratio;
+          }
+        } else {
+          this.scaling[1] *= ratio / this.GetTargetAspectRatio();
+        }
+      }
+    }
   }];
   Usage = Object.freeze({
     ALLIANCE_LOGO: 0,

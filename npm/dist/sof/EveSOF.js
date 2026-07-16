@@ -5,15 +5,16 @@ import { mat4 } from '@carbonenginejs/core-math/mat4';
 import { quat } from '@carbonenginejs/core-math/quat';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
 import { TriBatchType } from '@carbonenginejs/runtime-const/graphics';
-import { EveSOFDataHullDecalSetItem as _EveSOFDataHullDecalS } from '../generated/EveSOFDataHullDecalSetItem.js';
+import { EveSOFDataHullDecalSetItem as _EveSOFDataHullDecalS } from './hull/EveSOFDataHullDecalSetItem.js';
 import { EveSOFDataHullBanner as _EveSOFDataHullBanner } from './hull/EveSOFDataHullBanner.js';
 import { EveSOFDataHullBannerSetItem as _EveSOFDataHullBanner$1 } from './hull/EveSOFDataHullBannerSetItem.js';
 import { EveSOFDataHullHazeSet as _EveSOFDataHullHazeSe } from './hull/EveSOFDataHullHazeSet.js';
 import { EveSOFDataHullLightSetItem as _EveSOFDataHullLightS } from './hull/EveSOFDataHullLightSetItem.js';
 import { EveSOFDataHullPlaneSet as _EveSOFDataHullPlaneS } from './hull/EveSOFDataHullPlaneSet.js';
-import { EveSOFDataHull as _EveSOFDataHull } from '../generated/EveSOFDataHull.js';
-import { EveSOFDataArea as _EveSOFDataArea } from '../generated/EveSOFDataArea.js';
-import { EveSOFDataInstancedMesh as _EveSOFDataInstancedM } from '../generated/EveSOFDataInstancedMesh.js';
+import { EveSOFDataHull as _EveSOFDataHull } from './hull/EveSOFDataHull.js';
+import { EveSOFDataArea as _EveSOFDataArea } from './shared/EveSOFDataArea.js';
+import { EveSOFDataInstancedMesh as _EveSOFDataInstancedM } from './shared/EveSOFDataInstancedMesh.js';
+import { EveSOFUtilsParameterName } from './shared/EveSOFUtilsParameterName.js';
 import { EveSOFDNA as _EveSOFDNA } from './EveSOFDNA.js';
 import { EveSOFDataMgr as _EveSOFDataMgr } from './EveSOFDataMgr.js';
 import { planSofLayouts } from './layoutPlanner.js';
@@ -29,6 +30,7 @@ const BUILD_CLASS_TYPES = Object.freeze({
 const DECAL_EFFECT_NAMES = Object.freeze(["decalv5.fx", "decalcounterv5.fx", "decalholev5.fx", "decalcylindricv5.fx", "decalglowcylindricv5.fx", "decalglowv5.fx", "decalv5.fx"]);
 const BANNER_EXTERNAL_PARAMETER_NAMES = Object.freeze(["AllianceLogoResPath", "CorpLogoResPath", "CeoPortraitResPath", "VerticalBannerResPath", "HorizontalBannerResPath", "TargetSystemAllianceLogoResPath", "TargetSystemVerticalBannerResPath", "TargetSystemHorizontalBannerResPath", "TargetSystemInfo0ResPath", "TargetSystemInfo1ResPath", "TargetSystemInfo2ResPath", "TargetSystemInfo3ResPath", "TargetSystemInfo4ResPath", "TargetSystemStatusResPath", "CurrentSystemAllianceLogoResPath", "CurrentSystemVerticalBannerResPath", "CurrentSystemHorizontalBannerResPath", "PublicityPosterResPath", "PublicityPortraitResPath", "RecruitmentInformation0ResPath", "RecruitmentInformation1ResPath", "RecruitmentInformation2ResPath", "RecruitmentInformation3ResPath", "RecruitmentInformation4ResPath"]);
 const MIN_MESH_SCREEN_SIZE = 2.5;
+const SWARM_BEHAVIOR_FIELD_NAMES = Object.freeze(["mass", "speedMultiplier", "speedMinimum", "maxDistance0", "maxDistance1", "maxTime", "timeMultiplier", "agility", "speed0", "speed1", "weightFormation", "weightCohesion", "weightSeparation", "weightAlign", "weightWander", "weightAnchor", "anchorRadius0", "anchorRadius1", "maxDeceleration", "separationDistance", "formationDistance", "wanderFluctuation", "wanderDistance", "wanderRadius"]);
 const SOF_INSTANCE_LAYOUT = Object.freeze([Object.freeze({
   usage: "TEXCOORD",
   usageIndex: 0,
@@ -319,6 +321,8 @@ class EveSOF extends CjsModel {
     const sphere = dna.GetHullBoundingSphere() ?? [0, 0, 0, -1];
     const document = new SofDocumentBuilder();
     const isExtension = buildClass === _EveSOFDataHull.BuildClass.BUILDCLASS_EXTENSION;
+    const hasShipInterface = typeName === "EveShip2" || typeName === "EveSwarm";
+    const swarmBehavior = typeName === "EveSwarm" ? createSwarmBehaviorFields(dna.GetGenericSwarmProperties()) : null;
     const mesh = isExtension ? document.AddNode("Tr2Mesh", {}) : this.CreateMesh(dna, document);
     if (!mesh) return null;
     const rootFields = {
@@ -348,7 +352,8 @@ class EveSOF extends CjsModel {
       locators: [],
       locatorSets: []
     };
-    if (typeName === "EveShip2") rootFields.boosters = null;
+    if (hasShipInterface) rootFields.boosters = null;
+    if (swarmBehavior) Object.assign(rootFields, swarmBehavior);
     if (isExtension) {
       if (!this.SetupExtensionBuild(document, rootFields, dna, options?.layout ?? options ?? {})) return null;
       const root = document.AddNode(typeName, rootFields, {
@@ -363,7 +368,7 @@ class EveSOF extends CjsModel {
     this.SetupCustomMask(document, rootFields, dna);
     this.SetupDecalSets(document, rootFields, dna);
     this.SetupLocators(document, rootFields, dna);
-    this.SetupLocatorSets(document, rootFields, dna);
+    this.SetupLocatorSets(document, rootFields, dna, [identityMatrix()]);
     this.SetupAttachments(document, rootFields, dna);
     this.SetupImpactEffects(document, rootFields, dna);
     this.SetupEffects(document, rootFields, rootFields, dna, [identityMatrix()], _EveSOFDataHull.BuildFilter.STANDALONE);
@@ -372,10 +377,13 @@ class EveSOF extends CjsModel {
     this.SetupModelCurves(document, rootFields, dna);
     this.SetupInstancedMeshes(document, rootFields, dna, [identityMatrix()]);
     this.SetupLayout(document, rootFields, dna, options?.layout ?? options ?? {});
-    if (typeName === "EveShip2") this.SetupBoosters(document, rootFields, dna);
+    if (hasShipInterface) this.SetupBoosters(document, rootFields, dna);
     const root = document.AddNode(typeName, rootFields, {
       sofSpaceObjectSetup: {
         inheritColorSet: cloneValue(dna.GetColorSet()),
+        ...(swarmBehavior ? {
+          swarmBehavior: cloneValue(swarmBehavior)
+        } : {}),
         initialize: true
       }
     });
@@ -874,10 +882,10 @@ class EveSOF extends CjsModel {
     const ignoredScale = vec3.create();
     const parentRotation = quat.create();
     const ignoredTranslation = vec3.create();
-    mat4.decompose(arrayValue(parentOffset, identityMatrix()), parentRotation, ignoredTranslation, ignoredScale);
+    decomposeCarbonMatrix(arrayValue(parentOffset, identityMatrix()), parentRotation, ignoredTranslation, ignoredScale);
     for (const emitter of dna.GetHullSoundEmitters()) {
       const position = vec3.transformMat4(vec3.create(), arrayValue(emitter.position, [0, 0, 0]), arrayValue(parentOffset, identityMatrix()));
-      const rotation = quat.multiply(quat.create(), arrayValue(emitter.rotation, [0, 0, 0, 1]), parentRotation);
+      const rotation = quat.multiply(quat.create(), parentRotation, arrayValue(emitter.rotation, [0, 0, 0, 1]));
       const front = vec3.transformQuat(vec3.create(), [0, 0, 1], rotation);
       rootFields.observers.push(document.AddNode("TriObserverLocal", {
         name: String(emitter.name ?? ""),
@@ -1090,7 +1098,7 @@ class EveSOF extends CjsModel {
         const instances = occurrences.map(value => packInstanceMatrix(value.transform, value.locator?.boneIndex));
         const built = this.CreateLayoutInstancedMesh(document, extensionDna, instances);
         if (built) {
-          layoutFields.objects.push(document.AddNode("EveChildMesh", {
+          const childFields = {
             name: "Instanced Hull",
             mesh: built.ref,
             castShadow: extensionDna.CastShadow(),
@@ -1099,11 +1107,21 @@ class EveSOF extends CjsModel {
             decals: [],
             attachments: [],
             lights: []
-          }, {
+          };
+          this.SetupDecalSets(document, childFields, extensionDna);
+          addChildMeshShaderOption(document, childFields, "SPACE_OBJECT_INSTANCED_ATTACHMENT", "SOIA_ENABLED");
+          layoutFields.objects.push(document.AddNode("EveChildMesh", childFields, {
             sofChildSetup: childSetup([1, 1, 1], [0, 0, 0, 1], [0, 0, 0]),
             sofInstancedChildSetup: {
               instanceTransforms: transforms
-            }
+            },
+            ...(this.editorMode ? {
+              sofEditorMetadata: {
+                SofDna: extensionDna.GetDnaString(),
+                SofParentHullName: dna.GetHullNames()[0],
+                SofLocatorSetName: first.locatorSetName
+              }
+            } : {})
           }));
         }
       } else {
@@ -1112,7 +1130,7 @@ class EveSOF extends CjsModel {
           const rotation = quat.create();
           const translation = vec3.create();
           const ignoredScale = vec3.create();
-          mat4.decompose(occurrence.transform, rotation, translation, ignoredScale);
+          decomposeCarbonMatrix(occurrence.transform, rotation, translation, ignoredScale);
           const childFields = {
             name: "Hull",
             mesh: this.CreateMesh(extensionDna, document),
@@ -1130,7 +1148,15 @@ class EveSOF extends CjsModel {
           this.SetupDecalSets(document, childFields, extensionDna);
           this.SetupAttachments(document, childFields, extensionDna, [identityMatrix()], false);
           const child = document.AddNode("EveChildMesh", childFields, {
-            sofChildSetup: childSetup(occurrence.randomizedScaling, Array.from(rotation), Array.from(translation))
+            sofChildSetup: childSetup(occurrence.randomizedScaling, Array.from(rotation), Array.from(translation)),
+            ...(this.editorMode ? {
+              sofEditorMetadata: {
+                SofDna: extensionDna.GetDnaString(),
+                SofParentHullName: dna.GetHullNames()[0],
+                SofLocatorSetName: first.locatorSetName,
+                SofLocatorIndex: String(occurrence.locatorIndex)
+              }
+            } : {})
           });
           if (needsPlacementContainer) {
             placementFields[occurrenceIndex].objects.push(child);
@@ -1248,7 +1274,6 @@ class EveSOF extends CjsModel {
         opaqueAreas: node.fields.opaqueAreas
       }
     };
-    addMeshShaderOption(document, node.fields, "SPACE_OBJECT_INSTANCED_ATTACHMENT", "SOIA_ENABLED");
     return {
       ref,
       instanceData,
@@ -1284,17 +1309,17 @@ class EveSOF extends CjsModel {
           name: `locator_booster_${++locatorIndex}`,
           transform
         }));
-        const scaling = vec3.create();
+        const ignoredScale = vec3.create();
         const rotation = quat.create();
         const position = vec3.create();
-        mat4.decompose(arrayValue(item.transform, identityMatrix()), rotation, position, scaling);
+        decomposeCarbonMatrix(arrayValue(item.transform, identityMatrix()), rotation, position, ignoredScale);
         position[0] += hullOffset[0];
         position[1] += hullOffset[1];
         position[2] += hullOffset[2];
         boosterLocatorRefs.push(document.AddNode("Locator", {
           position: Array.from(position),
           direction: Array.from(rotation),
-          scale: Array.from(scaling),
+          scale: [0, 0, 0],
           boneIndex: -1
         }));
         instances.push({
@@ -1431,7 +1456,9 @@ class EveSOF extends CjsModel {
     this.SetupPlaneSets(document, rootFields, dna, offsets, isInstancedPlacement);
     this.SetupSpriteLineSets(document, rootFields, dna, offsets, isInstancedPlacement, sharedSpriteEffect);
     this.SetupHazeSets(document, rootFields, dna, offsets, isInstancedPlacement);
-    if (dna.GetBuildClass() !== _EveSOFDataHull.BuildClass.BUILDCLASS_EXTENSION) {
+    // Carbon gates banners on the owner's root object casting to EveSpaceObject2;
+    // only space-object roots carry the externalParameters banner surface.
+    if (Array.isArray(rootFields.externalParameters)) {
       if (dna.UsingSof6()) this.SetupBannerSets(document, rootFields, dna, offsets);else this.SetupBanners(document, rootFields, dna, offsets);
     }
     this.SetupLights(document, rootFields, dna, offsets);
@@ -1568,8 +1595,8 @@ class EveSOF extends CjsModel {
               lightColor = faction.coneColor;
             }
             const transform = arrayValue(item.transform, identityMatrix());
-            mat4.multiply(transform, transform, mat4.fromTranslation(mat4.create(), hullOffset));
-            mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+            mat4.multiply(transform, mat4.fromTranslation(mat4.create(), hullOffset), transform);
+            mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
             transform[12] += hullOffset[0];
             transform[13] += hullOffset[1];
             transform[14] += hullOffset[2];
@@ -1587,7 +1614,7 @@ class EveSOF extends CjsModel {
                 const position = vec3.create();
                 const rotation = quat.create();
                 const scaling = vec3.create();
-                mat4.decompose(transform, rotation, position, scaling);
+                decomposeCarbonMatrix(transform, rotation, position, scaling);
                 const scale = Array.from(scaling, Math.abs);
                 const angle = scale[2] > 0 ? Math.atan(Math.max(scale[0], scale[1]) / (2 * scale[2])) * 180 / Math.PI : 0;
                 const localPosition = vec3.transformQuat(vec3.create(), arrayValue(item.light.translation, [0, 0, 0]), rotation);
@@ -1688,11 +1715,11 @@ class EveSOF extends CjsModel {
         for (const offset of offsets) {
           for (const item of set.items) {
             const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(item.rotation, [0, 0, 0, 1]), [Number(item.position?.[0] ?? 0) + hullOffset[0], Number(item.position?.[1] ?? 0) + hullOffset[1], Number(item.position?.[2] ?? 0) + hullOffset[2]], [1, 1, 1]);
-            mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+            mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
             const position = vec3.create();
             const rotation = quat.create();
             const ignoredScale = vec3.create();
-            mat4.decompose(transform, rotation, position, ignoredScale);
+            decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
             let color;
             if (dna.UsingSof6()) {
               const sourceColor = dna.GetColorSet()[item.colorType];
@@ -1722,7 +1749,7 @@ class EveSOF extends CjsModel {
               if (item.lights.length) usesLightParameters = true;
               for (const light of item.lights) {
                 const maxScale = Math.max(...arrayValue(item.scaling, [1, 1, 1]));
-                const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), arrayValue(light.rotation, [0, 0, 0, 1]), rotation));
+                const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), rotation, arrayValue(light.rotation, [0, 0, 0, 1])));
                 const lightPosition = vec3.transformQuat(vec3.create(), arrayValue(light.translation, [0, 0, 0]), rotation);
                 vec3.add(lightPosition, lightPosition, position);
                 lights.push({
@@ -1799,11 +1826,11 @@ class EveSOF extends CjsModel {
             let color = multiplyColor(sourceColor, item.intensity);
             if (dna.UsingSof6()) color = saturateColor(color, item.saturation);
             const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(item.rotation, [0, 0, 0, 1]), [Number(item.position?.[0] ?? 0) + hullOffset[0], Number(item.position?.[1] ?? 0) + hullOffset[1], Number(item.position?.[2] ?? 0) + hullOffset[2]], [1, 1, 1]);
-            mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+            mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
             const position = vec3.create();
             const rotation = quat.create();
             const ignoredScale = vec3.create();
-            mat4.decompose(transform, rotation, position, ignoredScale);
+            decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
             const line = {
               blinkPhase: Number(item.blinkPhase ?? 0),
               blinkPhaseShift: Number(item.blinkPhaseShift ?? 0),
@@ -1826,7 +1853,7 @@ class EveSOF extends CjsModel {
                 let lightRotation = arrayValue(item.light.rotation, [0, 0, 0, 1]);
                 const positions = getSpriteLinePositions(line);
                 for (let spriteIndex = 0; spriteIndex < positions.length; spriteIndex++) {
-                  lightRotation = Array.from(quat.normalize(quat.create(), quat.multiply(quat.create(), lightRotation, line.rotation)));
+                  lightRotation = Array.from(quat.normalize(quat.create(), quat.multiply(quat.create(), line.rotation, lightRotation)));
                   sofSpriteLineLights.push({
                     lightData: {
                       position: [Number(item.light.translation?.[0] ?? 0) + positions[spriteIndex][0] + line.position[0], Number(item.light.translation?.[1] ?? 0) + positions[spriteIndex][1] + line.position[1], Number(item.light.translation?.[2] ?? 0) + positions[spriteIndex][2] + line.position[2]],
@@ -1903,11 +1930,11 @@ class EveSOF extends CjsModel {
             if (!sourceColor) continue;
             let color = multiplyColor(sourceColor, item.hazeBrightness);
             const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(item.rotation, [0, 0, 0, 1]), [Number(item.position?.[0] ?? 0) + hullOffset[0], Number(item.position?.[1] ?? 0) + hullOffset[1], Number(item.position?.[2] ?? 0) + hullOffset[2]], [1, 1, 1]);
-            mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+            mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
             const position = vec3.create();
             const rotation = quat.create();
             const ignoredScale = vec3.create();
-            mat4.decompose(transform, rotation, position, ignoredScale);
+            decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
             if (dna.UsingSof6()) color = saturateColor(color, item.saturation);
             hazes.push(document.AddNode("EveHazeSetItem", {
               color,
@@ -1923,7 +1950,7 @@ class EveSOF extends CjsModel {
               for (const light of item.lights) {
                 const lightPosition = vec3.transformQuat(vec3.create(), arrayValue(light.translation, [0, 0, 0]), rotation);
                 vec3.add(lightPosition, lightPosition, position);
-                const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), arrayValue(light.rotation, [0, 0, 0, 1]), rotation));
+                const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), rotation, arrayValue(light.rotation, [0, 0, 0, 1])));
                 sofHazeLights.push({
                   lightData: {
                     position: Array.from(lightPosition),
@@ -2031,7 +2058,7 @@ class EveSOF extends CjsModel {
                 const maxScale = Math.max(scaling[0], scaling[1], scaling[2]);
                 const lightPosition = vec3.transformQuat(vec3.create(), arrayValue(light.translation, [0, 0, 0]), item.rotation);
                 vec3.add(lightPosition, lightPosition, item.position);
-                const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), arrayValue(light.rotation, [0, 0, 0, 1]), item.rotation));
+                const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), item.rotation, arrayValue(light.rotation, [0, 0, 0, 1])));
                 lights.push({
                   lightData: {
                     position: Array.from(lightPosition),
@@ -2079,11 +2106,11 @@ class EveSOF extends CjsModel {
           if (!lightKind || !color) continue;
           for (const offset of offsets) {
             const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(item.rotation, [0, 0, 0, 1]), [Number(item.position?.[0] ?? 0) + hullOffset[0], Number(item.position?.[1] ?? 0) + hullOffset[1], Number(item.position?.[2] ?? 0) + hullOffset[2]], [1, 1, 1]);
-            mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+            mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
             const position = vec3.create();
             const rotation = quat.create();
-            const scaling = vec3.create();
-            mat4.decompose(transform, rotation, position, scaling);
+            const ignoredScale = vec3.create();
+            decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
             const lightData = document.AddNode("LightData", {
               position: Array.from(position),
               color: Array.from(color),
@@ -2147,28 +2174,32 @@ class EveSOF extends CjsModel {
   }
 
   /** Merges same-name locator sets across all hulls in Carbon map order. */
-  SetupLocatorSets(document, rootFields, dna) {
-    const merged = new Map();
+  SetupLocatorSets(document, rootFields, dna, offsets = [identityMatrix()]) {
+    const transforms = Array.isArray(offsets) && offsets.length !== 0 ? offsets : [identityMatrix()];
     const hullOffset = [0, 0, 0];
     for (let hullIndex = 0; hullIndex < dna.GetMultiHullCount(); hullIndex++) {
       for (const name of dna.GetHullLocatorSetNames(hullIndex)) {
-        if (!merged.has(name)) merged.set(name, []);
-        for (const locator of dna.GetHullLocators(name, hullIndex) ?? []) {
-          merged.get(name).push(document.AddNode("Locator", {
-            position: [Number(locator.position?.[0] ?? 0) + hullOffset[0], Number(locator.position?.[1] ?? 0) + hullOffset[1], Number(locator.position?.[2] ?? 0) + hullOffset[2]],
-            direction: arrayValue(locator.rotation, [0, 0, 0, 1]),
-            scale: arrayValue(locator.scaling, [1, 1, 1]),
-            boneIndex: Number(locator.boneIndex ?? -1)
-          }));
+        const locators = dna.GetHullLocators(name, hullIndex) ?? [];
+        const locatorRefs = [];
+        for (const offset of transforms) {
+          for (const locator of locators) {
+            const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(locator.rotation, [0, 0, 0, 1]), [Number(locator.position?.[0] ?? 0) + hullOffset[0], Number(locator.position?.[1] ?? 0) + hullOffset[1], Number(locator.position?.[2] ?? 0) + hullOffset[2]], [1, 1, 1]);
+            const composed = mat4.multiply(mat4.create(), arrayValue(offset, identityMatrix()), transform);
+            const position = vec3.create();
+            const rotation = quat.create();
+            const ignoredScale = vec3.create();
+            decomposeCarbonMatrix(composed, rotation, position, ignoredScale);
+            locatorRefs.push(document.AddNode("Locator", {
+              position: Array.from(position),
+              direction: Array.from(rotation),
+              scale: arrayValue(locator.scaling, [1, 1, 1]),
+              boneIndex: Number(locator.boneIndex ?? -1)
+            }));
+          }
         }
+        mergeDocumentLocatorSet(document, rootFields, name, locatorRefs);
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
-    }
-    for (const [name, locators] of merged) {
-      rootFields.locatorSets.push(document.AddNode("EveLocatorSets", {
-        name,
-        locators
-      }));
     }
   }
   SetupTurretMaterialFromFaction(turretSet, factionName) {
@@ -2211,41 +2242,22 @@ function updateTurretEffect(turretSet, resolveParameter) {
 }
 function findTurretFactionParameter(dataMgr, genericData, factionData, parameterName) {
   const prefixes = genericData?.materialPrefixes ?? [];
-  const info = turretParameterInfo(prefixes, parameterName);
-  if (info.materialIndex !== -1) {
-    const usageIndex = Number(factionData.materialUsageList?.[info.materialIndex] ?? info.materialIndex);
-    info.materialIndex = usageIndex;
-    if (prefixes[usageIndex] !== undefined) info.fullName = `${prefixes[usageIndex]}${info.shortName}`;
+  const info = new EveSOFUtilsParameterName(prefixes, parameterName);
+  if (info.IsMaterialIdxValid()) {
+    const materialIndex = info.GetMaterialIdx();
+    const usageIndex = Number(factionData.materialUsageList?.[materialIndex] ?? materialIndex);
+    info.ChangeMaterialIdx(genericData, usageIndex);
   }
   return findTurretAreaParameter(dataMgr, factionData.colorData?.colors ?? [], factionData.areaMaterials, _EveSOFDataArea.AreaType.TYPE_PRIMARY, info);
 }
-function turretParameterInfo(prefixes, parameterName) {
-  const fullName = String(parameterName);
-  const lowerName = fullName.toLowerCase();
-  for (let index = 0; index < prefixes.length; index++) {
-    const prefix = String(prefixes[index]);
-    if (lowerName.startsWith(prefix.toLowerCase())) {
-      return {
-        fullName,
-        shortName: fullName.slice(prefix.length),
-        materialIndex: index
-      };
-    }
-  }
-  return {
-    fullName,
-    shortName: fullName,
-    materialIndex: -1
-  };
-}
 function findTurretAreaParameter(dataMgr, colors, areaMaterials, areaType, info) {
   if (!areaMaterials) return null;
-  if (info.materialIndex !== -1) {
-    const materialName = areaMaterials.materialNames?.get(`${areaType}:${info.materialIndex}`);
-    const value = dataMgr.GetMaterialData(materialName)?.parameters?.get(info.shortName);
+  if (info.IsMaterialIdxValid()) {
+    const materialName = areaMaterials.materialNames?.get(`${areaType}:${info.GetMaterialIdx()}`);
+    const value = dataMgr.GetMaterialData(materialName)?.parameters?.get(info.GetShortName());
     if (value) return value;
   } else {
-    const colorType = areaMaterials.glowColor?.get(`${areaType}:${info.fullName}`);
+    const colorType = areaMaterials.glowColor?.get(`${areaType}:${info.GetFullName()}`);
     if (colorType !== undefined) return colors[colorType] ?? null;
   }
   return null;
@@ -2264,11 +2276,11 @@ function arrayValue(value, fallback) {
 }
 function composeChildPlacement(source, offset, target, animationId) {
   const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(source.rotation, [0, 0, 0, 1]), arrayValue(source.translation, [0, 0, 0]), [1, 1, 1]);
-  mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+  mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
   const position = vec3.create();
   const rotation = quat.create();
   const ignoredScale = vec3.create();
-  mat4.decompose(transform, rotation, position, ignoredScale);
+  decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
   return {
     target,
     redFilePath: String(source.redFilePath ?? ""),
@@ -2340,6 +2352,36 @@ function quaternionKey(time, value) {
 }
 function identityMatrix() {
   return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+}
+function decomposeCarbonMatrix(matrix, rotation, translation, scaling) {
+  const scaleX = Math.hypot(matrix[0], matrix[1], matrix[2]);
+  const scaleY = Math.hypot(matrix[4], matrix[5], matrix[6]);
+  const scaleZ = Math.hypot(matrix[8], matrix[9], matrix[10]);
+  scaling[0] = scaleX;
+  scaling[1] = scaleY;
+  scaling[2] = scaleZ;
+  translation[0] = matrix[12];
+  translation[1] = matrix[13];
+  translation[2] = matrix[14];
+  if (scaleX === 0 || scaleY === 0 || scaleZ === 0) {
+    rotation[0] = 0;
+    rotation[1] = 0;
+    rotation[2] = 0;
+    rotation[3] = 1;
+    return matrix;
+  }
+  const normalized = mat4.create();
+  normalized[0] = matrix[0] / scaleX;
+  normalized[1] = matrix[1] / scaleX;
+  normalized[2] = matrix[2] / scaleX;
+  normalized[4] = matrix[4] / scaleY;
+  normalized[5] = matrix[5] / scaleY;
+  normalized[6] = matrix[6] / scaleY;
+  normalized[8] = matrix[8] / scaleZ;
+  normalized[9] = matrix[9] / scaleZ;
+  normalized[10] = matrix[10] / scaleZ;
+  mat4.getRotation(rotation, normalized);
+  return matrix;
 }
 function addOffset(target, value) {
   if (!value) return;
@@ -2465,11 +2507,11 @@ function getSpriteLinePositions(item) {
 }
 function addBannerItem(document, source, hullOffset, offset) {
   const transform = mat4.fromRotationTranslationScale(mat4.create(), arrayValue(source.rotation, [0, 0, 0, 1]), [Number(source.position?.[0] ?? 0) + hullOffset[0], Number(source.position?.[1] ?? 0) + hullOffset[1], Number(source.position?.[2] ?? 0) + hullOffset[2]], [1, 1, 1]);
-  mat4.multiply(transform, transform, arrayValue(offset, identityMatrix()));
+  mat4.multiply(transform, arrayValue(offset, identityMatrix()), transform);
   const position = vec3.create();
   const rotation = quat.create();
   const ignoredScale = vec3.create();
-  mat4.decompose(transform, rotation, position, ignoredScale);
+  decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
   return {
     ref: document.AddNode("EveBannerItem", {
       bone: Number(source.bone ?? -1),
@@ -2787,6 +2829,14 @@ function addMeshShaderOption(document, meshFields, name, value) {
     }
   }
 }
+function addChildMeshShaderOption(document, childFields, name, value) {
+  const mesh = document.GetNode(childFields.mesh?.$ref);
+  if (mesh) addMeshShaderOption(document, mesh.fields, name, value);
+  for (const decalRef of childFields.decals ?? []) {
+    const decal = document.GetNode(decalRef?.$ref);
+    addEffectShaderOption(document, decal?.fields?.decalEffect, name, value);
+  }
+}
 function propagateInstancedMeshInstances(sourceInstances, requestedOffsets) {
   const offsets = Array.isArray(requestedOffsets) && requestedOffsets.length ? requestedOffsets.map(value => arrayValue(value, identityMatrix())) : [identityMatrix()];
   const identityFastPath = offsets.length === 1 && isIdentityMatrix(offsets[0]);
@@ -2804,7 +2854,7 @@ function propagateInstancedMeshInstances(sourceInstances, requestedOffsets) {
   }
   for (const offset of offsets) {
     for (const source of sourceInstances) {
-      const combined = mat4.multiply(mat4.create(), unpackInstanceMatrix(source), offset);
+      const combined = mat4.multiply(mat4.create(), offset, unpackInstanceMatrix(source));
       instances.push(packInstanceMatrix(combined, source.boneIndex));
       // Carbon retains the transposed product in this auxiliary list on the
       // general path, unlike its ordinary-matrix identity fast path.
@@ -3170,6 +3220,15 @@ class SofDocumentBuilder {
       nodes: this.#nodes.filter(node => reachable.has(node.id))
     };
   }
+}
+function createSwarmBehaviorFields(source) {
+  if (!source) return null;
+  const result = {};
+  for (const name of SWARM_BEHAVIOR_FIELD_NAMES) {
+    result[name] = Number(source[name]);
+  }
+  result.weightDeceleration = Number(source.weightDecelerate ?? source.weightDeceleration);
+  return result;
 }
 function normalizeSofResourcePath(value) {
   return String(value ?? "").trim().replace(/\\/g, "/").replace(/\/+/g, "/").toLowerCase();

@@ -19,4 +19,9 @@ export class EveSOFDataHullChildSet extends CjsModel
   @type.list("EveSOFDataHullChildSetItem")
   items = [];
 
+  GetName()
+  {
+    return this.visibilityGroup;
+  }
+
 }

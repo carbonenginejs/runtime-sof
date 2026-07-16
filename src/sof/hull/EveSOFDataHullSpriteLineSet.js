@@ -22,7 +22,7 @@ export class EveSOFDataHullSpriteLineSet extends CjsModel
   /** m_visibilityGroup (BlueSharedString) [READWRITE, PERSIST] */
   @io.persist
   @type.string
-  visibilityGroup = "";
+  visibilityGroup = "primary";
 
   /** m_items (PEveSOFDataHullSpriteLineSetItemVector) [READ, PERSIST] */
   @io.persist

@@ -176,9 +176,9 @@ function createSofHydrationAdapter() {
       } else if (context?.kind === "EveSpriteLineSet" && typeof instance.AddLightFromSOF === "function") {
         for (const light of spriteLineLights.get(instance) ?? []) instance.AddLightFromSOF(light);
         if (typeof instance.Initialize === "function") instance.Initialize();else if (typeof instance.Rebuild === "function") instance.Rebuild();
-      } else if (context?.kind === "EveHazeSet" && typeof instance.AddLightFromSOF === "function") {
+      } else if (context?.kind === "EveHazeSet") {
         for (const light of hazeLights.get(instance) ?? []) instance.AddLightFromSOF(light);
-        if (typeof instance.Initialize === "function") instance.Initialize();else if (typeof instance.Rebuild === "function") instance.Rebuild();
+        instance.Initialize();
       } else if (context?.kind === "EveBannerItem") {
         instance.reference = bannerReferences.get(instance) ?? 0;
       } else if (context?.kind === "EveBannerSet") {
@@ -246,6 +246,9 @@ function createSofHydrationAdapter() {
         }
       } else if (spaceObjectSetups.has(instance)) {
         const setup = spaceObjectSetups.get(instance);
+        if (setup?.swarmBehavior && typeof setup.swarmBehavior === "object") {
+          Object.assign(instance, setup.swarmBehavior);
+        }
         if (Array.isArray(setup?.inheritColorSet) && typeof instance.SetInheritProperties === "function") {
           instance.SetInheritProperties(setup.inheritColorSet);
         }

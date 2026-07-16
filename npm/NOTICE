@@ -1,7 +1,7 @@
 @carbonenginejs/runtime-sof
 ===========================
 
-TypeScript re-implementation of the CarbonEngine Space Object Factory (SOF)
+JavaScript re-implementation of the CarbonEngine Space Object Factory (SOF)
 data model and builder, targeting a serializable Trinity Graph output.
 
 Attribution
@@ -14,7 +14,7 @@ under the MIT License:
 
 Ported classes carry a `// Ported from CarbonEngine ...` header pointing at the
 upstream file. Other portions are original work by the CarbonEngineJS authors
-(TypeScript/JS structure, schema wiring, and independent improvements built up
+(JavaScript structure, schema wiring, and independent improvements built up
 over years of working with this library). The ccpwgl JavaScript library was
 consulted only as optional reference material.
 

@@ -243,11 +243,10 @@ export function createSofHydrationAdapter()
         if (typeof instance.Initialize === "function") instance.Initialize();
         else if (typeof instance.Rebuild === "function") instance.Rebuild();
       }
-      else if (context?.kind === "EveHazeSet" && typeof instance.AddLightFromSOF === "function")
+      else if (context?.kind === "EveHazeSet")
       {
         for (const light of hazeLights.get(instance) ?? []) instance.AddLightFromSOF(light);
-        if (typeof instance.Initialize === "function") instance.Initialize();
-        else if (typeof instance.Rebuild === "function") instance.Rebuild();
+        instance.Initialize();
       }
       else if (context?.kind === "EveBannerItem")
       {
@@ -364,6 +363,10 @@ export function createSofHydrationAdapter()
       else if (spaceObjectSetups.has(instance))
       {
         const setup = spaceObjectSetups.get(instance);
+        if (setup?.swarmBehavior && typeof setup.swarmBehavior === "object")
+        {
+          Object.assign(instance, setup.swarmBehavior);
+        }
         if (Array.isArray(setup?.inheritColorSet) && typeof instance.SetInheritProperties === "function")
         {
           instance.SetInheritProperties(setup.inheritColorSet);

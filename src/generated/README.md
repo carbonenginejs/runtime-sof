@@ -1,21 +1,14 @@
-# Pending SOF classes
+# SOF generated compatibility namespace
 
-This directory is a work queue, not the completed runtime surface.
+This directory is a retired compatibility namespace, not the runtime surface.
 
-Decorated schema shells remain here until their applicable legacy SOF behavior
-has been reviewed and ported. A completed class moves to the matching
-`src/sof/<domain>` directory; only one decorated implementation may exist.
+The queue is complete: there are zero pending schema shells. Every reviewed
+class now has a single implementation under its matching `src/sof/<domain>`
+directory and is exported through the domain barrels.
 
-The current 33 behavior-pending legacy classes are the JavaScript files in this
-directory other than these three runtime-only schema additions:
+Carbon/Blue source is authoritative for fields, defaults, enum ownership, and
+runtime behavior. Secondary JavaScript implementations may inform optional CPU
+conveniences only after those conveniences are checked against Carbon.
 
-- `EveSofDataMeshInstance`
-- `EveSOFUtilsParameterName`
-- `IEveSOFDataHullExtensionPlacementDistribution`
-
-Those additions also remain here until their ownership and required behavior
-have been reviewed. Donor-only ccpwgl helpers without a Carbon class or schema
-are not transpilation targets.
-
-`index.js` exports only pending classes. Completed classes are exported from
-`src/sof/index.js` and its domain barrels.
+`index.js` intentionally exports nothing and remains as a compatibility
+subpath for consumers that previously inspected the work queue.

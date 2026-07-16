@@ -1,4 +1,5 @@
 export { EveSOF } from "./EveSOF.js";
+export { EveSOFData } from "./EveSOFData.js";
 export { EveSOFDNA } from "./EveSOFDNA.js";
 export { EveSOFDataMgr } from "./EveSOFDataMgr.js";
 export { createSofHydrationAdapter } from "./createSofHydrationAdapter.js";
@@ -6,4 +7,6 @@ export * from "./faction/index.js";
 export * from "./generic/index.js";
 export * from "./hull/index.js";
 export * from "./layout/index.js";
+export * from "./pattern/index.js";
+export * from "./race/index.js";
 export * from "./shared/index.js";

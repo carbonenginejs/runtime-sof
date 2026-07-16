@@ -9,11 +9,6 @@ import { CjsModel } from "@carbonenginejs/core-types/model";
 export class EveSOFDataHullHazeSet extends CjsModel
 {
 
-  static HazeType = Object.freeze({
-    TYPE_SPHERICAL: 0,
-    TYPE_HALFSPHERICAL: 1
-  });
-
   /** m_hazeType (HazeType - enum HazeType) [READWRITE, PERSIST, ENUM] */
   @io.persist
   @type.int32
@@ -33,11 +28,16 @@ export class EveSOFDataHullHazeSet extends CjsModel
   /** m_visibilityGroup (BlueSharedString) [READWRITE, PERSIST] */
   @io.persist
   @type.string
-  visibilityGroup = "";
+  visibilityGroup = "primary";
 
   /** m_items (PEveSOFDataHullHazeSetItemVector) [READ, PERSIST] */
   @io.persist
   @type.list("EveSOFDataHullHazeSetItem")
   items = [];
+
+  static HazeType = Object.freeze({
+    TYPE_SPHERICAL: 0,
+    TYPE_HALFSPHERICAL: 1
+  });
 
 }

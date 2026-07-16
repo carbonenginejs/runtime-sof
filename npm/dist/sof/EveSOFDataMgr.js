@@ -1,6 +1,6 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../_virtual/_rollupPluginBabelHelpers.js';
 import { CjsModel } from '@carbonenginejs/core-types/model';
-import { carbon, impl, type } from '@carbonenginejs/core-types/schema';
+import { carbon, impl, type, CjsSchema } from '@carbonenginejs/core-types/schema';
 import { mat4 } from '@carbonenginejs/core-math/mat4';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
 
@@ -627,18 +627,21 @@ function projectHullLightSetItem(value) {
 }
 function getHullLightType(value) {
   if (Number.isInteger(value?.type)) return Number(value.type);
-  const className = String(value?.constructor?.name ?? value?._sourceClassName ?? "");
+  const className = getStableClassName(value);
   if (className.endsWith("TexturedPointLight")) return 1;
   if (className.endsWith("SpotLight")) return 2;
   return 0;
+}
+function getStableClassName(value) {
+  return String(CjsSchema.getClassName(value?.constructor) ?? value?._sourceClassName ?? "");
 }
 function projectLocatorSet(value, target, state) {
   if (!value) return;
   if (Array.isArray(value.locators)) {
     const name = String(value.name ?? "");
-    if (!target.has(name)) target.set(name, []);
-    const locators = target.get(name);
     for (const locator of value.locators) {
+      if (!target.has(name)) target.set(name, []);
+      const locators = target.get(name);
       locators.push({
         position: copyArray(locator?.position, [0, 0, 0]),
         rotation: copyArray(locator?.rotation, [0, 0, 0, 1]),
@@ -958,7 +961,8 @@ function projectExtensionPlacement(value) {
   };
 }
 function isExtensionPlacementGroup(value) {
-  const className = String(value?.constructor?.name ?? "");
+  const className = getStableClassName(value);
+  if (className === "EveSOFDataHullExtensionBucket" || value?.IsBucket?.() === true) return true;
   if (className === "EveSOFDataHullExtensionPlacementGroup") return true;
   if (className === "EveSOFDataHullExtensionPlacement") return false;
   return Array.isArray(value?.placements) && !Object.hasOwn(value, "descriptor") && !Object.hasOwn(value, "locatorSetName");
@@ -995,7 +999,7 @@ function projectDistributionConditions(values) {
   return (Array.isArray(values) ? values : []).filter(Boolean).map(projectDistributionCondition);
 }
 function projectDistributionCondition(value) {
-  const className = String(value?.constructor?.name ?? "");
+  const className = getStableClassName(value);
   const result = {
     distributionType: _EveSOFDataMgr.DistributionMethod.RANDOM_INCLUCION,
     seed: 0,
@@ -1032,8 +1036,10 @@ function createGenericData(value) {
       variants: new Map(),
       areaShaderData: new Map(),
       decalShaderData: new Map(),
+      decalMinScreenSize: [0, 0, 0, 0, 0, 0, 0],
       damage: projectGenericDamage(null),
-      hullDamage: projectGenericHullDamage(null)
+      hullDamage: projectGenericHullDamage(null),
+      swarmBehavior: projectSwarmBehavior(null)
     };
   }
   const materialPrefixes = (Array.isArray(value.materialPrefixes) ? value.materialPrefixes : []).map(item => typeof item === "string" ? item : String(item?.str ?? ""));
@@ -1053,10 +1059,10 @@ function createGenericData(value) {
   }
   const variants = new Map();
   for (const variant of Array.isArray(value.variants) ? value.variants : []) {
-    if (!variant) continue;
+    if (!variant?.hullArea) continue;
     variants.set(String(variant.name), {
       ...variant,
-      hullAreaData: variant.hullArea ? projectHullArea(variant.hullArea) : null
+      hullAreaData: projectHullArea(variant.hullArea)
     });
   }
   const categoryData = new Map();
@@ -1070,11 +1076,42 @@ function createGenericData(value) {
     areaShaderData,
     decalShaderData,
     categoryData,
+    decalMinScreenSize: [Number(value.decalMinScreenSizeSTANDARD ?? 0), Number(value.decalMinScreenSizeKILLCOUNTER ?? 0), Number(value.decalMinScreenSizeHOLE ?? 0), Number(value.decalMinScreenSizeCYLINDRICAL ?? 0), Number(value.decalMinScreenSizeGLOWCYLINDRICAL ?? 0), Number(value.decalMinScreenSizeGLOWSTANDARD ?? 0), Number(value.decalMinScreenSizeLOGO ?? 0)],
     genericWreckMaterialData: projectSingleAreaMaterial(value.genericWreckMaterial, 5),
     damage: projectGenericDamage(value.damage),
     hullDamage: projectGenericHullDamage(value.hullDamage),
+    swarmBehavior: projectSwarmBehavior(value.swarm),
     variants,
     bannerShader: value.bannerShader ? projectGenericShader(value.bannerShader) : null
+  };
+}
+function projectSwarmBehavior(value) {
+  return {
+    mass: 1,
+    speedMultiplier: Number(value?.speedMultiplier ?? 1.1),
+    speedMinimum: Number(value?.speedMinimum ?? 10),
+    agility: 2,
+    maxDistance0: Number(value?.maxDistance0 ?? 500),
+    maxDistance1: Number(value?.maxDistance1 ?? 125),
+    timeMultiplier: 1,
+    maxTime: Number(value?.maxTime ?? 0.2),
+    speed0: Number(value?.speed0 ?? 700),
+    speed1: Number(value?.speed1 ?? 1000),
+    weightCohesion: Number(value?.weightCohesion ?? 0.1),
+    weightSeparation: Number(value?.weightSeparation ?? 0.1),
+    separationDistance: Number(value?.separationDistance ?? 250),
+    weightAlign: Number(value?.weightAlign ?? 50),
+    weightWander: Number(value?.weightWander ?? 0.33),
+    wanderFluctuation: Number(value?.wanderFluctuation ?? 0.05),
+    wanderDistance: Number(value?.wanderDistance ?? 100),
+    wanderRadius: Number(value?.wanderRadius ?? 80),
+    weightAnchor: Number(value?.weightAnchor ?? 0.5),
+    anchorRadius0: Number(value?.anchorRadius0 ?? 75),
+    anchorRadius1: Number(value?.anchorRadius1 ?? 250),
+    weightDecelerate: Number(value?.weightDeceleration ?? 0.1),
+    maxDeceleration: Number(value?.maxDeceleration ?? 200),
+    weightFormation: Number(value?.weightFormation ?? 1),
+    formationDistance: Number(value?.formationDistance ?? 50)
   };
 }
 function projectGenericDamage(value) {

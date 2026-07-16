@@ -10,13 +10,6 @@ import { vec2 } from "@carbonenginejs/core-math/vec2";
 export class EveSOFDataHullPlaneSet extends CjsModel
 {
 
-  static Usage = Object.freeze({
-    USAGE_STANDARD: 0,
-    USAGE_SPACE_VIDEO: 2,
-    USAGE_HANGAR_VIDEO: 3,
-    USAGE_HAZE: 5
-  });
-
   /** m_usage (Usage - enum Usage) [READWRITE, PERSIST, ENUM] */
   @io.persist
   @type.int32
@@ -67,5 +60,12 @@ export class EveSOFDataHullPlaneSet extends CjsModel
   @io.persist
   @type.list("EveSOFDataHullPlaneSetItem")
   items = [];
+
+  static Usage = Object.freeze({
+    USAGE_STANDARD: 0,
+    USAGE_SPACE_VIDEO: 2,
+    USAGE_HANGAR_VIDEO: 3,
+    USAGE_HAZE: 5
+  });
 
 }

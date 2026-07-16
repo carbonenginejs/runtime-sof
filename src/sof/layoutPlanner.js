@@ -442,7 +442,7 @@ function distributeLocators(distribution, locators, managed, context, layoutPlan
       const pitch = step[1] * Math.floor(maxSteps[1] * context.random.next() + 0.5);
       const roll = step[2] * Math.floor(maxSteps[2] * context.random.next() + 0.5);
       const randomRotation = quat.fromYawPitchRoll(quat.create(), yaw, pitch, roll);
-      locator.rotation = Array.from(quat.multiply(quat.create(), locator.rotation, randomRotation));
+      locator.rotation = Array.from(quat.multiply(quat.create(), randomRotation, locator.rotation));
     }
   }
 
@@ -517,8 +517,8 @@ function createPlacementOccurrence(
     locator.position,
     scaling
   );
-  mat4.multiply(transform, transform, locatorTransform);
-  mat4.multiply(transform, transform, offset);
+  mat4.multiply(transform, locatorTransform, transform);
+  mat4.multiply(transform, offset, transform);
   const id = context.nextPlacementId++;
   return {
     key: `${batchKey}:${occurrenceIndex}`,
@@ -644,7 +644,7 @@ function quaternionToYawPitchRoll(value)
   const qPitch = [y * gamma, 0, 0, (w + 1) * gamma];
   if (Math.abs(Math.abs(y) - 1) < 0.00001)
   {
-    const combined = quat.multiply(quat.create(), value, quat.conjugate(quat.create(), qPitch));
+    const combined = quat.multiply(quat.create(), quat.conjugate(quat.create(), qPitch), value);
     let roll = 2 * Math.acos(Math.max(-1, Math.min(1, combined[3])));
     if (roll > Math.PI) roll -= Math.PI * 2;
     if (combined[2] > 0) roll = -roll;

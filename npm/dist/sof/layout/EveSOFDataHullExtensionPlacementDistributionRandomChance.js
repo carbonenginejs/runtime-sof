@@ -1,12 +1,12 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
 import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { IEveSOFDataHullExtensionPlacementDistribution as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacementDistribution.js';
 
 let _initClass, _init_chanceOfUsage, _init_extra_chanceOfUsage, _init_name, _init_extra_name;
 
 /** EveSOFDataHullExtensionPlacementDistributionRandomChance (eve) - generated from schema shapeHash 0c93607e.... */
 let _EveSOFDataHullExtens;
-class EveSOFDataHullExtensionPlacementDistributionRandomChance extends CjsModel {
+class EveSOFDataHullExtensionPlacementDistributionRandomChance extends _IEveSOFDataHullExten {
   static {
     ({
       e: [_init_chanceOfUsage, _init_extra_chanceOfUsage, _init_name, _init_extra_name],
@@ -14,7 +14,7 @@ class EveSOFDataHullExtensionPlacementDistributionRandomChance extends CjsModel 
     } = _applyDecs2311(this, [type.define({
       className: "EveSOFDataHullExtensionPlacementDistributionRandomChance",
       family: "eve"
-    })], [[[io, io.persist, type, type.float32], 16, "chanceOfUsage"], [[io, io.persist, type, type.string], 16, "name"]], 0, void 0, CjsModel));
+    })], [[[io, io.persist, type, type.float32], 16, "chanceOfUsage"], [[io, io.persist, type, type.string], 16, "name"]], 0, void 0, _IEveSOFDataHullExten));
   }
   constructor(...args) {
     super(...args);

@@ -4,8 +4,9 @@
 import { CjsModel } from "@carbonenginejs/core-types/model";
 import { carbon, impl, type } from "@carbonenginejs/core-types/schema";
 import { ReflectionMode, TriBatchType } from "@carbonenginejs/runtime-const/graphics";
-import { EveSOFDataArea } from "../generated/EveSOFDataArea.js";
-import { EveSOFDataHull } from "../generated/EveSOFDataHull.js";
+import { EveSOFDataHull } from "./hull/EveSOFDataHull.js";
+import { EveSOFDataArea } from "./shared/EveSOFDataArea.js";
+import { EveSOFUtilsParameterName } from "./shared/EveSOFUtilsParameterName.js";
 
 
 const COMMAND_NAMES = Object.freeze([
@@ -382,6 +383,14 @@ export class EveSOFDNA extends CjsModel
     return this.genericData?.bannerShader ?? null;
   }
 
+  /** Returns Carbon's decal minimum screen size for one HullDecalSetItem Usage. */
+  @carbon.method
+  @impl.implemented
+  GetDecalMinScreenSize(usage)
+  {
+    return this.genericData?.decalMinScreenSize?.[Number(usage)];
+  }
+
   @carbon.method
   @impl.implemented
   GetHighestMeshAreaIndex(batchType, hullIndex = 0)
@@ -480,6 +489,21 @@ export class EveSOFDNA extends CjsModel
     return this.genericData?.decalShaderLocation ?? "";
   }
 
+  /** Carbon returns constant decal shader 0. */
+  @carbon.method
+  @impl.implemented
+  GetDecalShader()
+  {
+    return 0;
+  }
+
+  @carbon.method
+  @impl.implemented
+  IsHullUsingDecalSets()
+  {
+    return this.hullDatas[0]?.isUsingDecalSets === true;
+  }
+
   @carbon.method
   @impl.implemented
   GetShaderPrefix(isAnimated)
@@ -533,6 +557,13 @@ export class EveSOFDNA extends CjsModel
   GetGenericHullDamageData()
   {
     return this.genericData?.hullDamage ?? null;
+  }
+
+  @carbon.method
+  @impl.implemented
+  GetGenericSwarmProperties()
+  {
+    return this.genericData?.swarmBehavior ?? null;
   }
 
   @carbon.method
@@ -648,13 +679,14 @@ export class EveSOFDNA extends CjsModel
     const materialArgs = this.GetDnaCommandArgs(EveSOFDNA.DnaCommand.CMD_MATERIAL);
     if (materialArgs)
     {
-      info = parameterInfo(this.genericData.materialPrefixes, parameterName);
-      if (info.materialIndex !== -1 && info.materialIndex < materialArgs.length && info.materialIndex < 32)
+      info = new EveSOFUtilsParameterName(this.genericData.materialPrefixes, parameterName);
+      const materialIndex = info.GetMaterialIdx();
+      if (materialIndex !== -1 && materialIndex < materialArgs.length && materialIndex < 32)
       {
-        const blocked = (blockedMaterials >>> 0) & (1 << info.materialIndex);
+        const blocked = (blockedMaterials >>> 0) & (1 << materialIndex);
         if (!blocked)
         {
-          value = findMaterialParameter(this.dataMgr, materialArgs[info.materialIndex], info.shortName);
+          value = findMaterialParameter(this.dataMgr, materialArgs[materialIndex], info.GetShortName());
           if (value) return value;
         }
       }
@@ -663,27 +695,36 @@ export class EveSOFDNA extends CjsModel
     const patternArgs = this.GetDnaCommandArgs(EveSOFDNA.DnaCommand.CMD_PATTERN);
     if (patternArgs)
     {
-      info = parameterInfo(this.genericData.patternMaterialPrefixes, parameterName);
-      if (info.materialIndex !== -1 && 1 + info.materialIndex < patternArgs.length)
+      info = new EveSOFUtilsParameterName(this.genericData.patternMaterialPrefixes, parameterName);
+      const materialIndex = info.GetMaterialIdx();
+      if (materialIndex !== -1 && 1 + materialIndex < patternArgs.length)
       {
-        value = findMaterialParameter(this.dataMgr, patternArgs[1 + info.materialIndex], info.shortName);
+        value = findMaterialParameter(this.dataMgr, patternArgs[1 + materialIndex], info.GetShortName());
         if (value) return value;
       }
     }
 
-    info = parameterInfo(this.genericData.patternMaterialPrefixes, parameterName);
-    if (info.materialIndex === 0)
+    info = new EveSOFUtilsParameterName(this.genericData.patternMaterialPrefixes, parameterName);
+    if (info.GetMaterialIdx() === 0)
     {
-      value = findMaterialParameter(this.dataMgr, this.factionData.defaultPatternLayer1MaterialName, info.shortName);
+      value = findMaterialParameter(
+        this.dataMgr,
+        this.factionData.defaultPatternLayer1MaterialName,
+        info.GetShortName()
+      );
       if (value) return value;
     }
-    else if (info.materialIndex === 1 && this.UsingSof6())
+    else if (info.GetMaterialIdx() === 1 && this.UsingSof6())
     {
-      value = findMaterialParameter(this.dataMgr, this.factionData.defaultPatternLayer2MaterialName, info.shortName);
+      value = findMaterialParameter(
+        this.dataMgr,
+        this.factionData.defaultPatternLayer2MaterialName,
+        info.GetShortName()
+      );
       if (value) return value;
     }
 
-    info = parameterInfo(this.genericData.materialPrefixes, parameterName);
+    info = new EveSOFUtilsParameterName(this.genericData.materialPrefixes, parameterName);
     if (areaType === EveSOFDataArea.AreaType.TYPE_WRECK)
     {
       value = findAreaMaterialParameter(this.dataMgr, this.GetColorSet(), this.genericData.genericWreckMaterialData, areaType, info);
@@ -705,17 +746,21 @@ export class EveSOFDNA extends CjsModel
   @impl.implemented
   GetFactionTurretParameters(parameterName)
   {
-    const info = parameterInfo(this.genericData?.materialPrefixes ?? [], parameterName);
-    let fullName = info.fullName;
-    if (info.materialIndex !== -1)
+    const info = new EveSOFUtilsParameterName(
+      this.genericData?.materialPrefixes ?? [],
+      parameterName
+    );
+    if (info.IsMaterialIdxValid())
     {
-      const usageIndex = Number(this.factionData?.materialUsageList?.[info.materialIndex] ?? info.materialIndex);
-      const prefix = this.genericData?.materialPrefixes?.[usageIndex];
-      if (prefix !== undefined) fullName = `${prefix}${info.shortName}`;
+      const materialIndex = info.GetMaterialIdx();
+      const usageIndex = Number(
+        this.factionData?.materialUsageList?.[materialIndex] ?? materialIndex
+      );
+      info.ChangeMaterialIdx(this.genericData, usageIndex);
     }
     return this.GetMeshAreaParameter(
       Number(this.genericData?.turretAreaType ?? EveSOFDataArea.AreaType.TYPE_PRIMARY),
-      fullName
+      info.GetFullName()
     );
   }
 
@@ -861,6 +906,48 @@ export class EveSOFDNA extends CjsModel
 
   @carbon.method
   @impl.implemented
+  GetParentBoundingSphere()
+  {
+    return EveSOFDNA.#CopySphere(this.parentBoundingSphere);
+  }
+
+  @carbon.method
+  @impl.implemented
+  GetParentHullShapeEllipsoid()
+  {
+    return this.parentHullShapeEllipsoid;
+  }
+
+  @carbon.method
+  @impl.implemented
+  SetParentBoundingSphere(boundingSphere)
+  {
+    this.parentBoundingSphere = EveSOFDNA.#CopySphere(boundingSphere);
+  }
+
+  @carbon.method
+  @impl.implemented
+  SetParentShapeEllipsoidInfo(ellipsoid)
+  {
+    this.parentHullShapeEllipsoid = EveSOFDNA.#CopyEllipsoid(ellipsoid);
+  }
+
+  static #CopySphere(sphere)
+  {
+    return sphere ? Array.from(sphere) : null;
+  }
+
+  static #CopyEllipsoid(ellipsoid)
+  {
+    if (!ellipsoid) return null;
+    return {
+      center: ellipsoid.center ? Array.from(ellipsoid.center) : null,
+      radius: ellipsoid.radius ? Array.from(ellipsoid.radius) : null
+    };
+  }
+
+  @carbon.method
+  @impl.implemented
   IsHullAnimated()
   {
     return this.isSkinned;
@@ -987,7 +1074,7 @@ export class EveSOFDNA extends CjsModel
 
     if (this.HasDnaCommand(EveSOFDNA.DnaCommand.CMD_VARIANT)) this.#setupCustomData();
     this.parentBoundingSphere = this.GetHullBoundingSphere();
-    this.parentHullShapeEllipsoid = this.hullDatas[0]?.shapeEllipsoid ?? null;
+    this.parentHullShapeEllipsoid = EveSOFDNA.#CopyEllipsoid(this.GetHullShapeEllipsoid());
     this.isSkinned = this.hullDatas[0]?.isSkinned === true;
   }
 
@@ -1058,8 +1145,8 @@ export class EveSOFDNA extends CjsModel
     {
       this.dna += `:${name}?${this.#commands.get(name).join(";")}`;
     }
-    this.parentBoundingSphere = parent.parentBoundingSphere;
-    this.parentHullShapeEllipsoid = parent.parentHullShapeEllipsoid;
+    this.parentBoundingSphere = parent.GetParentBoundingSphere();
+    this.parentHullShapeEllipsoid = EveSOFDNA.#CopyEllipsoid(parent.GetParentHullShapeEllipsoid());
     this.isSkinned = this.hullDatas[0]?.isSkinned === true;
     void layoutName;
   }
@@ -1074,22 +1161,9 @@ export class EveSOFDNA extends CjsModel
   {
     const args = this.GetDnaCommandArgs(EveSOFDNA.DnaCommand.CMD_VARIANT);
     if (!args?.length) return;
-    const variant = this.genericData?.variants?.get(args[0]);
-    if (!variant?.hullAreaData) return;
+    const variant = this.genericData?.variants?.get(args[0]) ?? null;
 
-    this.customHullData = this.hullDatas.map(hull => {
-      const copy = {
-        ...hull,
-        opaqueAreas: [],
-        transparentAreas: []
-      };
-      const target = variant.isTransparent ? copy.transparentAreas : copy.opaqueAreas;
-      for (const area of hull.opaqueAreas ?? [])
-      {
-        target.push({ ...variant.hullAreaData, index: area.index, count: area.count });
-      }
-      return copy;
-    });
+    this.customHullData = this.hullDatas.map(hull => createCustomHullData(hull, variant));
     this.hullDatas = this.customHullData;
   }
 
@@ -1114,6 +1188,120 @@ export class EveSOFDNA extends CjsModel
     this.#parseError = null;
   }
 
+}
+
+function createCustomHullData(source, variant)
+{
+  const shapeCenter = copyArrayValue(
+    source?.shapeEllipsoid?.center ?? source?.shapeEllipsoidCenter,
+    [0, 0, 0]
+  );
+  const shapeRadius = copyArrayValue(
+    source?.shapeEllipsoid?.radius ?? source?.shapeEllipsoidRadius,
+    [-1, -1, -1]
+  );
+  const result = {
+    buildClass: Number(source?.buildClass ?? 0),
+    geometryResFilePath: String(source?.geometryResFilePath ?? ""),
+    boundingSphere: copyArrayValue(source?.boundingSphere, [0, 0, 0, 0]),
+    shapeEllipsoidCenter: shapeCenter.slice(),
+    shapeEllipsoidRadius: shapeRadius.slice(),
+    shapeEllipsoid: {
+      center: shapeCenter,
+      radius: shapeRadius
+    },
+    isSkinned: source?.isSkinned === true,
+    isUsingDecalSets: false,
+    enableDynamicBoundingSphere: source?.enableDynamicBoundingSphere === true,
+    castShadow: source?.castShadow === true,
+    sof6: false,
+    audioPosition: copyArrayValue(source?.audioPosition, [0, 0, 0]),
+    spriteSets: [],
+    spotlightSets: [],
+    planeSets: [],
+    spriteLineSets: [],
+    hazeSets: [],
+    banners: [],
+    bannerSets: [],
+    hullDecalSets: [],
+    hullLightSets: [],
+    childSets: [],
+    defaultPattern: {
+      enabled: false,
+      position: [0, 0, 0],
+      scaling: [0, 0, 0],
+      rotation: [0, 0, 0, 1],
+      isMirrored: false
+    },
+    impactEffectType: EveSOFDataHull.ImpactEffectType.IMPACTEFFECT_NONE,
+    opaqueAreas: [],
+    decalAreas: [],
+    transparentAreas: [],
+    additiveAreas: [],
+    distortionAreas: [],
+    boosters: {
+      alwaysOn: false,
+      hasTrails: false,
+      items: []
+    },
+    locatorTurrets: [],
+    locatorSets: new Map(),
+    children: [],
+    instancedMeshes: [],
+    animations: [],
+    soundEmitters: [],
+    controllers: [],
+    modelRotationCurvePath: "",
+    modelTranslationCurvePath: "",
+    meshIndexToOpaqueAreaLookup: new Map(),
+    category: ""
+  };
+
+  if (variant?.hullAreaData)
+  {
+    const target = variant.isTransparent ? result.transparentAreas : result.opaqueAreas;
+    for (const sourceArea of source?.opaqueAreas ?? [])
+    {
+      target.push(cloneVariantHullArea(variant.hullAreaData, sourceArea));
+    }
+  }
+  return result;
+}
+
+function cloneVariantHullArea(value, sourceArea)
+{
+  const textures = new Map();
+  if (value?.textures instanceof Map)
+  {
+    for (const [name, texture] of value.textures)
+    {
+      textures.set(name, { resFilePath: String(texture?.resFilePath ?? "") });
+    }
+  }
+
+  const parameters = new Map();
+  if (value?.parameters instanceof Map)
+  {
+    for (const [name, parameter] of value.parameters)
+    {
+      parameters.set(name, copyArrayValue(parameter, [0, 0, 0, 0]));
+    }
+  }
+
+  return {
+    index: Number(sourceArea?.index ?? 0),
+    count: Number(sourceArea?.count ?? 1),
+    blockedMaterials: Number(value?.blockedMaterials ?? 0),
+    shader: String(value?.shader ?? ""),
+    areaType: Number(value?.areaType ?? 0),
+    textures,
+    parameters
+  };
+}
+
+function copyArrayValue(value, fallback)
+{
+  return value && typeof value.length === "number" ? Array.from(value) : fallback.slice();
 }
 
 function commandName(command)
@@ -1156,21 +1344,6 @@ function includeSphere(current, next)
   ];
 }
 
-function parameterInfo(prefixes, parameterName)
-{
-  const fullName = String(parameterName);
-  const lowerName = fullName.toLowerCase();
-  for (let index = 0; index < prefixes.length; index++)
-  {
-    const prefix = String(prefixes[index]);
-    if (lowerName.startsWith(prefix.toLowerCase()))
-    {
-      return { fullName, shortName: fullName.slice(prefix.length), materialIndex: index };
-    }
-  }
-  return { fullName, shortName: fullName, materialIndex: -1 };
-}
-
 function findMaterialParameter(dataMgr, materialName, parameterName)
 {
   return dataMgr.GetMaterialData(materialName)?.parameters?.get(parameterName) ?? null;
@@ -1180,14 +1353,16 @@ function findAreaMaterialParameter(dataMgr, colors, areaMaterials, areaType, inf
 {
   if (!areaMaterials) return null;
   let value = null;
-  if (info.materialIndex !== -1)
+  if (info.IsMaterialIdxValid())
   {
-    const materialName = areaMaterials.materialNames.get(`${areaType}:${info.materialIndex}`);
-    if (materialName) value = findMaterialParameter(dataMgr, materialName, info.shortName);
+    const materialName = areaMaterials.materialNames.get(
+      `${areaType}:${info.GetMaterialIdx()}`
+    );
+    if (materialName) value = findMaterialParameter(dataMgr, materialName, info.GetShortName());
   }
   else
   {
-    const colorType = areaMaterials.glowColor.get(`${areaType}:${info.fullName}`);
+    const colorType = areaMaterials.glowColor.get(`${areaType}:${info.GetFullName()}`);
     if (colorType !== undefined) value = colors[colorType] ?? null;
   }
   if (value) return value;

@@ -25,6 +25,18 @@ class EveSOFDataHullController extends CjsModel {
 
   /** m_path (std::string) [READWRITE, PERSIST] */
   path = (_init_extra_buildFilter(this), _init_path(this, ""));
+  GetName() {
+    const slash = this.path.lastIndexOf("/");
+    if (slash === -1) {
+      return "";
+    }
+    let result = this.path.substring(slash + 1);
+    const dot = result.lastIndexOf(".");
+    if (dot !== -1) {
+      result = result.substring(0, dot);
+    }
+    return result;
+  }
   static {
     _initClass();
   }

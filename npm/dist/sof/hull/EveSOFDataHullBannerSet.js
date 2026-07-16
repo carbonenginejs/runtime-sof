@@ -21,10 +21,13 @@ class EveSOFDataHullBannerSet extends CjsModel {
     _init_extra_banners(this);
   }
   /** m_visibilityGroup (BlueSharedString) [READWRITE, PERSIST] */
-  visibilityGroup = _init_visibilityGroup(this, "");
+  visibilityGroup = _init_visibilityGroup(this, "primary");
 
   /** m_banners (PEveSOFDataHullBannerSetItemVector) [READ, PERSIST] */
   banners = (_init_extra_visibilityGroup(this), _init_banners(this, []));
+  GetName() {
+    return this.visibilityGroup;
+  }
   static {
     _initClass();
   }

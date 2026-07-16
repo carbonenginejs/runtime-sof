@@ -3,7 +3,9 @@
 GPU-free Space Object Factory data model and Carbon-first ship DNA builder.
 
 Part of the CarbonEngineJS runtime/engine tier (decorated JavaScript, WebGPU-first).
-Ports/adapts from CarbonEngine (https://github.com/carbonengine, MIT); ccpwgl consulted as a reference donor.
+Ports/adapts from CarbonEngine (https://github.com/carbonengine, MIT). Carbon
+C++/Blue is canonical; ccpwgl is only an optional, non-authoritative source of
+JavaScript convenience ideas.
 
 ## Status
 
@@ -28,8 +30,8 @@ Sprite-line sets share the sprite pool effect and preserve Carbon line/circle
 geometry plus per-sprite SOF6 light descriptors restored through Trinity's
 maintained CPU API.
 Haze sets emit spherical, skinned-spherical, and half-spherical effects with
-Carbon transforms, faction colors, and SOF6 point-light descriptors retained
-for the pending Trinity haze-set CPU API.
+Carbon transforms, faction colors, and SOF6 point-light descriptors installed
+through Trinity's maintained `AddLightFromSOF`/`Initialize` CPU lifecycle.
 Legacy and SOF6 banners emit usage-grouped `EveBannerSet` graphs, generic
 banner effects, private light/texture state, and root external texture bindings.
 Legacy hull children and SOF6 child sets now project and filter exactly from
@@ -83,8 +85,13 @@ actual extension geometry, decals, attachments, placement controllers/audio,
 instanced attachments, locator sets, and nested layouts are emitted beneath or
 alongside that placement graph. Root initialization and placement-root intent
 are retained for device-free hydration. The complete 44-entry faction inherit
-color array is also retained; operational installation awaits Trinity's
-maintained inherit-properties API and corrected indexed color schema.
+color array is installed through Trinity's maintained `SetInheritProperties`
+API using Carbon's enum order; the source scanner now expands all 44 indexed
+Blue color fields rather than the unexpanded macro placeholder.
+Swarm build classes emit Carbon's complete 25-value `EveSwarm` behavior and
+hydrate it before initialization. Variant DNAs construct fresh stripped custom
+hulls, and locator-set fan-out/merging and instanced-layout decal routing follow
+their dedicated Carbon build paths.
 The public turret material entry points support both direct faction selection
 and full parent DNA, including Carbon's faction material-slot remap and
 const-parameter-first update behavior.
@@ -105,12 +112,13 @@ produces consumer ESM under `npm/dist`.
 
 ### Source promotion
 
-`src/generated` is intentionally a queue of schema shells whose legacy SOF
-behavior has not yet been ported. Once a class has its complete applicable
-behavior—or is verified to have been field-only in the donor library—its single
-decorated implementation moves into the matching `src/sof/<domain>` folder.
-The domain folders and root package export are therefore the completed runtime
-surface; generated files must not be treated as completed classes.
+The behavior-promotion queue is complete. `src/generated` is retained only as
+an empty compatibility namespace; all reviewed decorated implementations live
+under the matching `src/sof/<domain>` folder and are exported through the
+domain barrels and root package surface. Carbon/Blue is authoritative for
+fields, defaults, enum ownership, and runtime behavior. Secondary JavaScript
+implementations may inform optional CPU conveniences only after they are
+checked against Carbon.
 
 ## Async boundary
 
@@ -156,5 +164,6 @@ npm run lint
 
 CarbonEngine and Fenris Creations (CCP Games) are named for interoperability and provenance context.
 This package's runtime code is CarbonEngineJS original work that ports or adapts CarbonEngine class
-structure and behavior, verified against the CarbonEngine C++ source, and mines the ccpwgl WebGL port
-as a reference donor. Not affiliated with or endorsed by CCP Games.
+structure and behavior against the authoritative Carbon C++/Blue source. The ccpwgl WebGL port may
+inform optional JavaScript conveniences only; it is not an authority for schema or runtime behavior.
+Not affiliated with or endorsed by CCP Games.

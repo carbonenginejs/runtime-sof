@@ -42,4 +42,20 @@ export class EveSOFDataHullChildSetItem extends CjsModel
   @type.vec3
   scaling = vec3.fromValues(1, 1, 1);
 
+  GetName()
+  {
+    const slash = this.redFilePath.lastIndexOf("/");
+    if (slash === -1)
+    {
+      return "";
+    }
+    let result = this.redFilePath.substring(slash + 1);
+    const dot = result.lastIndexOf(".");
+    if (dot !== -1)
+    {
+      result = result.substring(0, dot);
+    }
+    return result;
+  }
+
 }

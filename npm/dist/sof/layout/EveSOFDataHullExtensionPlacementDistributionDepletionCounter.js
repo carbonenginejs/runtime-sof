@@ -1,12 +1,12 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
 import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { IEveSOFDataHullExtensionPlacementDistribution as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacementDistribution.js';
 
 let _initClass, _init_depletionCounters, _init_extra_depletionCounters, _init_name, _init_extra_name;
 
 /** EveSOFDataHullExtensionPlacementDistributionDepletionCounter (eve) - generated from schema shapeHash a7fc1a95.... */
 let _EveSOFDataHullExtens;
-class EveSOFDataHullExtensionPlacementDistributionDepletionCounter extends CjsModel {
+class EveSOFDataHullExtensionPlacementDistributionDepletionCounter extends _IEveSOFDataHullExten {
   static {
     ({
       e: [_init_depletionCounters, _init_extra_depletionCounters, _init_name, _init_extra_name],
@@ -14,7 +14,7 @@ class EveSOFDataHullExtensionPlacementDistributionDepletionCounter extends CjsMo
     } = _applyDecs2311(this, [type.define({
       className: "EveSOFDataHullExtensionPlacementDistributionDepletionCounter",
       family: "eve"
-    })], [[[io, io.persist, void 0, type.list("EveSOFDataDistributionDepletionCounter")], 16, "depletionCounters"], [[io, io.persist, type, type.string], 16, "name"]], 0, void 0, CjsModel));
+    })], [[[io, io.persist, void 0, type.list("EveSOFDataDistributionDepletionCounter")], 16, "depletionCounters"], [[io, io.persist, type, type.string], 16, "name"]], 0, void 0, _IEveSOFDataHullExten));
   }
   constructor(...args) {
     super(...args);

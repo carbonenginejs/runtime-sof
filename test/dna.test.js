@@ -8,27 +8,29 @@ import {
   EveSOFDataMgr,
   createSofHydrationAdapter,
 } from "../npm/dist/sof/index.js";
-import { EveSOFDataArea } from "../npm/dist/generated/EveSOFDataArea.js";
+import { EveSOFDataArea } from "../npm/dist/sof/shared/EveSOFDataArea.js";
 import { EveSOFDataDecalIndexBuffer } from "../npm/dist/sof/shared/EveSOFDataDecalIndexBuffer.js";
-import { EveSOFDataHull } from "../npm/dist/generated/EveSOFDataHull.js";
+import { EveSOFDataHull } from "../npm/dist/sof/hull/EveSOFDataHull.js";
 import { EveSOFDataHullBanner } from "../npm/dist/sof/hull/EveSOFDataHullBanner.js";
 import { EveSOFDataHullBannerSetItem } from "../npm/dist/sof/hull/EveSOFDataHullBannerSetItem.js";
 import { EveSOFDataHullChild } from "../npm/dist/sof/hull/EveSOFDataHullChild.js";
 import { EveSOFDataHullChildSet } from "../npm/dist/sof/hull/EveSOFDataHullChildSet.js";
 import { EveSOFDataHullChildSetItem } from "../npm/dist/sof/hull/EveSOFDataHullChildSetItem.js";
 import { EveSOFDataHullController } from "../npm/dist/sof/hull/EveSOFDataHullController.js";
-import { EveSOFDataHullDecalSetItem } from "../npm/dist/generated/EveSOFDataHullDecalSetItem.js";
+import { EveSOFDataHullDecalSetItem } from "../npm/dist/sof/hull/EveSOFDataHullDecalSetItem.js";
 import { EveSOFDataHullHazeSet } from "../npm/dist/sof/hull/EveSOFDataHullHazeSet.js";
 import { EveSOFDataHullLightSetItem } from "../npm/dist/sof/hull/EveSOFDataHullLightSetItem.js";
 import { EveSOFDataHullLightSetSpotLight } from "../npm/dist/sof/hull/EveSOFDataHullLightSetSpotLight.js";
 import { EveSOFDataHullLightSetTexturedPointLight } from "../npm/dist/sof/hull/EveSOFDataHullLightSetTexturedPointLight.js";
 import { EveSOFDataHullPlaneSet } from "../npm/dist/sof/hull/EveSOFDataHullPlaneSet.js";
+import { EveSOFDataHullPlaneSetItem } from "../npm/dist/sof/hull/EveSOFDataHullPlaneSetItem.js";
 import { EveSOFDataHullSpotlightSet } from "../npm/dist/sof/hull/EveSOFDataHullSpotlightSet.js";
 import { EveSOFDataHullSpotlightSetItem } from "../npm/dist/sof/hull/EveSOFDataHullSpotlightSetItem.js";
-import { EveSOFDataInstancedMesh } from "../npm/dist/generated/EveSOFDataInstancedMesh.js";
-import { EveSofDataMeshInstance } from "../npm/dist/generated/EveSofDataMeshInstance.js";
+import { EveSOFDataInstancedMesh } from "../npm/dist/sof/shared/EveSOFDataInstancedMesh.js";
+import { EveSofDataMeshInstance } from "../npm/dist/sof/shared/EveSofDataMeshInstance.js";
 import { EveSOFDataHullExtensionPlacementDistributionMapGraphicSettings } from "../npm/dist/sof/layout/EveSOFDataHullExtensionPlacementDistributionMapGraphicSettings.js";
-import { EveSOFDataLogoSet } from "../npm/dist/generated/EveSOFDataLogoSet.js";
+import { EveSOFDataHullExtensionBucket } from "../npm/dist/sof/layout/EveSOFDataHullExtensionBucket.js";
+import { EveSOFDataLogoSet } from "../npm/dist/sof/shared/EveSOFDataLogoSet.js";
 
 const trinityConsumerEntry = new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url);
 
@@ -96,6 +98,181 @@ test("a fresh EveSOFDataMgr exposes Carbon zero-valued damage records", () => {
   assert.equal(generic.damage.armorParticleTurbulenceFrequency, 0);
   assert.equal(generic.hullDamage.hullParticleColorMidpoint, 0);
   assert.equal(generic.hullDamage.hullParticleTurbulenceFrequency, 0);
+});
+
+test("EveSOFDataMgr and EveSOFDNA preserve Carbon swarm behavior defaults", () => {
+  const expected = {
+    mass: 1,
+    speedMultiplier: 1.1,
+    speedMinimum: 10,
+    agility: 2,
+    maxDistance0: 500,
+    maxDistance1: 125,
+    timeMultiplier: 1,
+    maxTime: 0.2,
+    speed0: 700,
+    speed1: 1000,
+    weightCohesion: 0.1,
+    weightSeparation: 0.1,
+    separationDistance: 250,
+    weightAlign: 50,
+    weightWander: 0.33,
+    wanderFluctuation: 0.05,
+    wanderDistance: 100,
+    wanderRadius: 80,
+    weightAnchor: 0.5,
+    anchorRadius0: 75,
+    anchorRadius1: 250,
+    weightDecelerate: 0.1,
+    maxDeceleration: 200,
+    weightFormation: 1,
+    formationDistance: 50,
+  };
+  assert.deepEqual(new EveSOFDataMgr().GetGenericData().swarmBehavior, expected);
+
+  const data = createData();
+  data.generic.swarm = {
+    speedMultiplier: 2.5,
+    weightDeceleration: 0.75,
+    formationDistance: 125,
+  };
+  const manager = new EveSOFDataMgr();
+  assert.equal(manager.SetData(data), true);
+  const behavior = manager.GetGenericData().swarmBehavior;
+  assert.deepEqual(behavior, {
+    ...expected,
+    speedMultiplier: 2.5,
+    weightDecelerate: 0.75,
+    formationDistance: 125,
+  });
+  assert.notEqual(behavior, data.generic.swarm);
+
+  const dna = new EveSOFDNA();
+  dna.Setup("rifter:minmatar:minmatar", manager);
+  assert.equal(dna.IsValid(), true);
+  assert.equal(dna.GetGenericSwarmProperties(), behavior);
+});
+
+test("EveSOF emits and hydrates Carbon swarm behavior on the EveShip2-derived root", {
+  skip: !existsSync(trinityConsumerEntry),
+}, async () => {
+  const data = createData();
+  data.hull[0].buildClass = EveSOFDataHull.BuildClass.BUILDCLASS_SWARM;
+  data.generic.swarm = {
+    speedMultiplier: 2.5,
+    weightDeceleration: 0.75,
+    formationDistance: 125,
+  };
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const document = sof.BuildFromDNA("rifter:minmatar:minmatar");
+  const root = rootNode(document);
+  assert.equal(root.kind, "EveSwarm");
+  assert.equal(root.fields.mass, 1);
+  assert.equal(root.fields.speedMultiplier, 2.5);
+  assert.equal(root.fields.agility, 2);
+  assert.equal(root.fields.timeMultiplier, 1);
+  assert.equal(root.fields.weightDeceleration, 0.75);
+  assert.equal(root.fields.formationDistance, 125);
+  assert.equal(root.fields.boosters, null);
+
+  const setup = root.raw.sofSpaceObjectSetup;
+  assert.equal(Object.keys(setup.swarmBehavior).length, 25);
+  assert.equal(setup.swarmBehavior.weightDeceleration, 0.75);
+  assert.equal(setup.initialize, true);
+
+  const trinity = await import(trinityConsumerEntry);
+  const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
+  const adapter = createSofHydrationAdapter();
+  const hydrated = CjsDocumentHydrator.hydrate(document, { registry, adapter });
+  assert.deepEqual(hydrated.reports, []);
+  assert.equal(hydrated.root.constructor.name, "EveSwarm");
+  assert.equal(hydrated.root.speedMultiplier, 2.5);
+  assert.equal(hydrated.root.weightDeceleration, 0.75);
+  assert.equal(hydrated.root.formationDistance, 125);
+  assert.equal(hydrated.root.boosters, null);
+  assert.deepEqual(adapter.getSpaceObjectSetup(hydrated.root).swarmBehavior, setup.swarmBehavior);
+});
+
+test("EveSOFDNA variants construct fresh Carbon custom hull records", () => {
+  const data = createData();
+  Object.assign(data.hull[0], {
+    category: "frigate",
+    sof6: true,
+    audioPosition: [11, 12, 13],
+    opaqueAreas: [
+      { name: "first", index: 3, count: 2, shader: "source.fx" },
+      { name: "second", index: 9, count: 4, shader: "source.fx" },
+    ],
+    decalAreas: [{ name: "discarded", index: 20, count: 1 }],
+    children: [{ redFilePath: "res:/discarded.red" }],
+    locatorSets: [{
+      name: "discarded",
+      locators: [{ position: [1, 2, 3] }],
+    }],
+    booster: { items: [{ transform: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 7, 8, 9, 1] }] },
+  });
+  data.generic.variants[0].hullArea = {
+    shader: "glass.fx",
+    blockedMaterials: 7,
+    textures: [{ name: "DiffuseMap", resFilePath: "res:/glass_d.dds" }],
+    parameters: [{ name: "GlowColor", value: [1, 2, 3, 4] }],
+  };
+  data.generic.variants.push({ name: "missing-area", isTransparent: false });
+
+  const manager = new EveSOFDataMgr();
+  assert.equal(manager.SetData(data), true);
+  assert.equal(manager.GetGenericData().variants.has("missing-area"), false);
+  const source = manager.GetHullData("rifter");
+  const variant = manager.GetGenericData().variants.get("transparent");
+  const dna = new EveSOFDNA();
+  dna.Setup("rifter:minmatar:minmatar:variant?transparent", manager);
+  assert.equal(dna.IsValid(), true);
+
+  const custom = dna.hullDatas[0];
+  assert.equal(custom, dna.customHullData[0]);
+  assert.notEqual(custom, source);
+  assert.equal(custom.buildClass, source.buildClass);
+  assert.equal(custom.geometryResFilePath, source.geometryResFilePath);
+  assert.deepEqual(custom.boundingSphere, source.boundingSphere);
+  assert.deepEqual(custom.shapeEllipsoid, source.shapeEllipsoid);
+  assert.deepEqual(custom.audioPosition, [11, 12, 13]);
+  assert.equal(custom.enableDynamicBoundingSphere, source.enableDynamicBoundingSphere);
+  assert.equal(custom.castShadow, source.castShadow);
+  assert.equal(custom.isSkinned, source.isSkinned);
+
+  assert.deepEqual(custom.opaqueAreas, []);
+  assert.deepEqual(custom.decalAreas, []);
+  assert.deepEqual(custom.children, []);
+  assert.equal(custom.locatorSets.size, 0);
+  assert.deepEqual(custom.boosters.items, []);
+  assert.equal(custom.category, "");
+  assert.equal(custom.sof6, false);
+  assert.equal(custom.name, undefined);
+  assert.deepEqual(custom.defaultPattern.rotation, [0, 0, 0, 1]);
+
+  assert.deepEqual(
+    custom.transparentAreas.map(area => [area.index, area.count, area.shader, area.blockedMaterials]),
+    [[3, 2, "glass.fx", 7], [9, 4, "glass.fx", 7]],
+  );
+  assert.notEqual(custom.transparentAreas[0], custom.transparentAreas[1]);
+  assert.equal("name" in custom.transparentAreas[0], false);
+  assert.notEqual(custom.transparentAreas[0].textures, variant.hullAreaData.textures);
+  assert.notEqual(custom.transparentAreas[0].textures, custom.transparentAreas[1].textures);
+  assert.deepEqual(custom.transparentAreas[0].textures.get("DiffuseMap"), {
+    resFilePath: "res:/glass_d.dds",
+  });
+  assert.deepEqual(custom.transparentAreas[0].parameters.get("GlowColor"), [1, 2, 3, 4]);
+
+  const unknown = new EveSOFDNA();
+  unknown.Setup("rifter:minmatar:minmatar:variant?unknown", manager);
+  assert.equal(unknown.ValidateContent(), false);
+  assert.equal(unknown.customHullData.length, 1);
+  assert.equal(unknown.hullDatas[0], unknown.customHullData[0]);
+  assert.deepEqual(unknown.hullDatas[0].opaqueAreas, []);
+  assert.deepEqual(unknown.hullDatas[0].transparentAreas, []);
+  assert.equal(unknown.hullDatas[0].category, "");
 });
 
 test("EveSOFDataMgr rejects duplicates and supports deterministic reload", () => {
@@ -317,6 +494,60 @@ test("EveSOFDataMgr deeply projects Carbon extension layouts for DNA consumers",
   assert.deepEqual(dna.GetPlacementLocators(0, "hardpoints")[0].position, [1, 2, 3]);
 });
 
+test("EveSOFDataMgr recognizes Carbon extension buckets after placement inheritance", () => {
+  const data = createData();
+  const bucket = new EveSOFDataHullExtensionBucket();
+  bucket.name = "bucket";
+  bucket.depletionCounters.push({ name: "remaining", value: 2 });
+  bucket.placements.push({
+    name: "leaf",
+    locatorSetName: "hardpoints",
+    descriptor: { hull: "rifter2" },
+  });
+  data.layout = [{
+    name: "bucket-layout",
+    seed: 1337,
+    placements: [bucket],
+    depletionCounters: [],
+  }];
+
+  const manager = new EveSOFDataMgr();
+  assert.equal(manager.SetData(data), true);
+  const projected = manager.GetLayoutData("bucket-layout").placements[0];
+  assert.equal(projected.isAGroup, true);
+  assert.equal(projected.name, "bucket");
+  assert.deepEqual(projected.depletionCounters, [{
+    counterName: "remaining",
+    counterValue: 2,
+  }]);
+  assert.equal(projected.placements[0].isAGroup, false);
+  assert.equal(projected.placements[0].descriptor.hull, "rifter2");
+});
+
+test("EveSOFDNA indexes all seven Carbon decal minimum-screen-size usages", () => {
+  const data = createData();
+  const expected = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5];
+  Object.assign(data.generic, {
+    decalMinScreenSizeSTANDARD: expected[0],
+    decalMinScreenSizeKILLCOUNTER: expected[1],
+    decalMinScreenSizeHOLE: expected[2],
+    decalMinScreenSizeCYLINDRICAL: expected[3],
+    decalMinScreenSizeGLOWCYLINDRICAL: expected[4],
+    decalMinScreenSizeGLOWSTANDARD: expected[5],
+    decalMinScreenSizeLOGO: expected[6],
+  });
+
+  const manager = new EveSOFDataMgr();
+  assert.equal(manager.SetData(data), true);
+  const dna = new EveSOFDNA();
+  dna.Setup("rifter:minmatar:minmatar", manager);
+  assert.deepEqual(
+    expected.map((value, usage) => dna.GetDecalMinScreenSize(usage)),
+    expected,
+  );
+  assert.equal(dna.GetDecalMinScreenSize(7), undefined);
+});
+
 test("EveSOF plans Carbon layout RNG, occupancy, and deterministic scramble offsets", () => {
   const data = createData();
   data.hull[0].locatorSets = [{
@@ -389,6 +620,51 @@ test("EveSOF plans Carbon layout RNG, occupancy, and deterministic scramble offs
   const third = sof.PlanLayoutFromDNA(dna, options);
   assert.equal(third.placements[0].descriptor.hull, "rifter2");
   assert.equal(third.placements[0].transform[12], 1);
+});
+
+test("EveSOF composes randomized locator rotations in Carbon quaternion order", () => {
+  const data = createData();
+  const halfSqrt = Math.sqrt(0.5);
+  data.hull[0].locatorSets = [{
+    name: "rotated",
+    locators: [{
+      position: [0, 0, 0],
+      rotation: [halfSqrt, 0, 0, halfSqrt],
+      scaling: [1, 1, 1],
+      boneIndex: 1,
+    }],
+  }];
+  data.layout = [{
+    name: "random-rotation",
+    seed: 1337,
+    placements: [{
+      name: "placed",
+      locatorSetName: "rotated",
+      descriptor: { hull: "rifter2" },
+      distribution: {
+        completeness: 1,
+        placementBias: [0, 0, 0],
+        centerBias: 0,
+        cap: 0,
+        randomRotationStepSizeYPR: [0, halfSqrt, 0, halfSqrt],
+        randomRotationMaxSteps: [1, 0, 0],
+        randomScaleMin: [1, 1, 1],
+        randomScaleMax: [1, 1, 1],
+        uniformScale: true,
+        occupyLocators: true,
+      },
+    }],
+  }];
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const plan = sof.PlanLayoutFromDNA("rifter:minmatar:minmatar:layout?random-rotation");
+  const expected = [0.5, 0.5, -0.5, 0.5];
+  const dot = plan.placements[0].rotation.reduce(
+    (sum, value, index) => sum + value * expected[index],
+    0,
+  );
+  assert.ok(Math.abs(dot) > 1 - 1e-5, "randomized locator rotation");
 });
 
 test("EveSOF layout planning preserves Carbon condition quirks and nested transform order", () => {
@@ -481,6 +757,9 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   }, {
     name: "controlled",
     locators: [{ position: [0, 0, 20], rotation: [0, 0, 0, 1], scaling: [1, 1, 1], boneIndex: 14 }],
+  }, {
+    name: "damage",
+    locators: [{ position: [0, 0, 0], rotation: [0, 0, 0, 1], scaling: [9, 9, 9], boneIndex: 16 }],
   }];
   data.hull.push({
     name: "controlled",
@@ -518,6 +797,15 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   data.hull[1].boundingSphere = [0, 0, 0, 1];
   data.hull[1].shapeEllipsoidCenter = [0, 0, 0];
   data.hull[1].shapeEllipsoidRadius = [1, 2, 3];
+  data.hull[1].locatorSets = [{
+    name: "damage",
+    locators: [{
+      position: [1, 0, 0],
+      rotation: [0, 0, 0, 1],
+      scaling: [3, 4, 5],
+      boneIndex: 15,
+    }],
+  }];
   data.hull[1].opaqueAreas = [{
     name: "Extension Hull",
     index: 3,
@@ -527,6 +815,28 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
     shader: "extension.fx",
     textures: [],
     parameters: [],
+  }];
+  data.hull[1].decalAreas = [{
+    name: "Extension Decal Area",
+    index: 5,
+    count: 1,
+    areaType: 0,
+    blockedMaterials: 0,
+    shader: "extension.fx",
+    textures: [],
+    parameters: [],
+  }];
+  data.hull[1].decalSets = [{
+    name: "extension-decals",
+    visibilityGroup: "primary",
+    items: [{
+      name: "extension-decal",
+      usage: EveSOFDataHullDecalSetItem.Usage.USAGE_STANDARD,
+      position: [1, 0, 0],
+      rotation: [0, 0, 0, 1],
+      scaling: [1, 1, 1],
+      indexBuffers: [{ indexBuffer: new Uint32Array([2, 4, 6]) }],
+    }],
   }];
   data.generic.areaShaderLocation = "res:/effect";
   data.generic.shaderPrefix = "static_";
@@ -608,6 +918,7 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   const ordinary = referencedNode(document, layouts.fields.objects[0]);
   assert.equal(ordinary.kind, "EveChildMesh");
   assert.equal(ordinary.fields.name, "Hull");
+  assert.equal(ordinary.fields.decals.length, 1);
   assert.deepEqual(ordinary.raw.sofChildSetup.scaling, [2, 2, 2]);
   assert.deepEqual(ordinary.raw.sofChildSetup.translation, [1, 2, 3]);
 
@@ -616,6 +927,19 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   const runtimeData = referencedNode(document, instancedMesh.fields.instanceGeometryResource);
   assert.equal(instanced.fields.name, "Instanced Hull");
   assert.equal(instancedMesh.kind, "Tr2InstancedMesh");
+  assert.equal(instanced.fields.decals.length, 1);
+  const instancedDecal = referencedNode(document, instanced.fields.decals[0]);
+  const instancedDecalEffect = referencedNode(document, instancedDecal.fields.decalEffect);
+  assert.ok(instancedDecalEffect.fields.options.some(ref => (
+    referencedNode(document, ref).fields.value === "SOIA_ENABLED"
+  )));
+  for (const areaRef of instancedMesh.fields.opaqueAreas)
+  {
+    const areaEffect = referencedNode(document, referencedNode(document, areaRef).fields.effect);
+    assert.ok(areaEffect.fields.options.some(ref => (
+      referencedNode(document, ref).fields.value === "SOIA_ENABLED"
+    )));
+  }
   assert.deepEqual(runtimeData.raw.sofRuntimeInstanceData.rows.map(row => row.transform0[3]), [5, 7]);
   assert.deepEqual(runtimeData.raw.sofRuntimeInstanceData.rows.map(row => row.boneIndex), [6, 8]);
   assert.equal(instanced.raw.sofInstancedChildSetup.instanceTransforms.length, 2);
@@ -640,7 +964,11 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.equal(shared.fields.name, "SharedInstancedMeshes");
   assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes.length, 1);
   assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes[0].instanceTransforms.length, 2);
-  assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas.length, 1);
+  assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas.length, 2);
+  assert.deepEqual(
+    shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas.map(area => area.batchType),
+    [0, 0],
+  );
   const sharedEffect = referencedNode(
     document,
     shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas[0].effect,
@@ -648,6 +976,23 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.ok(sharedEffect.fields.options.some(ref => (
     referencedNode(document, ref).fields.value === "SOIA_SHARED"
   )));
+  assert.equal(document.nodes.filter(node => node.kind === "EveSpaceObjectDecal").length, 2);
+  const damageSet = root.fields.locatorSets
+    .map(ref => referencedNode(document, ref))
+    .find(node => node.fields.name === "damage");
+  assert.ok(damageSet);
+  assert.equal(damageSet.fields.locators.length, 6);
+  const damageLocators = damageSet.fields.locators.map(ref => referencedNode(document, ref).fields);
+  assert.deepEqual(damageLocators.slice(2, 4).map(locator => locator.position), [
+    [6, 0, 0],
+    [8, 0, 0],
+  ]);
+  assert.deepEqual(damageLocators.slice(4).map(locator => locator.position), [
+    [1, 9, 0],
+    [1, 11, 0],
+  ]);
+  assert.deepEqual(damageLocators[1].scale, [3, 4, 5]);
+  assert.equal(damageLocators[1].boneIndex, 15);
 
   const trinity = await import(trinityConsumerEntry);
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -658,6 +1003,8 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   const hydratedShared = hydrated.root.effectChildren.find(child => child.name === "SharedInstancedMeshes");
   assert.equal(hydratedLayouts.objects[1].mesh.instanceGeometryResource.GetCount(), 2);
   assert.equal(hydratedLayouts.objects[1].GetInstanceTransforms().length, 2);
+  assert.equal(hydratedLayouts.objects[1].decals.length, 1);
+  assert.deepEqual(hydratedLayouts.objects[1].decals[0].GetStaticIndexBuffers(), [[2, 4, 6]]);
   const hydratedControlled = hydratedLayouts.objects.find(child => child.name === "controlled");
   assert.equal(hydratedControlled.objects[0].name, "Hull");
   assert.equal(hydratedControlled.objects[1].name, "layout-effect");
@@ -669,9 +1016,12 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.equal(hydratedShared.GetMeshCount(), 1);
   const sharedData = hydratedShared.GetMeshData(0);
   assert.equal(sharedData.instances.length, 2);
-  assert.equal(sharedData.areas.length, 1);
+  assert.equal(sharedData.areas.length, 2);
   assert.equal(sharedData.areas[0].effect.constructor.name, "Tr2Effect");
   assert.equal(adapter.getSharedInstancedMeshesSetup(hydratedShared).meshes.length, 1);
+  const hydratedDamage = hydrated.root.locatorSets.find(set => set.name === "damage");
+  assert.equal(hydratedDamage.locators.length, 6);
+  assert.deepEqual(Array.from(hydratedDamage.locators[1].scale), [3, 4, 5]);
 });
 
 test("EveSOFDataMgr recursively normalizes locator sets in Carbon order", () => {
@@ -702,6 +1052,7 @@ test("EveSOFDataMgr recursively normalizes locator sets in Carbon order", () => 
         },
       ],
     },
+    { name: "empty", locators: [] },
   ];
   const manager = new EveSOFDataMgr();
   assert.equal(manager.SetData(data), true);
@@ -711,8 +1062,237 @@ test("EveSOFDataMgr recursively normalizes locator sets in Carbon order", () => 
   assert.deepEqual(hull.locatorSets.get("A").map(locator => locator.uniqueID), [0, 2]);
   assert.equal(hull.locatorSets.get("B")[0].uniqueID, 1);
   assert.equal(hull.locatorSets.has("ignored-group"), false);
+  assert.equal(hull.locatorSets.has("empty"), false);
   assert.equal(hull.meshIndexToOpaqueAreaLookup.get(4), 2);
   assert.equal(hull.meshIndexToOpaqueAreaLookup.get(9), 1);
+});
+
+test("SOF locator sets apply Carbon placement matrix order and retain authored metadata", () => {
+  const data = createData();
+  const halfSqrt = Math.sqrt(0.5);
+  const nestedOffset = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    100, 0, 0, 1,
+  ];
+  data.hull[0].locatorSets = [{
+    name: "placement",
+    locators: [{
+      position: [10, 20, 30],
+      rotation: [0, 0, halfSqrt, halfSqrt],
+      scaling: [2, 3, 4],
+      boneIndex: 5,
+    }],
+  }];
+  Object.assign(data.hull[1], {
+    geometryResFilePath: "res:/model/extension.gr2",
+    boundingSphere: [0, 0, 0, 1],
+    shapeEllipsoidCenter: [0, 0, 0],
+    shapeEllipsoidRadius: [1, 1, 1],
+    opaqueAreas: [],
+    locatorSets: [{
+      name: "damage",
+      locators: [{
+        position: [1, 0, 0],
+        rotation: [0, 0, 0, 1],
+        scaling: [7, 8, 9],
+        boneIndex: 11,
+      }],
+    }],
+  });
+  data.layout = [{
+    name: "locator-transform",
+    placements: [{
+      name: "placed",
+      locatorSetName: "placement",
+      offset: [1, 0, 0],
+      descriptor: { hull: "rifter2" },
+      isInstanced: false,
+      isShared: false,
+    }],
+  }];
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const dna = "rifter:minmatar:minmatar:layout?locator-transform";
+  const plan = sof.PlanLayoutFromDNA(dna, { offsets: [nestedOffset] });
+  assert.deepEqual(plan.placements[0].transform.slice(12, 15), [110, 22, 30]);
+  const document = sof.BuildFromDNA(dna, { offsets: [nestedOffset] });
+  const damage = rootNode(document).fields.locatorSets
+    .map(ref => referencedNode(document, ref))
+    .find(node => node.fields.name === "damage");
+  assert.ok(damage);
+  assert.equal(damage.fields.locators.length, 1);
+  const locator = referencedNode(document, damage.fields.locators[0]).fields;
+  locator.position.forEach((value, index) => {
+    assert.ok(Math.abs(value - [110, 24, 30][index]) < 1e-5, `position[${index}]`);
+  });
+  const expectedDirection = [0, 0, halfSqrt, halfSqrt];
+  const directionDot = locator.direction.reduce(
+    (sum, value, index) => sum + value * expectedDirection[index],
+    0,
+  );
+  assert.ok(Math.abs(directionDot) > 1 - 1e-5, "direction quaternion");
+  assert.deepEqual(locator.scale, [7, 8, 9]);
+  assert.equal(locator.boneIndex, 11);
+});
+
+test("SOF applies Carbon row transforms to placed attachments, audio, and instances", () => {
+  const data = createData();
+  const halfSqrt = Math.sqrt(0.5);
+  data.hull[0].locatorSets = [{
+    name: "placement",
+    locators: [{
+      position: [10, 20, 30],
+      rotation: [0, 0, halfSqrt, halfSqrt],
+      scaling: [2, 3, 4],
+      boneIndex: 5,
+    }],
+  }];
+  Object.assign(data.hull[1], {
+    geometryResFilePath: "res:/model/placed.gr2",
+    boundingSphere: [0, 0, 0, 1],
+    shapeEllipsoidCenter: [0, 0, 0],
+    shapeEllipsoidRadius: [1, 1, 1],
+    castShadow: true,
+    sof6: true,
+    opaqueAreas: [],
+    hazeSets: [{
+      hazeType: EveSOFDataHullHazeSet.HazeType.TYPE_SPHERICAL,
+      visibilityGroup: "primary",
+      items: [{
+        colorType: 0,
+        position: [6, 0, 0],
+        rotation: [0, 0, 0, 1],
+        scaling: [7, 8, 9],
+        hazeBrightness: 1,
+        saturation: 1,
+        lights: [{
+          translation: [0, 1, 0],
+          rotation: [halfSqrt, 0, 0, halfSqrt],
+          saturation: 1,
+          intensity: 1,
+          innerScaleMultiplier: 1,
+          outerScaleMultiplier: 2,
+        }],
+      }],
+    }],
+    spotlightSets: [{
+      visibilityGroup: "primary",
+      items: [{
+        colorType: 0,
+        coneIntensity: 1,
+        flareIntensity: 1,
+        spriteIntensity: 1,
+        transform: [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          1, 0, 0, 1,
+        ],
+        light: {
+          innerScaleMultiplier: 2,
+          outerScaleMultiplier: 3,
+        },
+      }],
+    }],
+    soundEmitters: [{
+      name: "placed-audio",
+      prefix: "placed_",
+      position: [0, 0, 0],
+      rotation: [halfSqrt, 0, 0, halfSqrt],
+      attenuationScalingFactor: 1,
+    }],
+    instancedMeshes: [{
+      name: "placed-instance",
+      displayModifier: EveSOFDataInstancedMesh.DisplayQualityModifier.SHADER_ALL,
+      geometryResPath: "res:/model/instance.gr2",
+      shader: "",
+      instances: [{
+        rotation: [0, 0, 0, 1],
+        scaling: [1, 1, 1],
+        translation: [1, 0, 0],
+        boneIndex: 9,
+      }],
+    }],
+  });
+  data.layout = [{
+    name: "placed-transforms",
+    placements: [{
+      name: "placed",
+      locatorSetName: "placement",
+      descriptor: { hull: "rifter2" },
+      isInstanced: true,
+      isShared: false,
+    }],
+  }];
+  data.faction[0].visibilityGroupSet = { visibilityGroups: [{ str: "primary" }] };
+  data.faction[0].colorSet = { Primary: [1, 1, 1, 1] };
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const document = sof.BuildFromDNA("rifter:minmatar:minmatar:layout?placed-transforms");
+  const root = rootNode(document);
+  const containers = root.fields.effectChildren.map(ref => referencedNode(document, ref));
+  const layouts = containers.find(node => node.fields.name === "layouts");
+  assert.ok(layouts);
+  const attachments = layouts.fields.attachments.map(ref => referencedNode(document, ref));
+
+  const hazeSet = attachments.find(node => node.kind === "EveHazeSet");
+  const haze = referencedNode(document, hazeSet.fields.hazes[0]);
+  haze.fields.position.forEach((value, index) => {
+    assert.ok(Math.abs(value - [10, 32, 30][index]) < 1e-5, `haze position[${index}]`);
+  });
+  assert.deepEqual(haze.fields.scaling, [7, 8, 9]);
+  const hazeRotationDot = haze.fields.rotation.reduce(
+    (sum, value, index) => sum + value * [0, 0, halfSqrt, halfSqrt][index],
+    0,
+  );
+  assert.ok(Math.abs(hazeRotationDot) > 1 - 1e-5, "haze rotation");
+  const hazeLight = hazeSet.raw.sofHazeLights[0].lightData;
+  hazeLight.position.forEach((value, index) => {
+    assert.ok(Math.abs(value - [9, 32, 30][index]) < 1e-5, `haze light position[${index}]`);
+  });
+  const hazeLightRotationDot = hazeLight.rotation.reduce(
+    (sum, value, index) => sum + value * [0.5, 0.5, 0.5, 0.5][index],
+    0,
+  );
+  assert.ok(Math.abs(hazeLightRotationDot) > 1 - 1e-5, "haze light rotation");
+
+  const spotlightSet = attachments.find(node => node.kind === "EveSpotlightSet");
+  const spotlight = referencedNode(document, spotlightSet.fields.spotlightItems[0]);
+  spotlight.fields.transform.slice(12, 15).forEach((value, index) => {
+    assert.ok(Math.abs(value - [10, 22, 30][index]) < 1e-5, `spotlight position[${index}]`);
+  });
+  const spotlightLight = spotlightSet.raw.sofSpotlightLights[0].lightData;
+  assert.ok(Math.abs(spotlightLight.innerRadius - 8) < 1e-5);
+  assert.ok(Math.abs(spotlightLight.radius - 12) < 1e-5);
+  const spotlightRotationDot = spotlightLight.rotation.reduce(
+    (sum, value, index) => sum + value * [0, 0, halfSqrt, halfSqrt][index],
+    0,
+  );
+  assert.ok(Math.abs(spotlightRotationDot) > 1 - 1e-5, "spotlight rotation");
+
+  const observer = referencedNode(document, layouts.fields.observers[0]);
+  observer.fields.position.forEach((value, index) => {
+    assert.ok(Math.abs(value - [10, 20, 30][index]) < 1e-5, `audio position[${index}]`);
+  });
+  observer.fields.front.forEach((value, index) => {
+    assert.ok(Math.abs(value - [1, 0, 0][index]) < 1e-5, `audio front[${index}]`);
+  });
+
+  const instanceContainer = containers.find(node => node.fields.name === "Instanced Meshes");
+  const instanceChild = referencedNode(document, instanceContainer.fields.objects[0]);
+  const instanceMesh = referencedNode(document, instanceChild.fields.mesh);
+  const instanceData = referencedNode(document, instanceMesh.fields.instanceGeometryResource);
+  const row = instanceData.raw.sofRuntimeInstanceData.rows[0];
+  assert.deepEqual(
+    [row.transform0[3], row.transform1[3], row.transform2[3]],
+    [10, 22, 30],
+  );
+  const auxiliary = instanceChild.raw.sofInstancedChildSetup.instanceTransforms[0];
+  assert.deepEqual([auxiliary[3], auxiliary[7], auxiliary[11]], [10, 22, 30]);
 });
 
 test("EveSOFDataMgr indexes faction colors by Carbon enum value", () => {
@@ -1933,7 +2513,7 @@ test("SOF emits and hydrates Carbon SOF6 plane sets with private blink and light
     layer1MapResPath: "res:/layer1.dds",
     layer2MapResPath: "res:/layer2.dds",
     maskMapResPath: "res:/mask.dds",
-    items: [{
+    items: [Object.assign(new EveSOFDataHullPlaneSetItem(), {
       position: [1, 0, 0],
       scaling: [2, 3, 4],
       colorType: 0,
@@ -1953,7 +2533,7 @@ test("SOF emits and hydrates Carbon SOF6 plane sets with private blink and light
         outerScaleMultiplier: 3,
         lightProfilePath: "res:/plane.profile",
       }],
-    }],
+    })],
   }, {
     visibilityGroup: "hidden",
     items: [{ colorType: 0 }],
@@ -2148,7 +2728,7 @@ test("SOF applies sprite-line visibility filtering to legacy hulls", () => {
   assert.deepEqual(rootNode(document).fields.attachments, []);
 });
 
-test("SOF emits Carbon haze sets and retains SOF6 haze lights", {
+test("SOF emits and operationally hydrates Carbon haze sets with SOF6 lights", {
   skip: !existsSync(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url)),
 }, async () => {
   assert.deepEqual(EveSOFDataHullHazeSet.HazeType, {
@@ -2237,12 +2817,35 @@ test("SOF emits Carbon haze sets and retains SOF6 haze lights", {
   assert.equal(lights[0].lightProfilePath, "res:/haze.profile");
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
-  const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
+  class TrackingEveHazeSet extends trinity.EveHazeSet
+  {
+    calls = [];
+
+    AddLightFromSOF(light)
+    {
+      this.calls.push(`AddLightFromSOF:${light.index}`);
+      super.AddLightFromSOF(light);
+    }
+
+    Initialize()
+    {
+      this.calls.push("Initialize");
+      return super.Initialize();
+    }
+  }
+  const registry = CjsClassRegistry.fromMaps({
+    constructors: { ...trinity, EveHazeSet: TrackingEveHazeSet },
+  });
   const adapter = createSofHydrationAdapter();
   const hydrated = CjsDocumentHydrator.hydrate(document, { registry, adapter });
   assert.deepEqual(hydrated.reports, []);
-  assert.equal(hydrated.root.attachments[0].constructor.name, "EveHazeSet");
+  assert.ok(hydrated.root.attachments[0] instanceof TrackingEveHazeSet);
   assert.equal(hydrated.root.attachments[0].hazes[0].constructor.name, "EveHazeSetItem");
+  assert.deepEqual(hydrated.root.attachments.map(set => set.calls), [
+    ["AddLightFromSOF:0", "Initialize"],
+    ["Initialize"],
+    ["Initialize"],
+  ]);
   assert.equal(adapter.getHazeLights(hydrated.root.attachments[0]).length, 1);
 });
 
@@ -3287,6 +3890,8 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   }];
   data.faction[0].colorSet = {
     Primary: [1, 0, 0, 1],
+    PrimaryHologram: [22, 122, 222, 1],
+    PrimarySpotlight: [36, 136, 236, 1],
     PrimaryDockedFX: [0, 1, 0, 1],
   };
   data.pattern = [{
@@ -3319,8 +3924,11 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.equal(root.fields.castShadow, false);
   assert.equal(root.fields.isAnimated, false);
   assert.equal(root.fields.reflectionMode, 3);
+  assert.equal(Object.hasOwn(root.fields, "inheritProperties"), false);
   assert.equal(root.raw.sofSpaceObjectSetup.inheritColorSet.length, 44);
   assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[0], [1, 0, 0, 1]);
+  assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[22], [22, 122, 222, 1]);
+  assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[36], [36, 136, 236, 1]);
   assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[43], [0, 1, 0, 1]);
   const rootMesh = referencedNode(document, root.fields.mesh);
   assert.equal(rootMesh.kind, "Tr2Mesh");
@@ -3368,6 +3976,20 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.equal(adapter.getPlacementContainerSetup(hydratedExtension).isPlacementRoot, true);
   assert.equal(adapter.getSpaceObjectSetup(hydrated.root).initialize, true);
   assert.equal(adapter.getSpaceObjectSetup(hydrated.root).inheritColorSet.length, 44);
+  const inheritedColors = hydrated.root.inheritProperties.GetProperties();
+  const expectedColors = root.raw.sofSpaceObjectSetup.inheritColorSet;
+  assert.equal(inheritedColors.length, 44);
+  for (let colorIndex = 0; colorIndex < expectedColors.length; colorIndex++) {
+    assert.equal(inheritedColors[colorIndex].length, 4);
+    for (let component = 0; component < 4; component++) {
+      assert.ok(
+        Math.abs(inheritedColors[colorIndex][component] - expectedColors[colorIndex][component]) <= 1e-6,
+        `inherit color ${colorIndex}[${component}]`,
+      );
+    }
+  }
+  assert.deepEqual(Array.from(inheritedColors[22]), [22, 122, 222, 1]);
+  assert.deepEqual(Array.from(inheritedColors[36]), [36, 136, 236, 1]);
 });
 
 test("EveSOF extension builds abort when the placed hull mesh cannot be created", () => {
@@ -3922,6 +4544,10 @@ test("SOF projects, emits, and hydrates multi-hull Carbon boosters", {
     boosterLocatorSet.fields.locators.map(ref => referencedNode(document, ref).fields.position),
     [[1, 2, 3], [14, 5, 6]],
   );
+  assert.deepEqual(
+    boosterLocatorSet.fields.locators.map(ref => referencedNode(document, ref).fields.scale),
+    [[0, 0, 0], [0, 0, 0]],
+  );
   assert.equal(referencedNode(document, booster.fields.trails).kind, "EveTrailsSet");
   const nearEffect = referencedNode(document, booster.fields.effect);
   assert.deepEqual(referencedNode(document, nearEffect.fields.options[0]).fields, {
@@ -4100,4 +4726,166 @@ test("SOF carbon.document hydrates through the sibling runtime-trinity consumer"
   assert.equal(hydrated.root.locatorSets[0].constructor.name, "EveLocatorSets");
   assert.equal(hydrated.root.locatorSets[0].locators[0].constructor.name, "Locator");
   assert.deepEqual(Array.from(hydrated.root.locatorSets[0].locators[0].position), [4, 5, 6]);
+});
+
+test("DNA parent-bound accessors copy Carbon parent values", () => {
+  const manager = createManager();
+  const dna = new EveSOFDNA();
+  dna.Setup("rifter:minmatar:minmatar", manager);
+
+  const sphere = dna.GetParentBoundingSphere();
+  assert.deepEqual(sphere, [1, 2, 3, 4]);
+  sphere[0] = 99;
+  assert.deepEqual(dna.GetParentBoundingSphere(), [1, 2, 3, 4]);
+
+  const ellipsoid = dna.GetParentHullShapeEllipsoid();
+  assert.deepEqual(Array.from(ellipsoid.center), [5, 6, 7]);
+  assert.deepEqual(Array.from(ellipsoid.radius), [8, 9, 10]);
+  ellipsoid.center[0] = 42;
+  assert.equal(dna.GetParentHullShapeEllipsoid().center[0], 42);
+
+  const sibling = new EveSOFDNA();
+  sibling.Setup("rifter:minmatar:minmatar", manager);
+  assert.deepEqual(Array.from(sibling.GetParentHullShapeEllipsoid().center), [5, 6, 7]);
+
+  dna.SetParentBoundingSphere([9, 9, 9, 9]);
+  const info = { center: [1, 1, 1], radius: [2, 2, 2] };
+  dna.SetParentShapeEllipsoidInfo(info);
+  info.center[0] = 77;
+  assert.deepEqual(dna.GetParentBoundingSphere(), [9, 9, 9, 9]);
+  assert.deepEqual(Array.from(dna.GetParentHullShapeEllipsoid().center), [1, 1, 1]);
+
+  assert.equal(dna.GetDecalShader(), 0);
+  assert.equal(dna.IsHullUsingDecalSets(), false);
+});
+
+test("banners only attach to space-object roots, never layout children", () => {
+  const data = createData();
+  data.faction[0].visibilityGroupSet = { visibilityGroups: [{ str: "primary" }] };
+  data.generic.bannerShader = { shader: "res:/banner.fx", defaultParameters: [], defaultTextures: [] };
+  data.hull[0].banners = [{ usage: 3, visibilityGroup: "primary" }];
+  data.hull[0].locatorSets = [{
+    name: "spots",
+    locators: [{ position: [1, 0, 0], rotation: [0, 0, 0, 1], scaling: [1, 1, 1], boneIndex: -1 }],
+  }];
+  data.hull[1].geometryResFilePath = "res:/model/child.gr2";
+  data.hull[1].banners = [{ usage: 3, visibilityGroup: "primary" }];
+  data.hull[1].bannerSets = [{ visibilityGroup: "primary", banners: [{ usage: 3 }] }];
+  data.layout = [{
+    name: "graph",
+    seed: 1,
+    placements: [{
+      name: "child",
+      locatorSetName: "spots",
+      descriptor: { hull: "rifter2" },
+      isInstanced: false,
+      isShared: false,
+      extendsBoundingSphere: false,
+      extendsShieldEllipsoid: false,
+    }],
+  }];
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const document = sof.BuildFromDNA("rifter:minmatar:minmatar:layout?graph");
+  const root = rootNode(document);
+  const bannerSets = document.nodes.filter(node => node.kind === "EveBannerSet");
+  assert.equal(bannerSets.length, 1);
+  assert.ok(root.fields.attachments.some(ref => referencedNode(document, ref).kind === "EveBannerSet"));
+});
+
+test("editor mode records Carbon placement metadata on layout children", () => {
+  const makeData = () =>
+  {
+    const data = createData();
+    data.hull[0].locatorSets = [{
+      name: "ordinary",
+      locators: [{ position: [1, 2, 3], rotation: [0, 0, 0, 1], scaling: [1, 1, 1], boneIndex: -1 }],
+    }, {
+      name: "instanced",
+      locators: [
+        { position: [5, 0, 0], rotation: [0, 0, 0, 1], scaling: [1, 1, 1], boneIndex: 6 },
+        { position: [7, 0, 0], rotation: [0, 0, 0, 1], scaling: [1, 1, 1], boneIndex: 8 },
+      ],
+    }];
+    data.generic.areaShaderLocation = "res:/effect";
+    data.generic.shaderPrefix = "static_";
+    data.generic.areaShaders = [{
+      shader: "child.fx",
+      parameters: [],
+      defaultParameters: [],
+      defaultTextures: [],
+      doGenerateDepthArea: false,
+      transparencyTextureName: "",
+    }];
+    data.hull[1].geometryResFilePath = "res:/model/child.gr2";
+    data.hull[1].isSkinned = false;
+    data.hull[1].opaqueAreas = [{
+      name: "Child Hull",
+      index: 0,
+      count: 1,
+      areaType: 0,
+      blockedMaterials: 0,
+      shader: "child.fx",
+      textures: [],
+      parameters: [],
+    }];
+    data.layout = [{
+      name: "graph",
+      seed: 1,
+      placements: [{
+        name: "ordinary",
+        locatorSetName: "ordinary",
+        descriptor: { hull: "rifter2" },
+        isInstanced: false,
+        isShared: false,
+        extendsBoundingSphere: false,
+        extendsShieldEllipsoid: false,
+      }, {
+        name: "instanced",
+        locatorSetName: "instanced",
+        descriptor: { hull: "rifter2" },
+        isInstanced: true,
+        isShared: false,
+        extendsBoundingSphere: false,
+        extendsShieldEllipsoid: false,
+      }],
+    }];
+    return data;
+  };
+
+  const layoutChildren = document =>
+  {
+    const root = rootNode(document);
+    const layouts = root.fields.effectChildren
+      .map(ref => referencedNode(document, ref))
+      .find(node => node.kind === "EveChildContainer" && node.fields.name === "layouts");
+    assert.ok(layouts);
+    return layouts.fields.objects.map(ref => referencedNode(document, ref));
+  };
+
+  const editor = new EveSOF().Register({ editorMode: true });
+  assert.equal(editor.dataMgr.SetData(makeData()), true);
+  const document = editor.BuildFromDNA("rifter:minmatar:minmatar:layout?graph");
+  const children = layoutChildren(document);
+  const ordinary = children.find(node => node.fields.name === "Hull");
+  const instanced = children.find(node => node.fields.name === "Instanced Hull");
+  assert.ok(ordinary);
+  assert.ok(instanced);
+  assert.ok(ordinary.raw.sofEditorMetadata.SofDna.startsWith("rifter2:minmatar:minmatar"));
+  assert.equal(ordinary.raw.sofEditorMetadata.SofParentHullName, "rifter");
+  assert.equal(ordinary.raw.sofEditorMetadata.SofLocatorSetName, "ordinary");
+  assert.equal(ordinary.raw.sofEditorMetadata.SofLocatorIndex, "0");
+  assert.ok(instanced.raw.sofEditorMetadata.SofDna.startsWith("rifter2:minmatar:minmatar"));
+  assert.equal(instanced.raw.sofEditorMetadata.SofParentHullName, "rifter");
+  assert.equal(instanced.raw.sofEditorMetadata.SofLocatorSetName, "instanced");
+  assert.equal("SofLocatorIndex" in instanced.raw.sofEditorMetadata, false);
+
+  const plain = new EveSOF();
+  assert.equal(plain.dataMgr.SetData(makeData()), true);
+  const plainChildren = layoutChildren(plain.BuildFromDNA("rifter:minmatar:minmatar:layout?graph"));
+  for (const child of plainChildren)
+  {
+    assert.equal(child.raw.sofEditorMetadata, undefined);
+  }
 });

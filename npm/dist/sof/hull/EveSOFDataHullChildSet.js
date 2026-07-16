@@ -25,6 +25,9 @@ class EveSOFDataHullChildSet extends CjsModel {
 
   /** m_items (PEveSOFDataHullChildSetItemVector) [READ, PERSIST] */
   items = (_init_extra_visibilityGroup(this), _init_items(this, []));
+  GetName() {
+    return this.visibilityGroup;
+  }
   static {
     _initClass();
   }

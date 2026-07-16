@@ -10,12 +10,6 @@ import { vec3 } from "@carbonenginejs/core-math/vec3";
 export class EveSOFDataHullLightSetItem extends CjsModel
 {
 
-  static LightType = Object.freeze({
-    POINT_LIGHT: 0,
-    TEXTURED_POINT_LIGHT: 1,
-    SPOT_LIGHT: 2
-  });
-
   /** m_data.lightColor (SOFDataFactionColorChooser::ColorType - enum ColorType) [READWRITE, PERSIST, ENUM] */
   @io.persist
   @type.int32
@@ -71,5 +65,11 @@ export class EveSOFDataHullLightSetItem extends CjsModel
   @io.persist
   @type.int32
   noiseOctaves = 1;
+
+  static LightType = Object.freeze({
+    POINT_LIGHT: 0,
+    TEXTURED_POINT_LIGHT: 1,
+    SPOT_LIGHT: 2
+  });
 
 }
