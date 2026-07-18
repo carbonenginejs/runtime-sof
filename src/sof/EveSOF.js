@@ -17,8 +17,10 @@ import { EveSOFDataHull } from "./hull/EveSOFDataHull.js";
 import { EveSOFDataArea } from "./shared/EveSOFDataArea.js";
 import { EveSOFDataInstancedMesh } from "./shared/EveSOFDataInstancedMesh.js";
 import { EveSOFUtilsParameterName } from "./shared/EveSOFUtilsParameterName.js";
+import { CjsDocumentHydrator } from "@carbonenginejs/core-types/document";
 import { EveSOFDNA } from "./EveSOFDNA.js";
 import { EveSOFDataMgr } from "./EveSOFDataMgr.js";
+import { createSofHydrationAdapter } from "./createSofHydrationAdapter.js";
 import { planSofLayouts } from "./layoutPlanner.js";
 
 
@@ -68,6 +70,56 @@ const BANNER_EXTERNAL_PARAMETER_NAMES = Object.freeze([
 ]);
 
 const MIN_MESH_SCREEN_SIZE = 2.5;
+
+// EveChildInheritProperties field order (runtime-trinity is the authority for
+// these names); dna.GetColorSet() is index-aligned with this Carbon color-slot
+// order, so the authored color set projects onto named, persisted fields.
+const INHERIT_COLOR_PROPERTIES = Object.freeze([
+  "Primary",
+  "Secondary",
+  "Tertiary",
+  "Black",
+  "White",
+  "Yellow",
+  "Orange",
+  "Red",
+  "Blue",
+  "Green",
+  "Cyan",
+  "Fire",
+  "Hull",
+  "Glass",
+  "Reactor",
+  "Darkhull",
+  "Booster",
+  "Killmark",
+  "PrimaryLight",
+  "SecondaryLight",
+  "TertiaryLight",
+  "WhiteLight",
+  "PrimaryHologram",
+  "SecondaryHologram",
+  "TertiaryHologram",
+  "State0",
+  "State1",
+  "State2",
+  "State3",
+  "StateVulnerable",
+  "StateInvulnerable",
+  "PrimaryForcefield",
+  "SecondaryForcefield",
+  "PrimaryBanner",
+  "PrimaryFx",
+  "SecondaryFx",
+  "PrimarySpotlight",
+  "SecondarySpotlight",
+  "TertiarySpotlight",
+  "PrimaryBillboard",
+  "PrimaryWarpFx",
+  "PrimaryAttackFx",
+  "PrimarySiegeFx",
+  "PrimaryDockedFx"
+]);
 
 const SWARM_BEHAVIOR_FIELD_NAMES = Object.freeze([
   "mass",
@@ -307,6 +359,72 @@ export class EveSOF extends CjsModel
     return this.BuildFromDNAAsync(`${hullName}:${factionName}:${raceName}`, options);
   }
 
+  /** Builds plain model values from the three mandatory selections. */
+  BuildValues(hullName, factionName, raceName, options = {})
+  {
+    return this.BuildValuesFromDNA(`${hullName}:${factionName}:${raceName}`, options);
+  }
+
+  /** Promise-facing values entry point mirroring BuildAsync. */
+  BuildValuesAsync(hullName, factionName, raceName, options = {})
+  {
+    return this.BuildValuesFromDNAAsync(`${hullName}:${factionName}:${raceName}`, options);
+  }
+
+  /**
+   * Builds the plain model-values graph for a DNA string.
+   *
+   * The result is exactly what the hydrated root model's
+   * `GetValues({ refs: true, typeTags: true })` returns: one nested,
+   * JSON-serializable root value carrying `_type` on polymorphic nodes and
+   * `_id`/`_ref` only where topology demands shared identity. There is no
+   * node table, `kind`/`fields` record, or `raw` payload; hydrate it with
+   * `RootClass.from(values)` against the same class registry.
+   *
+   * runtime-sof stays free of a runtime-trinity dependency, so callers
+   * provide the concrete classes: `options.registry` is the
+   * `CjsClassRegistry` holding the runtime-trinity constructors (as the
+   * document hydration tests build with `CjsClassRegistry.fromMaps`).
+   * `options.values` may override the GetValues export options.
+   *
+   * Deliberate omission: deferred audio construction intent
+   * (`sofAudioEmitterSetup`) stays private to the explicit carbon.document
+   * path until the pure-data audio graph package exists; observer placement
+   * itself is ordinary declared data and is included.
+   */
+  BuildValuesFromDNA(dnaString, options = {})
+  {
+    const document = this.BuildFromDNA(dnaString, options);
+    return document ? EveSOF.projectDocumentValues(document, options) : null;
+  }
+
+  /** Async values build mirroring BuildFromDNAAsync's dependency resolution. */
+  async BuildValuesFromDNAAsync(dnaString, options = {})
+  {
+    const document = await this.BuildFromDNAAsync(dnaString, options);
+    return document ? EveSOF.projectDocumentValues(document, options) : null;
+  }
+
+  /**
+   * Projects a built carbon.document into plain model values by hydrating a
+   * fresh runtime graph and exporting it. Throws when hydration reports
+   * problems rather than emitting a partial values graph.
+   */
+  static projectDocumentValues(document, options = {})
+  {
+    if (!options.registry)
+    {
+      throw new TypeError("EveSOF values projection requires options.registry with the runtime graph classes (e.g. CjsClassRegistry.fromMaps({ constructors: trinityModule })).");
+    }
+    const adapter = options.adapter ?? createSofHydrationAdapter();
+    const hydrated = CjsDocumentHydrator.hydrate(document, { registry: options.registry, adapter });
+    if (Array.isArray(hydrated.reports) && hydrated.reports.length)
+    {
+      throw new Error(`EveSOF values projection failed to hydrate: ${hydrated.reports.map(report => JSON.stringify(report)).join("; ")}`);
+    }
+    return hydrated.root.GetValues({ refs: true, typeTags: true, ...options.values });
+  }
+
   /**
    * Resolve selected child/object dependencies without converting the
    * deterministic synchronous builder into an async state machine.
@@ -477,12 +595,8 @@ export class EveSOF extends CjsModel
     if (isExtension)
     {
       if (!this.SetupExtensionBuild(document, rootFields, dna, options?.layout ?? options ?? {})) return null;
-      const root = document.AddNode(typeName, rootFields, {
-        sofSpaceObjectSetup: {
-          inheritColorSet: cloneValue(dna.GetColorSet()),
-          initialize: true
-        }
-      });
+      rootFields.inheritProperties = createInheritProperties(document, dna);
+      const root = document.AddNode(typeName, rootFields);
       document.AddRoot("default", root);
       return document.ToJSON();
     }
@@ -499,13 +613,8 @@ export class EveSOF extends CjsModel
     this.SetupInstancedMeshes(document, rootFields, dna, [identityMatrix()]);
     this.SetupLayout(document, rootFields, dna, options?.layout ?? options ?? {});
     if (hasShipInterface) this.SetupBoosters(document, rootFields, dna);
-    const root = document.AddNode(typeName, rootFields, {
-      sofSpaceObjectSetup: {
-        inheritColorSet: cloneValue(dna.GetColorSet()),
-        ...(swarmBehavior ? { swarmBehavior: cloneValue(swarmBehavior) } : {}),
-        initialize: true
-      }
-    });
+    rootFields.inheritProperties = createInheritProperties(document, dna);
+    const root = document.AddNode(typeName, rootFields);
     document.AddRoot("default", root);
     return document.ToJSON();
   }
@@ -542,9 +651,7 @@ export class EveSOF extends CjsModel
     if (!childFields.mesh) return null;
     this.SetupDecalSets(document, childFields, dna);
     this.SetupAttachments(document, childFields, dna, [identityMatrix()], false);
-    const child = document.AddNode("EveChildMesh", childFields, {
-      sofChildSetup: childSetup([1, 1, 1], [0, 0, 0, 1], [0, 0, 0])
-    });
+    const child = document.AddNode("EveChildMesh", childFields);
     placementFields.objects.push(child);
 
     if (needsPlacementContainer)
@@ -577,23 +684,15 @@ export class EveSOF extends CjsModel
     }
     if (needsPlacementContainer)
     {
-      extensionFields.objects.push(document.AddNode("EveChildContainer", placementFields, {
-        sofPlacementContainerSetup: {
-          animationOwner: dna.IsHullAnimated() ? child : null
-        }
-      }));
+      placementFields.animationOwner = dna.IsHullAnimated() ? child : null;
+      extensionFields.objects.push(document.AddNode("EveChildContainer", placementFields));
     }
 
     this.SetupInstancedMeshes(document, rootFields, dna, [identityMatrix()]);
     this.SetupLocatorSets(document, rootFields, dna, [identityMatrix()]);
     this.SetupLayout(document, rootFields, dna, layoutOptions, extensionFields);
-    rootFields.effectChildren.push(document.AddNode("EveChildContainer", extensionFields, {
-      sofPlacementContainerSetup: {
-        isPlacementRoot: true,
-        alwaysOn: true,
-        origin: 1
-      }
-    }));
+    extensionFields.isPlacementRoot = true;
+    rootFields.effectChildren.push(document.AddNode("EveChildContainer", extensionFields));
     return child;
   }
 
@@ -826,8 +925,9 @@ export class EveSOF extends CjsModel
             scaling: arrayValue(item.scaling, [1, 1, 1]),
             parentBoneIndex: item.boneIndex,
             minScreenSize: 10,
-            decalEffect: effect
-          }, { sofStaticIndexBuffers: indexBuffers }));
+            decalEffect: effect,
+            staticIndexBuffers: indexBuffers
+          }));
         }
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
@@ -907,15 +1007,6 @@ export class EveSOF extends CjsModel
       scale: 0
     });
     const shieldIsEllipsoid = impactType === EveSOFDataHull.ImpactEffectType.IMPACTEFFECT_ELLIPSOID;
-    const setup = {
-      hullDamageFlickerCurve: flickerCurve,
-      armorImpactEmitter,
-      hullImpactEmitter,
-      armorDamageShader,
-      shieldImpactMesh: shieldMesh,
-      shieldIsEllipsoid,
-      damageLocatorCount: dna.GetLocatorCount("damage")
-    };
     rootFields.impactOverlay = document.AddNode("EveImpactOverlay", {
       mesh: shieldMesh,
       shieldIsEllipsoid,
@@ -923,7 +1014,7 @@ export class EveSOF extends CjsModel
       armorImpactEmitter,
       hullDamageFlickerCurve: flickerCurve,
       hullImpactEmitter
-    }, { sofImpactSetup: setup });
+    });
   }
 
   /** Selects Carbon's legacy or SOF6 effect-child path. */
@@ -957,7 +1048,7 @@ export class EveSOF extends CjsModel
       for (const offset of offsets)
       {
         const animationId = Number(child.id ?? -1);
-        const ref = this.#addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset, animationId);
+        const ref = this.#addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset);
         if (animationId !== -1)
         {
           if (!emitterTargetsById.has(animationId)) emitterTargetsById.set(animationId, []);
@@ -1033,7 +1124,7 @@ export class EveSOF extends CjsModel
         if (!descriptor) continue;
         for (const offset of offsets)
         {
-          this.#addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset, -1);
+          this.#addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset);
         }
       }
     }
@@ -1085,20 +1176,33 @@ export class EveSOF extends CjsModel
     };
   }
 
-  #addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset, animationId)
+  #addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset)
   {
-    const setup = composeChildPlacement(child, offset, descriptor.target, animationId);
+    const placement = composeChildPlacement(child, offset);
+    // "children"-target hosts accept only the SRT placement; effect children
+    // additionally receive Carbon's LOD gate and placement origin.
+    const placementFields = descriptor.target === "children"
+      ? {
+        scaling: placement.scaling,
+        rotation: placement.rotation,
+        translation: placement.translation
+      }
+      : placement;
     let ref;
     if (descriptor.fragment)
     {
       ref = document.ImportRoot(descriptor.fragment, descriptor.rootRef);
       const node = document.GetNode(ref.$ref);
-      node.raw = { ...(node.raw ?? {}), ...cloneValue(descriptor.raw), sofChildSetup: setup };
+      if (descriptor.raw) node.raw = { ...(node.raw ?? {}), ...cloneValue(descriptor.raw) };
+      Object.assign(node.fields, cloneValue(placementFields));
     }
     else
     {
-      const raw = { ...cloneValue(descriptor.raw), sofChildSetup: setup };
-      ref = document.AddNode(descriptor.kind, cloneFields(descriptor.fields), raw);
+      ref = document.AddNode(
+        descriptor.kind,
+        { ...cloneFields(descriptor.fields), ...cloneValue(placementFields) },
+        descriptor.raw ? cloneValue(descriptor.raw) : null
+      );
     }
     const ownerFields = descriptor.target === "children" ? objectFields : childOwnerFields;
     ownerFields[descriptor.target].push(ref);
@@ -1238,19 +1342,8 @@ export class EveSOF extends CjsModel
         mesh: built.ref,
         castShadow: dna.CastShadow(),
         minScreenSize: MIN_MESH_SCREEN_SIZE,
-        lowestLodVisible: Number(source.lowestLodVisible ?? 0)
-      }, {
-        sofChildSetup: {
-          target: "effectChildren",
-          scaling: [1, 1, 1],
-          rotation: [0, 0, 0, 1],
-          translation: [0, 0, 0],
-          lowestLodVisible: Number(source.lowestLodVisible ?? 0),
-          origin: 0
-        },
-        sofInstancedChildSetup: {
-          instanceTransforms: propagated.instanceTransforms
-        }
+        lowestLodVisible: Number(source.lowestLodVisible ?? 0),
+        instanceTransforms: propagated.instanceTransforms
       });
 
       if (Number(source.displayModifier) !== EveSOFDataInstancedMesh.DisplayQualityModifier.SHADER_ALL)
@@ -1259,15 +1352,6 @@ export class EveSOF extends CjsModel
           name: "Shader Quality Controlled Instanced Mesh",
           displayFilter: Number(source.displayModifier ?? 0),
           objects: [child]
-        }, {
-          sofChildSetup: {
-            target: "effectChildren",
-            scaling: [1, 1, 1],
-            rotation: [0, 0, 0, 1],
-            translation: [0, 0, 0],
-            lowestLodVisible: Number(source.lowestLodVisible ?? 0),
-            origin: 0
-          }
         }));
       }
       else
@@ -1300,17 +1384,12 @@ export class EveSOF extends CjsModel
       geometryResPath: String(resourcePath ?? ""),
       opaqueAreas,
       boundsMethod: 2,
-      instanceGeometryResPath: "",
+      instanceGeometryResPath: String(resourcePath ?? ""),
       instanceGeometryResource: instanceData,
       instanceMeshIndex: 0,
       minBounds: [0, 0, 0],
       maxBounds: [0, 0, 0],
       maxInstanceSize: maxScale
-    }, {
-      sofInstancedMeshSetup: {
-        geometryResPath: String(resourcePath ?? ""),
-        opaqueAreas
-      }
     });
     return { ref, instanceData, opaqueAreas, bounds, maxScale };
   }
@@ -1409,17 +1488,11 @@ export class EveSOF extends CjsModel
             "SPACE_OBJECT_INSTANCED_ATTACHMENT",
             "SOIA_ENABLED"
           );
-          layoutFields.objects.push(document.AddNode("EveChildMesh", childFields, {
-            sofChildSetup: childSetup([1, 1, 1], [0, 0, 0, 1], [0, 0, 0]),
-            sofInstancedChildSetup: { instanceTransforms: transforms },
-            ...(this.editorMode ? {
-              sofEditorMetadata: {
-                SofDna: extensionDna.GetDnaString(),
-                SofParentHullName: dna.GetHullNames()[0],
-                SofLocatorSetName: first.locatorSetName
-              }
-            } : {})
-          }));
+          childFields.instanceTransforms = transforms;
+          childFields.sofDna = this.editorMode ? extensionDna.GetDnaString() : "";
+          childFields.sofParentHullName = this.editorMode ? dna.GetHullNames()[0] : "";
+          childFields.sofLocatorSetName = this.editorMode ? first.locatorSetName : "";
+          layoutFields.objects.push(document.AddNode("EveChildMesh", childFields));
         }
       }
       else
@@ -1449,21 +1522,14 @@ export class EveSOF extends CjsModel
           if (!childFields.mesh) continue;
           this.SetupDecalSets(document, childFields, extensionDna);
           this.SetupAttachments(document, childFields, extensionDna, [identityMatrix()], false);
-          const child = document.AddNode("EveChildMesh", childFields, {
-            sofChildSetup: childSetup(
-              occurrence.randomizedScaling,
-              Array.from(rotation),
-              Array.from(translation)
-            ),
-            ...(this.editorMode ? {
-              sofEditorMetadata: {
-                SofDna: extensionDna.GetDnaString(),
-                SofParentHullName: dna.GetHullNames()[0],
-                SofLocatorSetName: first.locatorSetName,
-                SofLocatorIndex: String(occurrence.locatorIndex)
-              }
-            } : {})
-          });
+          childFields.scaling = arrayValue(occurrence.randomizedScaling, [1, 1, 1]);
+          childFields.rotation = Array.from(rotation);
+          childFields.translation = Array.from(translation);
+          childFields.sofDna = this.editorMode ? extensionDna.GetDnaString() : "";
+          childFields.sofParentHullName = this.editorMode ? dna.GetHullNames()[0] : "";
+          childFields.sofLocatorSetName = this.editorMode ? first.locatorSetName : "";
+          childFields.sofLocatorIndex = this.editorMode ? String(occurrence.locatorIndex) : "";
+          const child = document.AddNode("EveChildMesh", childFields);
           if (needsPlacementContainer)
           {
             placementFields[occurrenceIndex].objects.push(child);
@@ -1513,9 +1579,8 @@ export class EveSOF extends CjsModel
           if (!layoutContainerIsEmpty(fields))
           {
             const owner = placementAnimationOwners[index];
-            layoutFields.objects.push(document.AddNode("EveChildContainer", fields, owner ? {
-              sofPlacementContainerSetup: { animationOwner: owner }
-            } : null));
+            if (owner) fields.animationOwner = owner;
+            layoutFields.objects.push(document.AddNode("EveChildContainer", fields));
           }
         }
       }
@@ -1525,10 +1590,9 @@ export class EveSOF extends CjsModel
 
     if (!targetFields && layoutFields.objects.length !== 0)
     {
-      rootFields.effectChildren.push(document.AddNode("EveChildContainer", layoutFields, {
-        sofChildSetup: childSetup([1, 1, 1], [0, 0, 0, 1], [0, 0, 0], 1),
-        sofPlacementContainerSetup: { isPlacementRoot: true }
-      }));
+      layoutFields.origin = 1;
+      layoutFields.isPlacementRoot = true;
+      rootFields.effectChildren.push(document.AddNode("EveChildContainer", layoutFields));
     }
     return plan;
   }
@@ -1604,20 +1668,13 @@ export class EveSOF extends CjsModel
     node.kind = "Tr2InstancedMesh";
     Object.assign(node.fields, {
       boundsMethod: 2,
-      instanceGeometryResPath: "",
+      instanceGeometryResPath: String(node.fields.geometryResPath ?? ""),
       instanceGeometryResource: instanceData,
       instanceMeshIndex: 0,
       minBounds: [0, 0, 0],
       maxBounds: [0, 0, 0],
       maxInstanceSize: maximumInstanceScale(instances)
     });
-    node.raw = {
-      ...(node.raw ?? {}),
-      sofInstancedMeshSetup: {
-        geometryResPath: node.fields.geometryResPath,
-        opaqueAreas: node.fields.opaqueAreas
-      }
-    };
     return { ref, instanceData, bounds };
   }
 
@@ -2245,14 +2302,11 @@ export class EveSOF extends CjsModel
           lights,
           pickBufferID,
           planes,
-          skinned
-        }, {
-          sofPlaneSetup: {
-            imageMap: usesLightParameters ? imageMap : null,
-            layerMap1: usesLightParameters ? layerMap1 : null,
-            layerMap2: usesLightParameters ? layerMap2 : null,
-            maskMap: usesLightParameters ? maskMap : null
-          }
+          skinned,
+          imageMapParameter: usesLightParameters ? imageMap : null,
+          layerMap1Parameter: usesLightParameters ? layerMap1 : null,
+          layerMap2Parameter: usesLightParameters ? layerMap2 : null,
+          maskMapParameter: usesLightParameters ? maskMap : null
         }));
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
@@ -2926,7 +2980,7 @@ function arrayValue(value, fallback)
   return value ? Array.from(value) : fallback.slice();
 }
 
-function composeChildPlacement(source, offset, target, animationId)
+function composeChildPlacement(source, offset)
 {
   const transform = mat4.fromRotationTranslationScale(
     mat4.create(),
@@ -2940,15 +2994,23 @@ function composeChildPlacement(source, offset, target, animationId)
   const ignoredScale = vec3.create();
   decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
   return {
-    target,
-    redFilePath: String(source.redFilePath ?? ""),
     translation: Array.from(position),
     rotation: Array.from(rotation),
     scaling: arrayValue(source.scaling, [1, 1, 1]),
     lowestLodVisible: Number(source.lowestLodVisible ?? 0),
-    origin: 1,
-    animationId
+    origin: 1
   };
+}
+
+function createInheritProperties(document, dna)
+{
+  const colorSet = dna.GetColorSet();
+  const fields = {};
+  for (let index = 0; index < INHERIT_COLOR_PROPERTIES.length; index++)
+  {
+    fields[INHERIT_COLOR_PROPERTIES[index]] = arrayValue(colorSet?.[index], [0, 0, 0, 0]);
+  }
+  return document.AddNode("EveChildInheritProperties", fields);
 }
 
 function collectDynamicEmitterRefs(document, rootRef, target)
@@ -3277,11 +3339,8 @@ function addBannerSet(document, rootFields, dna, usage, banners, lights, usageCo
     isPickable: false,
     display: true,
     key: usage,
-    lights
-  }, {
-    sofBannerSetup: {
-      primaryTextureParameter: imageMap
-    }
+    lights,
+    primaryTextureParameter: imageMap
   }));
   rootFields.externalParameters.push(document.AddNode("Tr2ExternalParameter", {
     name: usage >= 0 && usage < usageCount ? BANNER_EXTERNAL_PARAMETER_NAMES[usage] : "",
@@ -3422,18 +3481,6 @@ function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffs
     effect,
     generateDepthArea: shaderData.doGenerateDepthArea,
     resourceRefs
-  };
-}
-
-function childSetup(scaling, rotation, translation, origin = 0)
-{
-  return {
-    target: "effectChildren",
-    scaling: arrayValue(scaling, [1, 1, 1]),
-    rotation: arrayValue(rotation, [0, 0, 0, 1]),
-    translation: arrayValue(translation, [0, 0, 0]),
-    lowestLodVisible: 0,
-    origin: Number(origin) | 0
   };
 }
 

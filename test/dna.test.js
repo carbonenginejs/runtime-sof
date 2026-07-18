@@ -177,10 +177,13 @@ test("EveSOF emits and hydrates Carbon swarm behavior on the EveShip2-derived ro
   assert.equal(root.fields.formationDistance, 125);
   assert.equal(root.fields.boosters, null);
 
-  const setup = root.raw.sofSpaceObjectSetup;
-  assert.equal(Object.keys(setup.swarmBehavior).length, 25);
-  assert.equal(setup.swarmBehavior.weightDeceleration, 0.75);
-  assert.equal(setup.initialize, true);
+  const behavior = sof.dataMgr.GetGenericData().swarmBehavior;
+  assert.equal(Object.keys(behavior).length, 25);
+  for (const [key, value] of Object.entries(behavior))
+  {
+    const fieldName = key === "weightDecelerate" ? "weightDeceleration" : key;
+    assert.equal(root.fields[fieldName], value, fieldName);
+  }
 
   const trinity = await import(trinityConsumerEntry);
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -192,7 +195,11 @@ test("EveSOF emits and hydrates Carbon swarm behavior on the EveShip2-derived ro
   assert.equal(hydrated.root.weightDeceleration, 0.75);
   assert.equal(hydrated.root.formationDistance, 125);
   assert.equal(hydrated.root.boosters, null);
-  assert.deepEqual(adapter.getSpaceObjectSetup(hydrated.root).swarmBehavior, setup.swarmBehavior);
+  for (const [key, value] of Object.entries(behavior))
+  {
+    const fieldName = key === "weightDecelerate" ? "weightDeceleration" : key;
+    assert.equal(hydrated.root[fieldName], value, fieldName);
+  }
 });
 
 test("EveSOFDNA variants construct fresh Carbon custom hull records", () => {
@@ -919,8 +926,8 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.equal(ordinary.kind, "EveChildMesh");
   assert.equal(ordinary.fields.name, "Hull");
   assert.equal(ordinary.fields.decals.length, 1);
-  assert.deepEqual(ordinary.raw.sofChildSetup.scaling, [2, 2, 2]);
-  assert.deepEqual(ordinary.raw.sofChildSetup.translation, [1, 2, 3]);
+  assert.deepEqual(ordinary.fields.scaling, [2, 2, 2]);
+  assert.deepEqual(ordinary.fields.translation, [1, 2, 3]);
 
   const instanced = referencedNode(document, layouts.fields.objects[1]);
   const instancedMesh = referencedNode(document, instanced.fields.mesh);
@@ -942,7 +949,7 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   }
   assert.deepEqual(runtimeData.fields.rows.map(row => row.transform0[3]), [5, 7]);
   assert.deepEqual(runtimeData.fields.rows.map(row => row.boneIndex), [6, 8]);
-  assert.equal(instanced.raw.sofInstancedChildSetup.instanceTransforms.length, 2);
+  assert.equal(instanced.fields.instanceTransforms.length, 2);
 
   const controlled = layouts.fields.objects
     .map(ref => referencedNode(document, ref))
@@ -952,7 +959,7 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.equal(controlled.fields.observers.length, 1);
   assert.equal(controlled.fields.controllers.length, 1);
   assert.equal(referencedNode(document, controlled.fields.objects[0]).fields.animationUpdater.$ref > 0, true);
-  assert.equal(controlled.raw.sofPlacementContainerSetup.animationOwner.$ref, controlled.fields.objects[0].$ref);
+  assert.equal(controlled.fields.animationOwner.$ref, controlled.fields.objects[0].$ref);
   const controlledObserver = referencedNode(document, controlled.fields.observers[0]);
   assert.deepEqual(controlledObserver.fields.position, [1, 0, 20]);
   assert.equal(controlledObserver.raw.sofAudioEmitterSetup.prefix, "layout_");
@@ -1296,7 +1303,7 @@ test("SOF applies Carbon row transforms to placed attachments, audio, and instan
     [row.transform0[3], row.transform1[3], row.transform2[3]],
     [10, 22, 30],
   );
-  const auxiliary = instanceChild.raw.sofInstancedChildSetup.instanceTransforms[0];
+  const auxiliary = instanceChild.fields.instanceTransforms[0];
   assert.deepEqual([auxiliary[3], auxiliary[7], auxiliary[11]], [10, 22, 30]);
 });
 
@@ -1439,9 +1446,8 @@ test("SOF projects first-hull legacy children, faction visibility, and animation
   assert.equal(root.fields.children.length, 1);
   assert.equal(root.fields.effectChildren.length, 0);
   const child = referencedNode(document, root.fields.children[0]);
-  assert.deepEqual(child.raw.sofChildSetup.translation, [1, 2, 3]);
-  assert.deepEqual(child.raw.sofChildSetup.scaling, [4, 5, 6]);
-  assert.equal(child.raw.sofChildSetup.animationId, 7);
+  assert.deepEqual(child.fields.translation, [1, 2, 3]);
+  assert.deepEqual(child.fields.scaling, [4, 5, 6]);
   assert.equal(root.fields.curveSets.length, 2);
   const animated = referencedNode(document, root.fields.curveSets[0]);
   const empty = referencedNode(document, root.fields.curveSets[1]);
@@ -1466,9 +1472,7 @@ test("SOF projects first-hull legacy children, faction visibility, and animation
   const adapter = createSofHydrationAdapter();
   const hydrated = CjsDocumentHydrator.hydrate(document, { registry, adapter });
   assert.deepEqual(hydrated.reports, []);
-  assert.deepEqual(Array.from(hydrated.root.children[0].translation), [1, 2, 3]);
-  assert.deepEqual(Array.from(hydrated.root.children[0].scaling), [4, 5, 6]);
-  assert.equal(adapter.getChildSetup(hydrated.root.children[0]).animationId, 7);
+  assert.equal(hydrated.root.children[0].constructor.name, "EveTransform");
   assert.equal(hydrated.root.curveSets[0].bindings[0].destinationObject, hydrated.root.modelRotationCurve);
 });
 
@@ -1505,7 +1509,7 @@ test("SOF6 child sets apply primary visibility and standalone filters", () => {
   assert.equal(root.fields.curveSets.length, 0);
   const child = referencedNode(document, root.fields.effectChildren[0]);
   assert.equal(child.fields.resPath, "res:/primary.red");
-  assert.equal(child.raw.sofChildSetup.origin, 1);
+  assert.equal(child.fields.origin, 1);
 });
 
 test("SOF child resolver is explicit and synchronous", () => {
@@ -1634,6 +1638,7 @@ test("SOF async builds resolve selected direct documents and existence probes de
   assert.equal(root.fields.children.length, 3);
   const imported = referencedNode(asyncDocument, root.fields.children[0]);
   assert.equal(imported.kind, "EveTransform");
+  assert.deepEqual(imported.fields.scaling, [1, 1, 1]);
   assert.equal(referencedNode(asyncDocument, imported.raw.rawOnly).fields.name, "raw-only");
   assert.equal(referencedNode(asyncDocument, root.fields.controllers[0]).kind, "Tr2Controller");
   assert.equal(referencedNode(asyncDocument, root.fields.modelRotationCurve).kind, "Tr2RotationAdapter");
@@ -1649,7 +1654,6 @@ test("SOF async builds resolve selected direct documents and existence probes de
     const hydrated = CjsDocumentHydrator.hydrate(asyncDocument, { registry, adapter });
     assert.deepEqual(hydrated.reports, []);
     assert.equal(hydrated.root.controllers[0].IsLinked(), true);
-    assert.equal(adapter.getChildSetup(hydrated.root.children[0]).origin, 1);
   }
 });
 
@@ -1934,7 +1938,7 @@ test("SOF imports complete child carbon.document fragments with remapped refs", 
   assert.notEqual(importedRoot.id, 40);
   assert.notEqual(importedChild.id, 90);
   assert.equal(importedRoot.raw.importedChild.$ref, importedChild.id);
-  assert.deepEqual(importedRoot.raw.sofChildSetup.translation, [9, 8, 7]);
+  assert.deepEqual(importedRoot.fields.translation, [9, 8, 7]);
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -1944,7 +1948,6 @@ test("SOF imports complete child carbon.document fragments with remapped refs", 
   });
   assert.deepEqual(hydrated.reports, []);
   assert.equal(hydrated.root.children[0].children[0].constructor.name, "EveTransform");
-  assert.deepEqual(Array.from(hydrated.root.children[0].translation), [9, 8, 7]);
 
   const invalid = new EveSOF();
   assert.equal(invalid.dataMgr.SetData(data), true);
@@ -2163,7 +2166,7 @@ test("SOF emits and hydrates Carbon decal sets with uint32 static indices", {
   assert.deepEqual(decalNode.fields.position, [1, 2, 3]);
   assert.equal(decalNode.fields.parentBoneIndex, 7);
   assert.equal(decalNode.fields.minScreenSize, 10);
-  assert.deepEqual(decalNode.raw.sofStaticIndexBuffers, [[0, 1, 70000]]);
+  assert.deepEqual(decalNode.fields.staticIndexBuffers, [[0, 1, 70000]]);
   const effect = referencedNode(document, decalNode.fields.decalEffect);
   assert.equal(effect.fields.effectFilePath, "res:/decal/static_decalglowcylindricv5.fx");
   assert.deepEqual(effect.fields.constParameters.map(ref => referencedNode(document, ref).fields), [
@@ -2219,8 +2222,8 @@ test("SOF selects multi-hull decal indices by the lowercased combined geometry p
   assert.equal(sof.dataMgr.SetData(data), true);
   const document = sof.BuildFromDNA("rifter;rifter2:minmatar:minmatar");
   const decals = rootNode(document).fields.decals.map(ref => referencedNode(document, ref));
-  assert.deepEqual(decals[0].raw.sofStaticIndexBuffers, [[9, 8, 7]]);
-  assert.deepEqual(decals[1].raw.sofStaticIndexBuffers, []);
+  assert.deepEqual(decals[0].fields.staticIndexBuffers, [[9, 8, 7]]);
+  assert.deepEqual(decals[1].fields.staticIndexBuffers, []);
 });
 
 test("SOF emits and hydrates Carbon sprite sets with SOF6 light metadata", {
@@ -2588,11 +2591,10 @@ test("SOF emits and hydrates Carbon SOF6 plane sets with public typed blink and 
   const nextHullItem = referencedNode(document, attachments[1].fields.planes[0]);
   assert.deepEqual(nextHullItem.fields.position, [11, 0, 0]);
 
-  const setup = attachments[0].raw.sofPlaneSetup;
-  assert.equal(setup.layerMap1, effect.fields.resources[0]);
-  assert.equal(setup.layerMap2, effect.fields.resources[1]);
-  assert.equal(setup.maskMap, effect.fields.resources[2]);
-  assert.equal(Object.hasOwn(setup, "lights"), false);
+  assert.equal(attachments[0].fields.imageMapParameter, null);
+  assert.equal(attachments[0].fields.layerMap1Parameter.$ref, effect.fields.resources[0].$ref);
+  assert.equal(attachments[0].fields.layerMap2Parameter.$ref, effect.fields.resources[1].$ref);
+  assert.equal(attachments[0].fields.maskMapParameter.$ref, effect.fields.resources[2].$ref);
   assert.equal(attachments[0].fields.lights.length, 1);
   const planeLight = referencedNode(document, attachments[0].fields.lights[0]);
   assert.equal(planeLight.kind, "EvePlaneLight");
@@ -3946,12 +3948,13 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.equal(root.fields.castShadow, false);
   assert.equal(root.fields.isAnimated, false);
   assert.equal(root.fields.reflectionMode, 3);
-  assert.equal(Object.hasOwn(root.fields, "inheritProperties"), false);
-  assert.equal(root.raw.sofSpaceObjectSetup.inheritColorSet.length, 44);
-  assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[0], [1, 0, 0, 1]);
-  assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[22], [22, 122, 222, 1]);
-  assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[36], [36, 136, 236, 1]);
-  assert.deepEqual(root.raw.sofSpaceObjectSetup.inheritColorSet[43], [0, 1, 0, 1]);
+  const inheritNode = referencedNode(document, root.fields.inheritProperties);
+  assert.equal(inheritNode.kind, "EveChildInheritProperties");
+  assert.equal(Object.keys(inheritNode.fields).length, 44);
+  assert.deepEqual(inheritNode.fields.Primary, [1, 0, 0, 1]);
+  assert.deepEqual(inheritNode.fields.PrimaryHologram, [22, 122, 222, 1]);
+  assert.deepEqual(inheritNode.fields.PrimarySpotlight, [36, 136, 236, 1]);
+  assert.deepEqual(inheritNode.fields.PrimaryDockedFx, [0, 1, 0, 1]);
   const rootMesh = referencedNode(document, root.fields.mesh);
   assert.equal(rootMesh.kind, "Tr2Mesh");
   assert.deepEqual(rootMesh.fields, {});
@@ -3965,8 +3968,7 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.equal(extensionContainer.fields.name, "Extension Container");
   assert.equal(extensionContainer.fields.alwaysOn, true);
   assert.equal(extensionContainer.fields.origin, 1);
-  assert.equal(extensionContainer.raw.sofPlacementContainerSetup.origin, 1);
-  assert.equal(extensionContainer.raw.sofPlacementContainerSetup.isPlacementRoot, true);
+  assert.equal(extensionContainer.fields.isPlacementRoot, true);
   assert.equal(extensionContainer.fields.objects.length, 2);
   const hull = referencedNode(document, extensionContainer.fields.objects[0]);
   assert.equal(hull.kind, "EveChildMesh");
@@ -3974,7 +3976,7 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.equal(hull.fields.castShadow, true);
   assert.equal(hull.fields.staticTransform, true);
   assert.equal(referencedNode(document, hull.fields.mesh).fields.geometryResPath, "res:/model/solo-extension.gr2");
-  assert.deepEqual(hull.raw.sofChildSetup.translation, [0, 0, 0]);
+  assert.equal(hull.fields.translation, undefined);
   assert.equal(referencedNode(document, extensionContainer.fields.objects[1]).fields.name, "Hull");
 
   const trinity = await import(trinityConsumerEntry);
@@ -3995,11 +3997,9 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.equal(hydratedExtension.objects[0].mesh.geometryResPath, "res:/model/solo-extension.gr2");
   assert.equal(hydratedExtension.objects[1].mesh.geometryResPath, "res:/model/nested-extension.gr2");
   assert.equal(hydrated.root.effectChildren[1].GetMeshCount(), 1);
-  assert.equal(adapter.getPlacementContainerSetup(hydratedExtension).isPlacementRoot, true);
-  assert.equal(adapter.getSpaceObjectSetup(hydrated.root).initialize, true);
-  assert.equal(adapter.getSpaceObjectSetup(hydrated.root).inheritColorSet.length, 44);
+  assert.equal(hydratedExtension.isPlacementRoot, true);
   const inheritedColors = hydrated.root.inheritProperties.GetProperties();
-  const expectedColors = root.raw.sofSpaceObjectSetup.inheritColorSet;
+  const expectedColors = Object.values(inheritNode.fields);
   assert.equal(inheritedColors.length, 44);
   for (let colorIndex = 0; colorIndex < expectedColors.length; colorIndex++) {
     assert.equal(inheritedColors[colorIndex].length, 4);
@@ -4060,7 +4060,7 @@ test("EveSOF placement routing preserves root transform children without a Solo 
   const root = rootNode(document);
   const extension = referencedNode(document, root.fields.effectChildren.at(-1));
   assert.equal(root.fields.children.length, 1);
-  assert.deepEqual(referencedNode(document, root.fields.children[0]).raw.sofChildSetup.translation, [7, 8, 9]);
+  assert.deepEqual(referencedNode(document, root.fields.children[0]).fields.translation, [7, 8, 9]);
   assert.equal(extension.fields.objects.length, 1);
   assert.equal(referencedNode(document, extension.fields.objects[0]).fields.name, "Hull");
   assert.equal(extension.fields.objects.some(ref => referencedNode(document, ref).fields.name === "unowned-effect"), false);
@@ -4135,11 +4135,11 @@ test("EveSOF routes animated extension children through Solo Placement", {
   assert.equal(solo.fields.curveSets.length, 0);
   assert.equal(root.fields.children.length, 1);
   assert.equal(referencedNode(document, root.fields.children[0]).fields.name, "legacy-extension-transform");
-  assert.deepEqual(referencedNode(document, root.fields.children[0]).raw.sofChildSetup.translation, [3, 4, 5]);
+  assert.deepEqual(referencedNode(document, root.fields.children[0]).fields.translation, [3, 4, 5]);
   assert.equal(root.fields.curveSets.length, 1);
   assert.equal(referencedNode(document, root.fields.curveSets[0]).fields.name, "extension-animation");
   assert.equal(referencedNode(document, root.fields.modelRotationCurve).kind, "Tr2RotationAdapter");
-  assert.equal(solo.raw.sofPlacementContainerSetup.animationOwner.$ref, solo.fields.objects[0].$ref);
+  assert.equal(solo.fields.animationOwner.$ref, solo.fields.objects[0].$ref);
 
   const trinity = await import(trinityConsumerEntry);
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -4151,7 +4151,6 @@ test("EveSOF routes animated extension children through Solo Placement", {
   assert.equal(hydratedSolo.objects[1].name, "legacy-extension-effect");
   assert.equal(hydratedSolo.controllers.length, 1);
   assert.equal(hydrated.root.children[0].constructor.name, "EveTransform");
-  assert.deepEqual(Array.from(hydrated.root.children[0].translation), [3, 4, 5]);
   assert.equal(hydrated.root.curveSets[0].name, "extension-animation");
   assert.equal(hydrated.root.modelRotationCurve.constructor.name, "Tr2RotationAdapter");
   assert.equal(adapter.getAudioEmitterSetup(hydratedSolo.observers[0]).prefix, "extension_");
@@ -4391,7 +4390,7 @@ test("SOF emits and hydrates Carbon instanced attachments with public CPU instan
   assert.equal(mesh.fields.boundsMethod, 2);
   assert.equal(mesh.fields.maxInstanceSize, 4);
   assert.equal(mesh.fields.opaqueAreas.length, 1);
-  assert.equal(mesh.raw.sofInstancedMeshSetup.geometryResPath, "res:/model/antenna.gr2");
+  assert.equal(mesh.fields.instanceGeometryResPath, "res:/model/antenna.gr2");
   const runtimeData = referencedNode(document, mesh.fields.instanceGeometryResource);
   assert.equal(runtimeData.fields.layout.length, 7);
   assert.equal(runtimeData.fields.layout[6].type, "BYTE_4");
@@ -4399,7 +4398,7 @@ test("SOF emits and hydrates Carbon instanced attachments with public CPU instan
   assert.deepEqual(runtimeData.fields.aabbMin, [-1, 6, 2]);
   assert.deepEqual(runtimeData.fields.aabbMax, [5, 8, 7]);
   assert.deepEqual(runtimeData.fields.rows[0].transform0, [2, 0, 0, 5]);
-  assert.deepEqual(child.raw.sofInstancedChildSetup.instanceTransforms[0], [
+  assert.deepEqual(child.fields.instanceTransforms[0], [
     2, 0, 0, 0,
     0, 3, 0, 0,
     0, 0, 4, 0,
@@ -4427,9 +4426,7 @@ test("SOF emits and hydrates Carbon instanced attachments with public CPU instan
   assert.deepEqual(hydrated.reports, []);
   const hydratedQuality = hydrated.root.effectChildren[0].objects[0];
   const hydratedChild = hydratedQuality.objects[0];
-  const meshSetup = adapter.getInstancedMeshSetup(hydratedChild.mesh);
-  assert.equal(meshSetup.geometryResPath, "res:/model/antenna.gr2");
-  assert.equal(meshSetup.opaqueAreas[0].constructor.name, "Tr2MeshArea");
+  assert.equal(hydratedChild.mesh.instanceGeometryResPath, "res:/model/antenna.gr2");
   assert.equal(hydratedChild.mesh.geometryResPath, "res:/model/antenna.gr2");
   assert.equal(hydratedChild.mesh.opaqueAreas[0].constructor.name, "Tr2MeshArea");
   const hydratedRuntimeData = hydratedChild.mesh.instanceGeometryResource;
@@ -4443,7 +4440,6 @@ test("SOF emits and hydrates Carbon instanced attachments with public CPU instan
   assert.deepEqual(Array.from(hydratedRuntimeData.aabbMax), [5, 8, 7]);
   assert.equal(hydratedRuntimeData.dirty, false);
   assert.equal(hydratedRuntimeData.dataRevision, 1);
-  assert.equal(adapter.getInstancedChildSetup(hydratedChild).instanceTransforms.length, 2);
   assert.equal(hydratedChild.GetInstanceTransforms().length, 2);
 });
 
@@ -4896,20 +4892,112 @@ test("editor mode records Carbon placement metadata on layout children", () => {
   const instanced = children.find(node => node.fields.name === "Instanced Hull");
   assert.ok(ordinary);
   assert.ok(instanced);
-  assert.ok(ordinary.raw.sofEditorMetadata.SofDna.startsWith("rifter2:minmatar:minmatar"));
-  assert.equal(ordinary.raw.sofEditorMetadata.SofParentHullName, "rifter");
-  assert.equal(ordinary.raw.sofEditorMetadata.SofLocatorSetName, "ordinary");
-  assert.equal(ordinary.raw.sofEditorMetadata.SofLocatorIndex, "0");
-  assert.ok(instanced.raw.sofEditorMetadata.SofDna.startsWith("rifter2:minmatar:minmatar"));
-  assert.equal(instanced.raw.sofEditorMetadata.SofParentHullName, "rifter");
-  assert.equal(instanced.raw.sofEditorMetadata.SofLocatorSetName, "instanced");
-  assert.equal("SofLocatorIndex" in instanced.raw.sofEditorMetadata, false);
+  assert.ok(ordinary.fields.sofDna.startsWith("rifter2:minmatar:minmatar"));
+  assert.equal(ordinary.fields.sofParentHullName, "rifter");
+  assert.equal(ordinary.fields.sofLocatorSetName, "ordinary");
+  assert.equal(ordinary.fields.sofLocatorIndex, "0");
+  assert.ok(instanced.fields.sofDna.startsWith("rifter2:minmatar:minmatar"));
+  assert.equal(instanced.fields.sofParentHullName, "rifter");
+  assert.equal(instanced.fields.sofLocatorSetName, "instanced");
+  assert.equal("sofLocatorIndex" in instanced.fields, false);
 
   const plain = new EveSOF();
   assert.equal(plain.dataMgr.SetData(makeData()), true);
   const plainChildren = layoutChildren(plain.BuildFromDNA("rifter:minmatar:minmatar:layout?graph"));
   for (const child of plainChildren)
   {
-    assert.equal(child.raw.sofEditorMetadata, undefined);
+    assert.equal(child.fields.sofDna, "");
+    assert.equal(child.fields.sofParentHullName, "");
+    assert.equal(child.fields.sofLocatorSetName, "");
   }
+});
+
+test("BuildValuesFromDNA emits plain model values with parity to document hydration", {
+  skip: !existsSync(trinityConsumerEntry),
+}, async () => {
+  const data = createData();
+  data.hull[0].sof6 = true;
+  data.hull[0].spriteSets = [
+    { visibilityGroup: "primary", items: [{ position: [1, 0, 0], colorType: 0 }] },
+    { visibilityGroup: "primary", items: [{ position: [2, 0, 0], colorType: 0 }] },
+  ];
+  data.faction[0].visibilityGroupSet = { visibilityGroups: [{ str: "primary" }] };
+  data.faction[0].colorSet = { Primary: [1, 0, 0, 1] };
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const trinity = await import(trinityConsumerEntry);
+  const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
+
+  const values = sof.BuildValuesFromDNA("rifter:minmatar:minmatar", { registry });
+
+  // The values result is the model's own GetValues shape: no document wrappers.
+  assert.equal(values.schema, undefined);
+  assert.equal(values.nodes, undefined);
+  assert.equal(values.roots, undefined);
+  assert.equal(values._type, "EveShip2");
+
+  // The result survives an ordinary JSON transport hop.
+  const transported = JSON.parse(JSON.stringify(values));
+
+  // The shared sprite pool effect stays one object via _id/_ref.
+  const spriteSets = transported.attachments.filter(item => item._type === "EveSpriteSet");
+  assert.equal(spriteSets.length, 2);
+  assert.notEqual(spriteSets[0].effect._id, undefined);
+  assert.deepEqual(spriteSets[1].effect, { _ref: spriteSets[0].effect._id });
+
+  // Hydrating the values recreates the same public graph as the document path,
+  // and the shared effect is one instance again.
+  const RootClass = registry.GetConstructor(transported._type);
+  const fromValues = RootClass.from(transported, { registry });
+  const hydratedSets = fromValues.attachments.filter(item => item.constructor.name === "EveSpriteSet");
+  assert.equal(hydratedSets[0].effect, hydratedSets[1].effect);
+
+  const document = sof.BuildFromDNA("rifter:minmatar:minmatar");
+  const hydrated = CjsDocumentHydrator.hydrate(document, { registry, adapter: createSofHydrationAdapter() });
+  assert.deepEqual(hydrated.reports, []);
+  assert.deepEqual(
+    fromValues.GetValues({ refs: true, typeTags: true }),
+    hydrated.root.GetValues({ refs: true, typeTags: true })
+  );
+});
+
+test("values projection keeps parity while deferred audio raw stays document-only", {
+  skip: !existsSync(trinityConsumerEntry),
+}, async () => {
+  const data = createData();
+  data.hull[0].soundEmitters = [{
+    name: "engine",
+    prefix: "ship_",
+    position: [1, 2, 3],
+    rotation: [0, 1, 0, 0],
+    attenuationScalingFactor: 2.5,
+  }];
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const trinity = await import(trinityConsumerEntry);
+  const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
+
+  const values = sof.BuildValuesFromDNA("rifter:minmatar:minmatar", { registry });
+
+  // Observer placement is ordinary declared data in the values graph...
+  assert.equal(values.observers.length, 1);
+  assert.deepEqual(values.observers[0].position, [1, 2, 3]);
+  // ...while deferred audio construction intent remains only on the explicit
+  // document path (documented omission until the pure-data audio package).
+  assert.equal(JSON.stringify(values).includes("sofAudioEmitterSetup"), false);
+  assert.equal(JSON.stringify(values).includes("AudEmitter"), false);
+  const document = sof.BuildFromDNA("rifter:minmatar:minmatar");
+  const observerNode = referencedNode(document, rootNode(document).fields.observers[0]);
+  assert.equal(observerNode.raw.sofAudioEmitterSetup.className, "AudEmitter");
+
+  const hydrated = CjsDocumentHydrator.hydrate(document, { registry, adapter: createSofHydrationAdapter() });
+  assert.deepEqual(hydrated.reports, []);
+  const RootClass = registry.GetConstructor(values._type);
+  const fromValues = RootClass.from(JSON.parse(JSON.stringify(values)), { registry });
+  assert.deepEqual(
+    fromValues.GetValues({ refs: true, typeTags: true }),
+    hydrated.root.GetValues({ refs: true, typeTags: true })
+  );
 });

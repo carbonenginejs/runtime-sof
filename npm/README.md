@@ -54,9 +54,11 @@ The builder emits `Tr2RuntimeInstanceData`, `Tr2InstancedMesh`, opaque area,
 effect, child-mesh, and named container nodes in Carbon order. Runtime-instance
 layout, normalized rows, and explicit bounds are ordinary graph fields;
 Trinity may derive a packed CPU byte view from them, while GPU buffer creation
-and upload remain exclusively renderer responsibilities. Base-mesh setup and
-child instance transforms still use the hydration adapter pending their own
-values-contract promotion.
+and upload remain exclusively renderer responsibilities. Base-mesh paths,
+child instance transforms, child placement (SRT, LOD gate, origin), placement
+containers (animation owner, always-on, placement root), decal static index
+buffers, plane/banner shared texture parameters, impact overlay state, and
+the faction inherit color set are all ordinary declared node fields now.
 Multi-hull boosters now project detached hull/race records, emit Carbon's
 near/far volumetric effects, glow sprites, optional trails, cumulative hull
 transforms, and merged booster locators. Booster descriptions are emitted as
@@ -71,8 +73,8 @@ random rotation/scaling, descriptor inheritance, and recursive nested layout
 transforms. `BuildFromDNA()` now consumes the same plan to emit Carbon's
 `layouts` container, ordinary extension hull children, non-shared runtime
 instance meshes, and the single root-level `SharedInstancedMeshes` child.
-Shared private mesh records are installed through
-`EveChildInstancedMeshes.AddMesh()` during hydration. Scrambled layouts accept
+Shared mesh records are typed `EveChildInstancedMesh` nodes on the declared
+`EveChildInstancedMeshes.meshes` field. Scrambled layouts accept
 an explicit `scrambleSeedOffset` option so offline builds remain reproducible
 without wall-clock or global random state. Layout occurrences independently
 expand the root bounding sphere and shield ellipsoid according to their authored
@@ -87,9 +89,12 @@ actual extension geometry, decals, attachments, placement controllers/audio,
 instanced attachments, locator sets, and nested layouts are emitted beneath or
 alongside that placement graph. Root initialization and placement-root intent
 are retained for device-free hydration. The complete 44-entry faction inherit
-color array is installed through Trinity's maintained `SetInheritProperties`
-API using Carbon's enum order; the source scanner now expands all 44 indexed
-Blue color fields rather than the unexpanded macro placeholder.
+color set is emitted as an `EveChildInheritProperties` node on the root's
+declared `inheritProperties` field in Carbon's enum order;
+`EveSpaceObject2.Initialize` propagates it, so authoring
+(`SetInheritProperties`) and field-populated graphs converge. The source
+scanner expands all 44 indexed Blue color fields rather than the unexpanded
+macro placeholder.
 Swarm build classes emit Carbon's complete 25-value `EveSwarm` behavior and
 hydrate it before initialization. Variant DNAs construct fresh stripped custom
 hulls, and locator-set fan-out/merging and instanced-layout decal routing follow
@@ -98,13 +103,29 @@ The public turret material entry points support both direct faction selection
 and full parent DNA, including Carbon's faction material-slot remap and
 const-parameter-first update behavior.
 
-Some SOF setup state is private in runtime-Trinity, as in Carbon. Consumers that
-hydrate SOF documents should pass `createSofHydrationAdapter()` so decal indices,
-attachment light/blink descriptors, impact emitter descriptors, overlay locator
-counts, child placement/setup state, and initialization calls are restored after
-graph references resolve. Operational child setup uses Trinity's maintained
-inherited transform and effect-child contracts; the emitted animation document
-preserves the complete curve and binding graph.
+Plain model values are the recommended SOF boundary:
+`BuildValues`/`BuildValuesAsync`/`BuildValuesFromDNA`/`BuildValuesFromDNAAsync`
+hydrate the built graph and return the root's
+`GetValues({ refs: true, typeTags: true })` — one nested JSON-serializable
+value with `_type` on polymorphic nodes and `_id`/`_ref` only for genuinely
+shared identity, no node table or `raw` payloads. Callers supply the class
+registry (`options.registry`, e.g.
+`CjsClassRegistry.fromMaps({ constructors: runtimeTrinityModule })`), keeping
+runtime-sof free of a runtime-trinity dependency. Hydrate the result with
+`RootClass.from(values)` against the same registry; parity tests prove the
+values-hydrated and document-hydrated graphs export identically, including a
+shared-reference graph and a graph carrying the remaining deferred audio
+record.
+
+The explicit `carbon.document` output (`BuildFromDNA`) remains available as
+the compatibility/diagnostic graph format. Consumers that hydrate documents
+pass `createSofHydrationAdapter()`, which now carries only the per-kind
+Initialize lifecycle (what `CjsModel.from` performs on the values path) and
+one deliberately retained private record: `sofAudioEmitterSetup`, the
+deferred audio-emitter construction intent, which stays document-only until
+the pure-data audio graph package exists. Observer placement itself is
+ordinary declared data and appears in values output. The emitted animation
+document preserves the complete curve and binding graph.
 Texture path inserts remain
 deterministic and GPU-free through an optional synchronous resource-existence
 resolver. Remaining specialized stages are still in progress.
