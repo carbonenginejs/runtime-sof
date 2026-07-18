@@ -940,8 +940,8 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
       referencedNode(document, ref).fields.value === "SOIA_ENABLED"
     )));
   }
-  assert.deepEqual(runtimeData.raw.sofRuntimeInstanceData.rows.map(row => row.transform0[3]), [5, 7]);
-  assert.deepEqual(runtimeData.raw.sofRuntimeInstanceData.rows.map(row => row.boneIndex), [6, 8]);
+  assert.deepEqual(runtimeData.fields.rows.map(row => row.transform0[3]), [5, 7]);
+  assert.deepEqual(runtimeData.fields.rows.map(row => row.boneIndex), [6, 8]);
   assert.equal(instanced.raw.sofInstancedChildSetup.instanceTransforms.length, 2);
 
   const controlled = layouts.fields.objects
@@ -962,16 +962,19 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.equal(controlledEffect.fields.name, "layout-effect");
 
   assert.equal(shared.fields.name, "SharedInstancedMeshes");
-  assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes.length, 1);
-  assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes[0].instanceTransforms.length, 2);
-  assert.equal(shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas.length, 2);
+  assert.equal(shared.fields.meshes.length, 1);
+  const sharedMesh = referencedNode(document, shared.fields.meshes[0]);
+  assert.equal(sharedMesh.kind, "EveChildInstancedMesh");
+  assert.equal(sharedMesh.fields.instances.length, 2);
+  assert.equal(sharedMesh.fields.areas.length, 2);
+  const sharedAreas = sharedMesh.fields.areas.map(ref => referencedNode(document, ref));
   assert.deepEqual(
-    shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas.map(area => area.batchType),
+    sharedAreas.map(area => area.fields.batchType),
     [0, 0],
   );
   const sharedEffect = referencedNode(
     document,
-    shared.raw.sofSharedInstancedMeshesSetup.meshes[0].areas[0].effect,
+    sharedAreas[0].fields.effect,
   );
   assert.ok(sharedEffect.fields.options.some(ref => (
     referencedNode(document, ref).fields.value === "SOIA_SHARED"
@@ -1018,7 +1021,9 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   assert.equal(sharedData.instances.length, 2);
   assert.equal(sharedData.areas.length, 2);
   assert.equal(sharedData.areas[0].effect.constructor.name, "Tr2Effect");
-  assert.equal(adapter.getSharedInstancedMeshesSetup(hydratedShared).meshes.length, 1);
+  assert.equal(hydratedShared.meshes.length, 1);
+  assert.equal(hydratedShared.meshes[0].constructor.name, "EveChildInstancedMesh");
+  assert.equal(hydratedShared.meshes[0].instances[0].constructor.name, "EveChildInstancedMeshInstance");
   const hydratedDamage = hydrated.root.locatorSets.find(set => set.name === "damage");
   assert.equal(hydratedDamage.locators.length, 6);
   assert.deepEqual(Array.from(hydratedDamage.locators[1].scale), [3, 4, 5]);
@@ -1250,7 +1255,7 @@ test("SOF applies Carbon row transforms to placed attachments, audio, and instan
     0,
   );
   assert.ok(Math.abs(hazeRotationDot) > 1 - 1e-5, "haze rotation");
-  const hazeLight = hazeSet.raw.sofHazeLights[0].lightData;
+  const hazeLight = referencedNode(document, hazeSet.fields.lights[0]).fields.lightData;
   hazeLight.position.forEach((value, index) => {
     assert.ok(Math.abs(value - [9, 32, 30][index]) < 1e-5, `haze light position[${index}]`);
   });
@@ -1265,7 +1270,7 @@ test("SOF applies Carbon row transforms to placed attachments, audio, and instan
   spotlight.fields.transform.slice(12, 15).forEach((value, index) => {
     assert.ok(Math.abs(value - [10, 22, 30][index]) < 1e-5, `spotlight position[${index}]`);
   });
-  const spotlightLight = spotlightSet.raw.sofSpotlightLights[0].lightData;
+  const spotlightLight = referencedNode(document, spotlightSet.fields.lights[0]).fields.lightData;
   assert.ok(Math.abs(spotlightLight.innerRadius - 8) < 1e-5);
   assert.ok(Math.abs(spotlightLight.radius - 12) < 1e-5);
   const spotlightRotationDot = spotlightLight.rotation.reduce(
@@ -1286,7 +1291,7 @@ test("SOF applies Carbon row transforms to placed attachments, audio, and instan
   const instanceChild = referencedNode(document, instanceContainer.fields.objects[0]);
   const instanceMesh = referencedNode(document, instanceChild.fields.mesh);
   const instanceData = referencedNode(document, instanceMesh.fields.instanceGeometryResource);
-  const row = instanceData.raw.sofRuntimeInstanceData.rows[0];
+  const row = instanceData.fields.rows[0];
   assert.deepEqual(
     [row.transform0[3], row.transform1[3], row.transform2[3]],
     [10, 22, 30],
@@ -1450,7 +1455,6 @@ test("SOF projects first-hull legacy children, faction visibility, and animation
     [0, 2, 1, 1],
     [1, 8, 1, 1],
   ]);
-  assert.equal(scalar.raw.sofEmitterRateTargetId, 7);
   assert.deepEqual(rotation.fields.keys.map(key => [key.time, key.value]), [
     [3, [0, 0, 0, 1]],
     [5, [0, 0, 1, 0]],
@@ -1465,7 +1469,6 @@ test("SOF projects first-hull legacy children, faction visibility, and animation
   assert.deepEqual(Array.from(hydrated.root.children[0].translation), [1, 2, 3]);
   assert.deepEqual(Array.from(hydrated.root.children[0].scaling), [4, 5, 6]);
   assert.equal(adapter.getChildSetup(hydrated.root.children[0]).animationId, 7);
-  assert.equal(adapter.getEmitterRateTargetId(hydrated.root.curveSets[0].curves[0]), 7);
   assert.equal(hydrated.root.curveSets[0].bindings[0].destinationObject, hydrated.root.modelRotationCurve);
 });
 
@@ -2294,14 +2297,15 @@ test("SOF emits and hydrates Carbon sprite sets with SOF6 light metadata", {
   const secondHull = referencedNode(document, attachments[1].fields.sprites[0]);
   assert.deepEqual(secondHull.fields.position, [11, 0, 0]);
 
-  assert.equal(attachments[0].raw.sofSpriteLights.length, 1);
-  const spriteLight = attachments[0].raw.sofSpriteLights[0];
-  assert.equal(spriteLight.index, 1);
-  assert.equal(spriteLight.lightProfilePath, "res:/profile.red");
-  assert.deepEqual(spriteLight.lightData.position, [2.5, 1, 0]);
-  assert.equal(spriteLight.lightData.radius, 5);
-  assert.equal(spriteLight.lightData.innerRadius, 2);
-  assert.equal(spriteLight.lightData.brightness, 4);
+  assert.equal(attachments[0].fields.lights.length, 1);
+  const spriteLight = referencedNode(document, attachments[0].fields.lights[0]);
+  assert.equal(spriteLight.kind, "EveSpriteLight");
+  assert.equal(spriteLight.fields.index, 1);
+  assert.equal(spriteLight.fields.lightProfilePath, "res:/profile.red");
+  assert.deepEqual(spriteLight.fields.lightData.position, [2.5, 1, 0]);
+  assert.equal(spriteLight.fields.lightData.radius, 5);
+  assert.equal(spriteLight.fields.lightData.innerRadius, 2);
+  assert.equal(spriteLight.fields.lightData.brightness, 4);
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -2311,10 +2315,12 @@ test("SOF emits and hydrates Carbon sprite sets with SOF6 light metadata", {
   });
   assert.deepEqual(hydrated.reports, []);
   assert.equal(hydrated.root.attachments[0].constructor.name, "EveSpriteSet");
+  assert.equal(hydrated.root.attachments[0].lights[0].constructor.name, "EveSpriteLight");
+  assert.equal(hydrated.root.attachments[0].lights[0].index, 1);
   assert.deepEqual(Array.from(hydrated.root.attachments[1].sprites[0].position), [11, 0, 0]);
 });
 
-test("SOF emits and hydrates Carbon SOF6 spotlight sets with private light metadata", {
+test("SOF emits and hydrates Carbon SOF6 spotlight sets with public typed lights", {
   skip: !existsSync(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url)),
 }, async () => {
   assert.equal(new EveSOFDataHullSpotlightSet().visibilityGroup, "primary");
@@ -2428,19 +2434,20 @@ test("SOF emits and hydrates Carbon SOF6 spotlight sets with private light metad
   const secondHullItem = referencedNode(document, attachments[1].fields.spotlightItems[0]);
   assert.deepEqual(secondHullItem.fields.transform.slice(12, 15), [21, 0, 0]);
 
-  assert.equal(attachments[0].raw.sofSpotlightLights.length, 1);
-  const spotlightLight = attachments[0].raw.sofSpotlightLights[0];
+  assert.equal(attachments[0].fields.lights.length, 1);
+  const spotlightLight = referencedNode(document, attachments[0].fields.lights[0]);
   const baseAngle = Math.atan(4 / 16) * 180 / Math.PI;
-  assert.equal(spotlightLight.index, 1);
-  assert.equal(spotlightLight.boosterGainInfluence, true);
-  assert.equal(spotlightLight.lightProfilePath, "res:/spotlight.profile");
-  assert.deepEqual(spotlightLight.lightData.position, [3, 2, 0]);
-  assert.ok(Math.abs(spotlightLight.lightData.innerAngle - baseAngle * 0.5) < 1e-12);
-  assert.ok(Math.abs(spotlightLight.lightData.outerAngle - baseAngle * 1.5) < 1e-12);
-  assert.equal(spotlightLight.lightData.innerRadius, 16);
-  assert.equal(spotlightLight.lightData.radius, 24);
-  assert.equal(spotlightLight.lightData.brightness, 8);
-  assert.equal(spotlightLight.lightData.texturePath, "res:/spotlight.profile");
+  assert.equal(spotlightLight.kind, "EveSpotlightLight");
+  assert.equal(spotlightLight.fields.index, 1);
+  assert.equal(spotlightLight.fields.boosterGainInfluence, true);
+  assert.equal(spotlightLight.fields.lightProfilePath, "res:/spotlight.profile");
+  assert.deepEqual(spotlightLight.fields.lightData.position, [3, 2, 0]);
+  assert.ok(Math.abs(spotlightLight.fields.lightData.innerAngle - baseAngle * 0.5) < 1e-12);
+  assert.ok(Math.abs(spotlightLight.fields.lightData.outerAngle - baseAngle * 1.5) < 1e-12);
+  assert.equal(spotlightLight.fields.lightData.innerRadius, 16);
+  assert.equal(spotlightLight.fields.lightData.radius, 24);
+  assert.equal(spotlightLight.fields.lightData.brightness, 8);
+  assert.equal(spotlightLight.fields.lightData.texturePath, "res:/spotlight.profile");
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -2449,7 +2456,8 @@ test("SOF emits and hydrates Carbon SOF6 spotlight sets with private light metad
   assert.deepEqual(hydrated.reports, []);
   assert.equal(hydrated.root.attachments[0].constructor.name, "EveSpotlightSet");
   assert.equal(hydrated.root.attachments[0].spotlightItems.length, 2);
-  assert.equal(adapter.getSpotlightLights(hydrated.root.attachments[0]).length, 1);
+  assert.equal(hydrated.root.attachments[0].lights.length, 1);
+  assert.equal(hydrated.root.attachments[0].lights[0].constructor.name, "EveSpotlightLight");
 });
 
 test("SOF legacy spotlight sets use faction groups without SOF6 visibility filtering", () => {
@@ -2483,10 +2491,10 @@ test("SOF legacy spotlight sets use faction groups without SOF6 visibility filte
   assert.deepEqual(item.fields.coneColor, [2, 4, 6, 8]);
   assert.deepEqual(item.fields.flareColor, [6, 9, 12, 15]);
   assert.deepEqual(item.fields.spriteColor, [12, 16, 20, 24]);
-  assert.deepEqual(attachment.raw.sofSpotlightLights, []);
+  assert.deepEqual(attachment.fields.lights, []);
 });
 
-test("SOF emits and hydrates Carbon SOF6 plane sets with private blink and light state", {
+test("SOF emits and hydrates Carbon SOF6 plane sets with public typed blink and light state", {
   skip: !existsSync(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url)),
 }, async () => {
   assert.deepEqual(EveSOFDataHullPlaneSet.Usage, {
@@ -2572,7 +2580,7 @@ test("SOF emits and hydrates Carbon SOF6 plane sets with private blink and light
   }]);
   const item = referencedNode(document, attachments[0].fields.planes[0]);
   assert.deepEqual(item.fields.position, [1, 0, 0]);
-  assert.deepEqual(item.raw.sofBlinkData, [0.25, 0.5, 1, 1]);
+  assert.deepEqual(item.fields.blinkData, [0.25, 0.5, 1, 1]);
   assert.ok(Math.abs(item.fields.color[0] - 0.598) < 1e-12);
   assert.ok(Math.abs(item.fields.color[1] - 0.598) < 1e-12);
   assert.ok(Math.abs(item.fields.color[2] - 0.598) < 1e-12);
@@ -2581,18 +2589,21 @@ test("SOF emits and hydrates Carbon SOF6 plane sets with private blink and light
   assert.deepEqual(nextHullItem.fields.position, [11, 0, 0]);
 
   const setup = attachments[0].raw.sofPlaneSetup;
-  assert.equal(setup.lights.length, 1);
   assert.equal(setup.layerMap1, effect.fields.resources[0]);
   assert.equal(setup.layerMap2, effect.fields.resources[1]);
   assert.equal(setup.maskMap, effect.fields.resources[2]);
-  assert.equal(setup.lights[0].index, 0);
-  assert.equal(setup.lights[0].blinkPhase, 0.5);
-  assert.equal(setup.lights[0].blinkRate, 0.25);
-  assert.equal(setup.lights[0].lightProfilePath, "res:/plane.profile");
-  assert.deepEqual(setup.lights[0].lightData.position, [1, 1, 0]);
-  assert.equal(setup.lights[0].lightData.innerRadius, 8);
-  assert.equal(setup.lights[0].lightData.radius, 12);
-  assert.equal(setup.lights[0].lightData.brightness, 5);
+  assert.equal(Object.hasOwn(setup, "lights"), false);
+  assert.equal(attachments[0].fields.lights.length, 1);
+  const planeLight = referencedNode(document, attachments[0].fields.lights[0]);
+  assert.equal(planeLight.kind, "EvePlaneLight");
+  assert.equal(planeLight.fields.index, 0);
+  assert.equal(planeLight.fields.blinkPhase, 0.5);
+  assert.equal(planeLight.fields.blinkRate, 0.25);
+  assert.equal(planeLight.fields.lightProfilePath, "res:/plane.profile");
+  assert.deepEqual(planeLight.fields.lightData.position, [1, 1, 0]);
+  assert.equal(planeLight.fields.lightData.innerRadius, 8);
+  assert.equal(planeLight.fields.lightData.radius, 12);
+  assert.equal(planeLight.fields.lightData.brightness, 5);
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -2603,6 +2614,7 @@ test("SOF emits and hydrates Carbon SOF6 plane sets with private blink and light
   assert.deepEqual(hydrated.reports, []);
   assert.equal(hydrated.root.attachments[0].constructor.name, "EvePlaneSet");
   assert.deepEqual(Array.from(hydrated.root.attachments[0].planes[0].blinkData), [0.25, 0.5, 1, 1]);
+  assert.equal(hydrated.root.attachments[0].lights[0].constructor.name, "EvePlaneLight");
 });
 
 test("SOF legacy hangar-video plane sets use faction colors without SOF6 visibility filtering", () => {
@@ -2631,7 +2643,7 @@ test("SOF legacy hangar-video plane sets use faction colors without SOF6 visibil
   });
   const item = referencedNode(document, attachment.fields.planes[0]);
   assert.deepEqual(item.fields.color, [2, 3, 4, 5]);
-  assert.deepEqual(attachment.raw.sofPlaneSetup.lights, []);
+  assert.deepEqual(attachment.fields.lights, []);
 });
 
 test("SOF emits Carbon sprite-line sets with shared effects and per-sprite SOF6 lights", {
@@ -2693,18 +2705,19 @@ test("SOF emits Carbon sprite-line sets with shared effects and per-sprite SOF6 
   assert.ok(Math.abs(line.fields.color[2] - 0.598) < 1e-12);
   assert.equal(line.fields.color[3], 2);
 
-  const lights = attachments[1].raw.sofSpriteLineLights;
+  const lights = attachments[1].fields.lights.map(ref => referencedNode(document, ref));
   assert.equal(lights.length, 3);
-  assert.deepEqual(lights.map(light => light.index), [1, 1, 1]);
-  assert.deepEqual(lights.map(light => light.blinkPhase), [0.5, 0.6, 0.7]);
-  assert.deepEqual(lights.map(light => light.lightData.position), [
+  assert.deepEqual(lights.map(light => light.kind), ["EveSpriteLight", "EveSpriteLight", "EveSpriteLight"]);
+  assert.deepEqual(lights.map(light => light.fields.index), [1, 1, 1]);
+  assert.deepEqual(lights.map(light => light.fields.blinkPhase), [0.5, 0.6, 0.7]);
+  assert.deepEqual(lights.map(light => light.fields.lightData.position), [
     [4.5, 0, 0],
     [6.5, 0, 0],
     [8.5, 0, 0],
   ]);
-  assert.equal(lights[0].lightData.innerRadius, 2);
-  assert.equal(lights[0].lightData.radius, 3);
-  assert.equal(lights[0].lightProfilePath, "res:/line.profile");
+  assert.equal(lights[0].fields.lightData.innerRadius, 2);
+  assert.equal(lights[0].fields.lightData.radius, 3);
+  assert.equal(lights[0].fields.lightProfilePath, "res:/line.profile");
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -2712,7 +2725,8 @@ test("SOF emits Carbon sprite-line sets with shared effects and per-sprite SOF6 
   const hydrated = CjsDocumentHydrator.hydrate(document, { registry, adapter });
   assert.deepEqual(hydrated.reports, []);
   assert.equal(hydrated.root.attachments[1].constructor.name, "EveSpriteLineSet");
-  assert.equal(adapter.getSpriteLineLights(hydrated.root.attachments[1]).length, 3);
+  assert.equal(hydrated.root.attachments[1].lights.length, 3);
+  assert.equal(hydrated.root.attachments[1].lights[0].constructor.name, "EveSpriteLight");
 });
 
 test("SOF applies sprite-line visibility filtering to legacy hulls", () => {
@@ -2805,16 +2819,17 @@ test("SOF emits and operationally hydrates Carbon haze sets with SOF6 lights", {
   assert.ok(Math.abs(haze.fields.color[2] - 1.052) < 1e-12);
   assert.equal(haze.fields.color[3], 2);
 
-  const lights = attachments[0].raw.sofHazeLights;
+  const lights = attachments[0].fields.lights.map(ref => referencedNode(document, ref));
   assert.equal(lights.length, 1);
-  assert.deepEqual(lights[0].lightData.position, [2, 2, 3]);
-  assert.deepEqual(lights[0].lightData.color, [0.526, 0.526, 0.526, 1]);
-  assert.equal(lights[0].lightData.innerRadius, 4);
-  assert.equal(lights[0].lightData.radius, 8);
-  assert.equal(lights[0].lightData.brightness, 5);
-  assert.equal(lights[0].index, 0);
-  assert.equal(lights[0].boosterGainInfluence, true);
-  assert.equal(lights[0].lightProfilePath, "res:/haze.profile");
+  assert.equal(lights[0].kind, "EveHazeSetLight");
+  assert.deepEqual(lights[0].fields.lightData.position, [2, 2, 3]);
+  assert.deepEqual(lights[0].fields.lightData.color, [0.526, 0.526, 0.526, 1]);
+  assert.equal(lights[0].fields.lightData.innerRadius, 4);
+  assert.equal(lights[0].fields.lightData.radius, 8);
+  assert.equal(lights[0].fields.lightData.brightness, 5);
+  assert.equal(lights[0].fields.index, 0);
+  assert.equal(lights[0].fields.boosterGainInfluence, true);
+  assert.equal(lights[0].fields.lightProfilePath, "res:/haze.profile");
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   class TrackingEveHazeSet extends trinity.EveHazeSet
@@ -2842,11 +2857,12 @@ test("SOF emits and operationally hydrates Carbon haze sets with SOF6 lights", {
   assert.ok(hydrated.root.attachments[0] instanceof TrackingEveHazeSet);
   assert.equal(hydrated.root.attachments[0].hazes[0].constructor.name, "EveHazeSetItem");
   assert.deepEqual(hydrated.root.attachments.map(set => set.calls), [
-    ["AddLightFromSOF:0", "Initialize"],
+    ["Initialize"],
     ["Initialize"],
     ["Initialize"],
   ]);
-  assert.equal(adapter.getHazeLights(hydrated.root.attachments[0]).length, 1);
+  assert.equal(hydrated.root.attachments[0].lights.length, 1);
+  assert.equal(hydrated.root.attachments[0].lights[0].constructor.name, "EveHazeSetLight");
 });
 
 test("SOF applies haze visibility filtering to legacy hulls", () => {
@@ -2919,8 +2935,8 @@ test("SOF emits and hydrates legacy banners with external texture bindings", {
   const second = referencedNode(document, set.fields.banners[1]);
   assert.deepEqual(first.fields.position, [1, 2, 3]);
   assert.deepEqual(first.fields.scaling, [2, 4, 3]);
-  assert.equal(first.raw.sofReference, 0);
-  assert.equal(second.raw.sofReference, 2);
+  assert.equal(first.fields.reference, 0);
+  assert.equal(second.fields.reference, 2);
 
   const effect = referencedNode(document, set.fields.effect);
   assert.equal(effect.fields.effectFilePath, "res:/banner.fx");
@@ -2932,12 +2948,13 @@ test("SOF emits and hydrates legacy banners with external texture bindings", {
   assert.deepEqual(external.fields.destinationObject, imageMapRef);
   assert.equal(external.fields.destinationAttribute, "resourcePath");
 
-  const lights = set.raw.sofBannerSetup.lights;
-  assert.deepEqual(lights.map(light => light.index), [0, 1]);
-  assert.equal(lights[0].lightData.radius, 8);
-  assert.equal(lights[0].lightData.innerRadius, 2);
-  assert.equal(lights[0].lightData.noiseOctaves, 6);
-  assert.equal(lights[0].saturation, 0.75);
+  const lights = set.fields.lights.map(ref => referencedNode(document, ref));
+  assert.deepEqual(lights.map(light => light.kind), ["EveBannerLight", "EveBannerLight"]);
+  assert.deepEqual(lights.map(light => light.fields.index), [0, 1]);
+  assert.equal(lights[0].fields.lightData.radius, 8);
+  assert.equal(lights[0].fields.lightData.innerRadius, 2);
+  assert.equal(lights[0].fields.lightData.noiseOctaves, 6);
+  assert.equal(lights[0].fields.saturation, 0.75);
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -2947,7 +2964,8 @@ test("SOF emits and hydrates legacy banners with external texture bindings", {
   assert.equal(hydrated.root.attachments[0].banners[0].reference, 0);
   assert.equal(hydrated.root.attachments[0].banners[1].reference, 2);
   assert.equal(hydrated.root.externalParameters[0].destinationObject, hydrated.root.attachments[0].effect.resources[2]);
-  assert.equal(adapter.getBannerLights(hydrated.root.attachments[0]).length, 2);
+  assert.equal(hydrated.root.attachments[0].lights.length, 2);
+  assert.equal(hydrated.root.attachments[0].lights[0].constructor.name, "EveBannerLight");
 });
 
 test("SOF6 banner sets group usages numerically and preserve optional lights", {
@@ -2999,16 +3017,17 @@ test("SOF6 banner sets group usages numerically and preserve optional lights", {
   ]);
   const alliance = referencedNode(document, sets[0].fields.banners[0]);
   const horizontal = referencedNode(document, sets[1].fields.banners[0]);
-  assert.equal(alliance.raw.sofReference, 1);
-  assert.equal(horizontal.raw.sofReference, 0);
-  const lights = sets[1].raw.sofBannerSetup.lights;
+  assert.equal(alliance.fields.reference, 1);
+  assert.equal(horizontal.fields.reference, 0);
+  const lights = sets[1].fields.lights.map(ref => referencedNode(document, ref));
   assert.equal(lights.length, 1);
-  assert.equal(lights[0].index, 0);
-  assert.deepEqual(lights[0].lightData.position, [3, 0, 0]);
-  assert.equal(lights[0].lightData.innerRadius, 3);
-  assert.equal(lights[0].lightData.radius, 6);
-  assert.equal(lights[0].lightData.brightness, 4);
-  assert.equal(lights[0].lightProfilePath, "res:/banner.profile");
+  assert.equal(lights[0].kind, "EveBannerLight");
+  assert.equal(lights[0].fields.index, 0);
+  assert.deepEqual(lights[0].fields.lightData.position, [3, 0, 0]);
+  assert.equal(lights[0].fields.lightData.innerRadius, 3);
+  assert.equal(lights[0].fields.lightData.radius, 6);
+  assert.equal(lights[0].fields.lightData.brightness, 4);
+  assert.equal(lights[0].fields.lightProfilePath, "res:/banner.profile");
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });
@@ -3017,7 +3036,8 @@ test("SOF6 banner sets group usages numerically and preserve optional lights", {
   assert.deepEqual(hydrated.reports, []);
   assert.equal(hydrated.root.attachments[0].banners[0].reference, 1);
   assert.equal(hydrated.root.attachments[1].banners[0].reference, 0);
-  assert.equal(adapter.getBannerLights(hydrated.root.attachments[1]).length, 1);
+  assert.equal(hydrated.root.attachments[1].lights.length, 1);
+  assert.equal(hydrated.root.attachments[1].lights[0].constructor.name, "EveBannerLight");
 });
 
 test("SOF emits and hydrates visible Carbon hull light types with cumulative hull offsets", {
@@ -3197,9 +3217,11 @@ test("SOF emits and hydrates Carbon impact overlays and preserves the HULL shiel
   assert.equal(armorEmitterNode.fields.rate, 10);
   assert.equal(armorEmitterNode.fields.textureIndex, 6);
   assert.deepEqual(armorEmitterNode.fields.sizes, [1, 2, 3]);
+  assert.equal(armorEmitterNode.raw, undefined);
   const hullEmitterNode = referencedNode(document, overlayNode.fields.hullImpactEmitter);
   assert.equal(hullEmitterNode.fields.innerAngle, 0.1);
   assert.equal(hullEmitterNode.fields.colorMidpoint, 0.65);
+  assert.equal(hullEmitterNode.raw, undefined);
   const flicker = referencedNode(document, overlayNode.fields.hullDamageFlickerCurve);
   assert.deepEqual(flicker.fields, { alpha: 1.5, beta: 2.5, N: 4, speed: 1.25, offset: 1, scale: 0 });
 
@@ -4307,7 +4329,7 @@ test("EveSOFDataMgr packs and detaches Carbon instanced-mesh projections", () =>
   assert.equal(dna.GetHullInstancedMeshes()[0].name, "antenna");
 });
 
-test("SOF emits and hydrates Carbon instanced attachments with private CPU metadata", {
+test("SOF emits and hydrates Carbon instanced attachments with public CPU instance data", {
   skip: !existsSync(trinityConsumerEntry),
 }, async () => {
   const data = createData();
@@ -4371,13 +4393,12 @@ test("SOF emits and hydrates Carbon instanced attachments with private CPU metad
   assert.equal(mesh.fields.opaqueAreas.length, 1);
   assert.equal(mesh.raw.sofInstancedMeshSetup.geometryResPath, "res:/model/antenna.gr2");
   const runtimeData = referencedNode(document, mesh.fields.instanceGeometryResource);
-  assert.equal(runtimeData.raw.sofRuntimeInstanceData.layout.length, 7);
-  assert.equal(runtimeData.raw.sofRuntimeInstanceData.layout[6].type, "BYTE_4");
-  assert.deepEqual(runtimeData.raw.sofRuntimeInstanceData.boundingBox, {
-    min: [-1, 6, 2],
-    max: [5, 8, 7],
-  });
-  assert.deepEqual(runtimeData.raw.sofRuntimeInstanceData.rows[0].transform0, [2, 0, 0, 5]);
+  assert.equal(runtimeData.fields.layout.length, 7);
+  assert.equal(runtimeData.fields.layout[6].type, "BYTE_4");
+  assert.equal(runtimeData.fields.explicitBoundingBox, true);
+  assert.deepEqual(runtimeData.fields.aabbMin, [-1, 6, 2]);
+  assert.deepEqual(runtimeData.fields.aabbMax, [5, 8, 7]);
+  assert.deepEqual(runtimeData.fields.rows[0].transform0, [2, 0, 0, 5]);
   assert.deepEqual(child.raw.sofInstancedChildSetup.instanceTransforms[0], [
     2, 0, 0, 0,
     0, 3, 0, 0,
@@ -4412,7 +4433,7 @@ test("SOF emits and hydrates Carbon instanced attachments with private CPU metad
   assert.equal(hydratedChild.mesh.geometryResPath, "res:/model/antenna.gr2");
   assert.equal(hydratedChild.mesh.opaqueAreas[0].constructor.name, "Tr2MeshArea");
   const hydratedRuntimeData = hydratedChild.mesh.instanceGeometryResource;
-  assert.equal(adapter.getRuntimeInstanceSetup(hydratedRuntimeData).rows.length, 2);
+  assert.equal(hydratedRuntimeData.rows.length, 2);
   assert.equal(hydratedRuntimeData.GetCount(), 2);
   assert.equal(hydratedRuntimeData.GetStride(), 100);
   assert.equal(hydratedRuntimeData.GetLayout().length, 7);
@@ -4525,8 +4546,10 @@ test("SOF projects, emits, and hydrates multi-hull Carbon boosters", {
   assert.equal(booster.fields.alwaysOn, false);
   assert.equal(booster.fields.glowScale, 6);
   assert.deepEqual(booster.fields.warpHaloColor, [0.6, 0.7, 0.8, 0.9]);
-  assert.equal(booster.raw.sofBoosterSetup.instances.length, 2);
-  assert.deepEqual(booster.raw.sofBoosterSetup.instances[1].transform.slice(12, 15), [14, 5, 6]);
+  assert.equal(booster.fields.items.length, 2);
+  const boosterItems = booster.fields.items.map(ref => referencedNode(document, ref));
+  assert.deepEqual(boosterItems.map(node => node.kind), ["EveBoosterSet2Item", "EveBoosterSet2Item"]);
+  assert.deepEqual(boosterItems[1].fields.transform.slice(12, 15), [14, 5, 6]);
   assert.deepEqual(
     root.fields.locators
       .map(ref => referencedNode(document, ref))
@@ -4570,7 +4593,8 @@ test("SOF projects, emits, and hydrates multi-hull Carbon boosters", {
   assert.equal(hydrated.root.boosters.constructor.name, "EveBoosterSet2");
   assert.equal(hydrated.root.boosters.effect.constructor.name, "Tr2Effect");
   assert.equal(hydrated.root.boosters.glows.constructor.name, "EveSpriteSet");
-  assert.equal(adapter.getBoosterSetup(hydrated.root.boosters).instances.length, 2);
+  assert.equal(hydrated.root.boosters.items.length, 2);
+  assert.equal(hydrated.root.boosters.items[0].constructor.name, "EveBoosterSet2Item");
   const boosterData = hydrated.root.boosters.GetBoosterData();
   assert.equal(boosterData.length, 2);
   assert.deepEqual(Array.from(boosterData[0].transform).slice(12, 15), [1, 2, 3]);

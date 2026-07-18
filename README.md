@@ -51,15 +51,17 @@ resource boundary; audio backend creation remains intentionally deferred.
 First-hull instanced attachments now project Carbon's packed current/previous
 transform rows, runtime instance bounds, shader inputs, and quality filters.
 The builder emits `Tr2RuntimeInstanceData`, `Tr2InstancedMesh`, opaque area,
-effect, child-mesh, and named container nodes in Carbon order. CPU-private
-instance layout/rows, base-mesh fields, and child instance transforms are
-retained by the hydration adapter and installed into Trinity's maintained CPU
-classes during hydration; GPU buffer upload remains a renderer responsibility.
+effect, child-mesh, and named container nodes in Carbon order. Runtime-instance
+layout, normalized rows, and explicit bounds are ordinary graph fields;
+Trinity may derive a packed CPU byte view from them, while GPU buffer creation
+and upload remain exclusively renderer responsibilities. Base-mesh setup and
+child instance transforms still use the hydration adapter pending their own
+values-contract promotion.
 Multi-hull boosters now project detached hull/race records, emit Carbon's
 near/far volumetric effects, glow sprites, optional trails, cumulative hull
-transforms, and merged booster locators. The hydration adapter installs the
-retained instances through Trinity's maintained `Clear`/`Add`/`Initialize`
-lifecycle while leaving GPU preparation backend-owned. Layout catalog records
+transforms, and merged booster locators. Booster descriptions are emitted as
+typed `EveBoosterSet2Item` graph nodes; Trinity rebuilds derived glow, trail,
+light, and bounds state during initialization. Layout catalog records
 project recursively into Carbon's deterministic planner shape, including
 groups, depletion counters, placement distributions, all four condition
 methods, descriptor defaults, and DNA layout/locator accessors.

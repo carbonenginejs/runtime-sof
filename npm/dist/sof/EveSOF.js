@@ -760,8 +760,6 @@ class EveSOF extends CjsModel {
       if (Number(animation.id) !== -1 && Number(animation.startRate) !== -1) {
         const scalar = document.AddNode("Tr2CurveScalar", {
           keys: [scalarKey(0, animation.startRate), scalarKey(1, animation.endRate)]
-        }, {
-          sofEmitterRateTargetId: Number(animation.id)
         });
         for (const emitter of emitterTargetsById.get(Number(animation.id)) ?? []) {
           bindings.push(document.AddNode("TriValueBinding", {
@@ -1005,15 +1003,14 @@ class EveSOF extends CjsModel {
     const maxScale = maximumInstanceScale(instances);
     const instanceData = document.AddNode("Tr2RuntimeInstanceData", {
       name: "",
-      particleSystem: null
-    }, {
-      sofRuntimeInstanceData: {
-        layout: SOF_INSTANCE_LAYOUT.map(value => ({
-          ...value
-        })),
-        rows: cloneValue(instances),
-        boundingBox: bounds
-      }
+      particleSystem: null,
+      layout: SOF_INSTANCE_LAYOUT.map(value => ({
+        ...value
+      })),
+      rows: cloneValue(instances),
+      explicitBoundingBox: true,
+      aabbMin: bounds.min,
+      aabbMax: bounds.max
     });
     const opaqueAreas = [];
     const ref = document.AddNode("Tr2InstancedMesh", {
@@ -1058,7 +1055,7 @@ class EveSOF extends CjsModel {
     };
     const batches = groupLayoutPlacements(plan.placements);
     let sharedRef = null;
-    let sharedRaw = null;
+    let sharedMeshes = null;
     for (const occurrences of batches) {
       const first = occurrences[0];
       const extensionDna = this.CreateDna(first.dna);
@@ -1073,26 +1070,28 @@ class EveSOF extends CjsModel {
         const areas = this.CreateSharedLayoutAreas(document, extensionDna);
         if (areas.length !== 0) {
           if (!sharedRef) {
-            sharedRaw = {
-              meshes: []
-            };
+            sharedMeshes = [];
             sharedRef = document.AddNode("EveChildInstancedMeshes", {
-              name: "SharedInstancedMeshes"
-            }, {
-              sofSharedInstancedMeshesSetup: sharedRaw
+              name: "SharedInstancedMeshes",
+              meshes: sharedMeshes
             });
             rootFields.effectChildren.push(sharedRef);
           }
-          sharedRaw.meshes.push({
+          const instances = transforms.map((transform, sphereIndex) => document.AddNode("EveChildInstancedMeshInstance", {
+            transform,
+            sphereIndex
+          }));
+          sharedMeshes.push(document.AddNode("EveChildInstancedMesh", {
             geometryPath: extensionDna.GetHullGeometryResPath(),
             castsShadow: extensionDna.CastShadow(),
             reflectionMode: extensionDna.GetReflectionMode(),
             meshIndex: 0,
             areas,
-            instanceTransforms: transforms,
+            instances,
             sofHullName: this.editorMode ? dna.GetHullNames()[0] : "",
-            sofLocatorSetName: this.editorMode ? first.locatorSetName : ""
-          });
+            sofLocatorSetName: this.editorMode ? first.locatorSetName : "",
+            display: true
+          }));
         }
       } else if (first.isInstanced) {
         const instances = occurrences.map(value => packInstanceMatrix(value.transform, value.locator?.boneIndex));
@@ -1215,7 +1214,7 @@ class EveSOF extends CjsModel {
     return plan;
   }
 
-  /** Creates the retained effect-area records consumed by EveChildInstancedMeshes.AddMesh. */
+  /** Creates typed effect-area records for EveChildInstancedMeshes.meshes. */
   CreateSharedLayoutAreas(document, dna) {
     const result = [];
     const types = [TriBatchType.TRIBATCHTYPE_OPAQUE, TriBatchType.TRIBATCHTYPE_DECAL, TriBatchType.TRIBATCHTYPE_TRANSPARENT, TriBatchType.TRIBATCHTYPE_ADDITIVE, TriBatchType.TRIBATCHTYPE_DISTORTION];
@@ -1227,12 +1226,12 @@ class EveSOF extends CjsModel {
         if (!shaderData) continue;
         const built = buildMeshArea(document, dna, area, shaderData, batchType, 0, path => dna.ModifyTextureResPath(path, this.#resourceExists, this.allowFileCaching ? this.#existingFilesCache : null), false);
         addEffectShaderOption(document, built.effect, "SPACE_OBJECT_INSTANCED_ATTACHMENT", "SOIA_SHARED");
-        result.push({
+        result.push(document.AddNode("EveChildInstancedMeshArea", {
           effect: built.effect,
           batchType: batchType === TriBatchType.TRIBATCHTYPE_DECAL ? TriBatchType.TRIBATCHTYPE_OPAQUE : batchType,
           areaIndex: Number(built.fields.index) >>> 0,
           areaCount: Number(built.fields.count) >>> 0
-        });
+        }));
       }
     }
     return result;
@@ -1247,15 +1246,14 @@ class EveSOF extends CjsModel {
     const bounds = translationBounds(instances);
     const instanceData = document.AddNode("Tr2RuntimeInstanceData", {
       name: "",
-      particleSystem: null
-    }, {
-      sofRuntimeInstanceData: {
-        layout: SOF_INSTANCE_LAYOUT.map(value => ({
-          ...value
-        })),
-        rows: cloneValue(instances),
-        boundingBox: bounds
-      }
+      particleSystem: null,
+      layout: SOF_INSTANCE_LAYOUT.map(value => ({
+        ...value
+      })),
+      rows: cloneValue(instances),
+      explicitBoundingBox: true,
+      aabbMin: bounds.min,
+      aabbMax: bounds.max
     });
     node.kind = "Tr2InstancedMesh";
     Object.assign(node.fields, {
@@ -1289,7 +1287,7 @@ class EveSOF extends CjsModel {
     let alwaysOn = false;
     let hasTrails = false;
     let locatorIndex = 0;
-    const instances = [];
+    const items = [];
     const boosterLocatorRefs = [];
     const hullOffset = [0, 0, 0];
     for (let hullIndex = 0; hullIndex < dna.GetMultiHullCount(); hullIndex++) {
@@ -1322,14 +1320,14 @@ class EveSOF extends CjsModel {
           scale: [0, 0, 0],
           boneIndex: -1
         }));
-        instances.push({
+        items.push(document.AddNode("EveBoosterSet2Item", {
           transform,
           functionality: arrayValue(item.functionality, [0, 1, 1, 1]),
           hasTrail: item.hasTrail !== false,
           atlasIndex0: Number(item.atlasIndex0 ?? 0) >>> 0,
           atlasIndex1: Number(item.atlasIndex1 ?? 0) >>> 0,
           lightScale: Number(item.lightScale ?? 1)
-        });
+        }));
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
     }
@@ -1395,12 +1393,8 @@ class EveSOF extends CjsModel {
       effect,
       effectFar,
       glows,
-      trails
-    }, {
-      sofBoosterSetup: {
-        instances,
-        preparedResources: true
-      }
+      trails,
+      items
     });
     return rootFields.boosters;
   }
@@ -1464,7 +1458,7 @@ class EveSOF extends CjsModel {
     this.SetupLights(document, rootFields, dna, offsets);
   }
 
-  /** Emits visible EveSpriteSet attachments and preserves private SOF6 light state. */
+  /** Emits visible EveSpriteSet attachments and their SOF6 lights. */
   SetupSpriteSets(document, rootFields, dna, offsets = [identityMatrix()], isInstancedPlacement = false, sharedEffect = {
     ref: null
   }) {
@@ -1481,7 +1475,7 @@ class EveSOF extends CjsModel {
           });
         }
         const sprites = [];
-        const sofSpriteLights = [];
+        const lights = [];
         let index = 0;
         for (const offset of offsets) {
           for (const item of set.items) {
@@ -1503,7 +1497,7 @@ class EveSOF extends CjsModel {
             if (dna.UsingSof6()) {
               if (item.light) {
                 const lightColor = saturateColor(color, item.light.saturation);
-                sofSpriteLights.push({
+                lights.push(document.AddNode("EveSpriteLight", {
                   lightData: {
                     position: [Number(item.light.translation?.[0] ?? 0) + position[0], Number(item.light.translation?.[1] ?? 0) + position[1], Number(item.light.translation?.[2] ?? 0) + position[2]],
                     rotation: arrayValue(item.light.rotation, [0, 0, 0, 1]),
@@ -1525,8 +1519,8 @@ class EveSOF extends CjsModel {
                   minScale: Number(item.minScale ?? 1),
                   maxScale: Number(item.maxScale ?? 10),
                   index,
-                  lightProfilePath: item.light.lightProfilePath
-                });
+                  lightProfilePath: String(item.light.lightProfilePath ?? "")
+                }));
               }
               index++;
             }
@@ -1535,16 +1529,15 @@ class EveSOF extends CjsModel {
         rootFields.attachments.push(document.AddNode("EveSpriteSet", {
           effect: sharedEffect.ref,
           skinned: set.skinned === true && !isInstancedPlacement,
-          sprites
-        }, {
-          sofSpriteLights
+          sprites,
+          lights
         }));
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
     }
   }
 
-  /** Emits Carbon spotlight geometry/effects and preserves private SOF6 light descriptors. */
+  /** Emits Carbon spotlight geometry, effects, and authored SOF6 light descriptors. */
   SetupSpotlightSets(document, rootFields, dna, offsets = [identityMatrix()], isInstancedPlacement = false) {
     const hullOffset = [0, 0, 0];
     for (let hullIndex = 0; hullIndex < dna.GetMultiHullCount(); hullIndex++) {
@@ -1572,7 +1565,7 @@ class EveSOF extends CjsModel {
           })]
         });
         const spotlightItems = [];
-        const sofSpotlightLights = [];
+        const lights = [];
         let index = 0;
         for (const offset of offsets) {
           for (const item of set.items) {
@@ -1619,7 +1612,7 @@ class EveSOF extends CjsModel {
                 const angle = scale[2] > 0 ? Math.atan(Math.max(scale[0], scale[1]) / (2 * scale[2])) * 180 / Math.PI : 0;
                 const localPosition = vec3.transformQuat(vec3.create(), arrayValue(item.light.translation, [0, 0, 0]), rotation);
                 vec3.add(localPosition, localPosition, position);
-                sofSpotlightLights.push({
+                lights.push(document.AddNode("EveSpotlightLight", {
                   lightData: {
                     position: Array.from(localPosition),
                     rotation: Array.from(rotation),
@@ -1642,7 +1635,7 @@ class EveSOF extends CjsModel {
                   index,
                   lightProfilePath: String(item.light.lightProfilePath ?? ""),
                   boosterGainInfluence: item.boosterGainInfluence === true
-                });
+                }));
               }
               index++;
             }
@@ -1651,17 +1644,16 @@ class EveSOF extends CjsModel {
         rootFields.attachments.push(document.AddNode("EveSpotlightSet", {
           coneEffect,
           glowEffect,
+          lights,
           skinned: set.skinned === true && !isInstancedPlacement,
           spotlightItems
-        }, {
-          sofSpotlightLights
         }));
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
     }
   }
 
-  /** Emits Carbon plane-set effects/items and preserves their private SOF6 light state. */
+  /** Emits Carbon plane-set effects, items, and authored SOF6 lights. */
   SetupPlaneSets(document, rootFields, dna, offsets = [identityMatrix()], isInstancedPlacement = false) {
     const hullOffset = [0, 0, 0];
     for (let hullIndex = 0; hullIndex < dna.GetMultiHullCount(); hullIndex++) {
@@ -1741,9 +1733,8 @@ class EveSOF extends CjsModel {
               maskAtlasID: Number(item.maskMapAtlasIndex ?? 0) >>> 0,
               position: Array.from(position),
               rotation: Array.from(rotation),
-              scaling: arrayValue(item.scaling, [1, 1, 1])
-            }, {
-              sofBlinkData: blinkData
+              scaling: arrayValue(item.scaling, [1, 1, 1]),
+              blinkData
             }));
             if (dna.UsingSof6()) {
               if (item.lights.length) usesLightParameters = true;
@@ -1752,7 +1743,7 @@ class EveSOF extends CjsModel {
                 const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), rotation, arrayValue(light.rotation, [0, 0, 0, 1])));
                 const lightPosition = vec3.transformQuat(vec3.create(), arrayValue(light.translation, [0, 0, 0]), rotation);
                 vec3.add(lightPosition, lightPosition, position);
-                lights.push({
+                lights.push(document.AddNode("EvePlaneLight", {
                   lightData: {
                     position: Array.from(lightPosition),
                     rotation: Array.from(lightRotation),
@@ -1775,7 +1766,7 @@ class EveSOF extends CjsModel {
                   fadeType: Number(item.blinkMode ?? 0),
                   blinkPhase: Number(item.phase ?? 0),
                   blinkRate: Number(item.rate ?? 1)
-                });
+                }));
               }
               index++;
             }
@@ -1783,6 +1774,7 @@ class EveSOF extends CjsModel {
         }
         rootFields.attachments.push(document.AddNode("EvePlaneSet", {
           effect,
+          lights,
           pickBufferID,
           planes,
           skinned
@@ -1791,8 +1783,7 @@ class EveSOF extends CjsModel {
             imageMap: usesLightParameters ? imageMap : null,
             layerMap1: usesLightParameters ? layerMap1 : null,
             layerMap2: usesLightParameters ? layerMap2 : null,
-            maskMap: usesLightParameters ? maskMap : null,
-            lights
+            maskMap: usesLightParameters ? maskMap : null
           }
         }));
       }
@@ -1800,7 +1791,7 @@ class EveSOF extends CjsModel {
     }
   }
 
-  /** Emits Carbon sprite-line geometry and preserves private SOF6 per-sprite lights. */
+  /** Emits Carbon sprite-line geometry and authored SOF6 per-sprite lights. */
   SetupSpriteLineSets(document, rootFields, dna, offsets = [identityMatrix()], isInstancedPlacement = false, sharedEffect = {
     ref: null
   }) {
@@ -1817,7 +1808,7 @@ class EveSOF extends CjsModel {
           });
         }
         const spriteLines = [];
-        const sofSpriteLineLights = [];
+        const lights = [];
         let index = 0;
         for (const offset of offsets) {
           for (const item of set.items) {
@@ -1854,7 +1845,7 @@ class EveSOF extends CjsModel {
                 const positions = getSpriteLinePositions(line);
                 for (let spriteIndex = 0; spriteIndex < positions.length; spriteIndex++) {
                   lightRotation = Array.from(quat.normalize(quat.create(), quat.multiply(quat.create(), line.rotation, lightRotation)));
-                  sofSpriteLineLights.push({
+                  lights.push(document.AddNode("EveSpriteLight", {
                     lightData: {
                       position: [Number(item.light.translation?.[0] ?? 0) + positions[spriteIndex][0] + line.position[0], Number(item.light.translation?.[1] ?? 0) + positions[spriteIndex][1] + line.position[1], Number(item.light.translation?.[2] ?? 0) + positions[spriteIndex][2] + line.position[2]],
                       rotation: lightRotation,
@@ -1877,7 +1868,7 @@ class EveSOF extends CjsModel {
                     maxScale: Number(item.maxScale ?? 10),
                     index,
                     lightProfilePath: String(item.light.lightProfilePath ?? "")
-                  });
+                  }));
                 }
               }
               index++;
@@ -1886,17 +1877,16 @@ class EveSOF extends CjsModel {
         }
         rootFields.attachments.push(document.AddNode("EveSpriteLineSet", {
           effect: sharedEffect.ref,
+          lights,
           skinned: set.skinned === true && !isInstancedPlacement,
           spriteLines
-        }, {
-          sofSpriteLineLights
         }));
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
     }
   }
 
-  /** Emits Carbon haze geometry and preserves private SOF6 point-light descriptors. */
+  /** Emits Carbon haze geometry and authored SOF6 point-light descriptors. */
   SetupHazeSets(document, rootFields, dna, offsets = [identityMatrix()], isInstancedPlacement = false) {
     const hullOffset = [0, 0, 0];
     const effects = new Map();
@@ -1922,7 +1912,7 @@ class EveSOF extends CjsModel {
           effectPath = "res:/graphics/effect/managed/space/spaceobject/fx/hazehalfspherical.fx";
         }
         const hazes = [];
-        const sofHazeLights = [];
+        const lights = [];
         let index = 0;
         for (const offset of offsets) {
           for (const item of set.items) {
@@ -1951,7 +1941,7 @@ class EveSOF extends CjsModel {
                 const lightPosition = vec3.transformQuat(vec3.create(), arrayValue(light.translation, [0, 0, 0]), rotation);
                 vec3.add(lightPosition, lightPosition, position);
                 const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), rotation, arrayValue(light.rotation, [0, 0, 0, 1])));
-                sofHazeLights.push({
+                lights.push(document.AddNode("EveHazeSetLight", {
                   lightData: {
                     position: Array.from(lightPosition),
                     rotation: Array.from(lightRotation),
@@ -1972,7 +1962,7 @@ class EveSOF extends CjsModel {
                   boosterGainInfluence: item.boosterGainInfluence === true,
                   boneMatrix: identityMatrix(),
                   lightProfilePath: String(light.lightProfilePath ?? "")
-                });
+                }));
               }
             }
             index++;
@@ -1981,9 +1971,8 @@ class EveSOF extends CjsModel {
         rootFields.attachments.push(document.AddNode("EveHazeSet", {
           effect: getEffect(effectPath),
           display: true,
-          hazes
-        }, {
-          sofHazeLights
+          hazes,
+          lights
         }));
       }
       addOffset(hullOffset, dna.GetHullNextSubsystemOffset(hullIndex));
@@ -2006,7 +1995,7 @@ class EveSOF extends CjsModel {
             const light = value.bannerLight;
             const scaling = arrayValue(value.item.scaling, [1, 1, 1]);
             const radius = Number(light.radiusMultiplier ?? 1) * Math.max(scaling[0], scaling[1], scaling[2]);
-            lights.push({
+            lights.push(document.AddNode("EveBannerLight", {
               lightData: {
                 position: item.position,
                 rotation: [0, 0, 0, 1],
@@ -2027,7 +2016,7 @@ class EveSOF extends CjsModel {
               index: index++,
               boneMatrix: identityMatrix(),
               lightProfilePath: ""
-            });
+            }));
           }
         }
         if (banners.length) {
@@ -2059,7 +2048,7 @@ class EveSOF extends CjsModel {
                 const lightPosition = vec3.transformQuat(vec3.create(), arrayValue(light.translation, [0, 0, 0]), item.rotation);
                 vec3.add(lightPosition, lightPosition, item.position);
                 const lightRotation = quat.normalize(quat.create(), quat.multiply(quat.create(), item.rotation, arrayValue(light.rotation, [0, 0, 0, 1])));
-                lights.push({
+                lights.push(document.AddNode("EveBannerLight", {
                   lightData: {
                     position: Array.from(lightPosition),
                     rotation: Array.from(lightRotation),
@@ -2080,7 +2069,7 @@ class EveSOF extends CjsModel {
                   index,
                   boneMatrix: identityMatrix(),
                   lightProfilePath: String(light.lightProfilePath ?? "")
-                });
+                }));
               }
             }
             index++;
@@ -2519,9 +2508,8 @@ function addBannerItem(document, source, hullOffset, offset) {
       rotation: Array.from(rotation),
       scaling: arrayValue(source.scaling, [1, 1, 1]),
       angleX: Number(source.angleX ?? 0),
-      angleY: Number(source.angleY ?? 0)
-    }, {
-      sofReference: Number(source.reference ?? 0) | 0
+      angleY: Number(source.angleY ?? 0),
+      reference: Number(source.reference ?? 0) | 0
     }),
     position: Array.from(position),
     rotation: Array.from(rotation)
@@ -2557,11 +2545,11 @@ function addBannerSet(document, rootFields, dna, usage, banners, lights, usageCo
     effect,
     isPickable: false,
     display: true,
-    key: usage
+    key: usage,
+    lights
   }, {
     sofBannerSetup: {
-      primaryTextureParameter: imageMap,
-      lights
+      primaryTextureParameter: imageMap
     }
   }));
   rootFields.externalParameters.push(document.AddNode("Tr2ExternalParameter", {
@@ -3118,12 +3106,6 @@ function createImpactEmitter(document, values) {
     drag: paramsData.drag,
     turbulenceAmplitude: paramsData.turbulenceAmplitude,
     turbulenceFrequency: paramsData.turbulenceFrequency
-  }, {
-    sofEmitterSetup: {
-      rate: Number(values.rate ?? 0),
-      emitterData,
-      paramsData
-    }
   });
 }
 function cloneFields(fields) {
