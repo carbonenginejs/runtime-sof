@@ -2743,7 +2743,7 @@ export class EveSOF extends CjsModel
             const ignoredScale = vec3.create();
             decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
 
-            const lightData = document.AddNode("LightData", {
+            const lightData = {
               position: Array.from(position),
               color: Array.from(color),
               brightness: Number(item.brightness ?? 0),
@@ -2761,7 +2761,7 @@ export class EveSOF extends CjsModel
               startTime: 0,
               castsShadows: 0,
               isVolumetric: false
-            });
+            };
             rootFields.lights.push(document.AddNode(lightKind.className, {
               lightData,
               type: lightKind.type,
