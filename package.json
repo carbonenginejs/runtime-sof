@@ -33,7 +33,8 @@
   "dependencies": {
     "@carbonenginejs/core-math": "file:../core-math",
     "@carbonenginejs/core-types": "file:../core-types",
-    "@carbonenginejs/runtime-const": "file:../runtime-const"
+    "@carbonenginejs/runtime-const": "file:../runtime-const",
+        "@carbonenginejs/runtime-resource": "file:../runtime-resource"
   },
   "license": "MIT",
   "publishConfig": {

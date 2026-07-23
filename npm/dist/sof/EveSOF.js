@@ -5,6 +5,7 @@ import { mat4 } from '@carbonenginejs/core-math/mat4';
 import { quat } from '@carbonenginejs/core-math/quat';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
 import { TriBatchType } from '@carbonenginejs/runtime-const/graphics';
+import { CjsBlackFormat } from '@carbonenginejs/runtime-resource/formats/black';
 import { EveSOFDataHullDecalSetItem as _EveSOFDataHullDecalS } from './hull/EveSOFDataHullDecalSetItem.js';
 import { EveSOFDataHullBanner as _EveSOFDataHullBanner } from './hull/EveSOFDataHullBanner.js';
 import { EveSOFDataHullBannerSetItem as _EveSOFDataHullBanner$1 } from './hull/EveSOFDataHullBannerSetItem.js';
@@ -195,7 +196,13 @@ class EveSOF extends CjsModel {
       // Carbon's existence-driven path rewriting. Accepts the tools-browser
       // CjsFileIndex surface (Has), a Set/Map, a predicate, or null to clear.
       const index = options.resFileIndex;
-      if (index === null) this.SetResourceExistsResolver(null);else if (typeof index === "function") this.SetResourceExistsResolver(path => Boolean(index(path)));else if (index instanceof Set || index instanceof Map) this.SetResourceExistsResolver(path => index.has(path));else if (typeof index?.Has === "function") this.SetResourceExistsResolver(path => Boolean(index.Has(path)));else if (typeof index?.has === "function") this.SetResourceExistsResolver(path => Boolean(index.has(path)));else throw new TypeError("EveSOF resFileIndex must expose Has/has, be a predicate, a Set, a Map, or null");
+      if (index === null) this.SetResourceExistsResolver(null);else if (Array.isArray(index)) {
+        // The canonical shape: a plain list of res file names, from wherever
+        // the caller got them. Existence is case-insensitive membership,
+        // matching Carbon's file-system semantics.
+        const names = new Set(index.map(name => String(name ?? "").toLowerCase()));
+        this.SetResourceExistsResolver(path => names.has(String(path ?? "").toLowerCase()));
+      } else if (typeof index === "function") this.SetResourceExistsResolver(path => Boolean(index(path)));else if (index instanceof Set || index instanceof Map) this.SetResourceExistsResolver(path => index.has(path));else if (typeof index?.Has === "function") this.SetResourceExistsResolver(path => Boolean(index.Has(path)));else if (typeof index?.has === "function") this.SetResourceExistsResolver(path => Boolean(index.has(path)));else throw new TypeError("EveSOF resFileIndex must be an array of file names, expose Has/has, be a predicate, a Set, a Map, or null");
     }
     if (Object.prototype.hasOwnProperty.call(options, "editorMode")) {
       this.editorMode = Boolean(options.editorMode);
@@ -342,6 +349,43 @@ class EveSOF extends CjsModel {
   async BuildValuesFromDNAAsync(dnaString, options = {}) {
     const document = await this.BuildFromDNAAsync(dnaString, options);
     return document ? _EveSOF.projectDocumentValues(document, options) : null;
+  }
+
+  /**
+   * Canonical pure-data instantiation: the decoded (or raw black) sof catalog
+   * plus a plain list of res file names.
+   *
+   * The catalog is mandatory - a factory without its data is useless. The
+   * file list is the sole build-time resource dependency (resPathInsert
+   * existence); without it every insert lookup reports missing and texture
+   * paths fall back to their base values, with a one-time console warning.
+   * The factory never fetches, never parses index formats, and never touches
+   * the network: callers hand it bytes or data they acquired however they
+   * chose.
+   *
+   * (`Create`, not `from` - CjsModel.from is the schema hydration contract
+   * and keeps its signature.)
+   */
+  static Create({
+    black,
+    resFileIndex
+  } = {}) {
+    if (black === undefined || black === null) {
+      throw new TypeError("EveSOF.Create requires the sof catalog: data.black bytes or its decoded data");
+    }
+    const sof = new _EveSOF();
+    const data = black instanceof ArrayBuffer || ArrayBuffer.isView(black) ? CjsBlackFormat.readPayload(ArrayBuffer.isView(black) ? black.buffer.slice(black.byteOffset, black.byteOffset + black.byteLength) : black, {}).object : black;
+    if (!sof.dataMgr.SetData(data)) {
+      throw new TypeError("EveSOF.Create could not ingest the sof catalog");
+    }
+    if (resFileIndex === undefined || resFileIndex === null) {
+      console.warn("EveSOF.Create: no resFileIndex file list provided; resPathInsert existence checks will report missing and texture paths fall back to their base values.");
+    } else {
+      sof.Register({
+        resFileIndex
+      });
+    }
+    return sof;
   }
 
   /**

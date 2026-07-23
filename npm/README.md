@@ -144,6 +144,29 @@ fields, defaults, enum ownership, and runtime behavior. Secondary JavaScript
 implementations may inform optional CPU conveniences only after they are
 checked against Carbon.
 
+## Instantiation
+
+The canonical pure-data entry point takes the two things a space object
+factory actually needs and nothing else:
+
+```js
+const sof = EveSOF.Create({
+  black,                  // data.black bytes (or its decoded data) - required
+  resFileIndex: names     // plain array of res file names - optional
+});
+const document = sof.Build("rifter", "minmatar", "minmatar");
+```
+
+`black` is mandatory: a factory without its catalog is useless, so its absence
+throws. Raw bytes are decoded with the black format reader (the one sanctioned
+format dependency); already-decoded data is accepted as-is. `resFileIndex` is
+the sole build-time resource dependency - Carbon's resPathInsert texture
+selection is an existence test - and it is just a case-insensitive list of
+file names from wherever the caller got them (a parsed resfileindex, an index
+service, a fixture). Without it the factory warns once and every insert lookup
+reports missing, so texture paths fall back to their base values. The factory
+never fetches, never parses index formats, and never touches the network.
+
 ## Async boundary
 
 The synchronous resolver methods remain available for preloaded and offline

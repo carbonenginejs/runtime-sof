@@ -2034,8 +2034,13 @@ test("runtime-SOF async boundary introduces no engine or format-layer imports", 
       specifiers.push(...Object.keys(manifest[key] ?? {}));
     }
   }
+  // Maintainer decision 2026-07-24: the black FORMAT reader is a sanctioned
+  // dependency (EveSOF.Create ingests raw data.black bytes); the resource
+  // MANAGER layer (CjsResMan and the rest of runtime-resource) stays
+  // forbidden - only the /formats/black subpath may be imported.
+  const allowed = new Set(["@carbonenginejs/runtime-resource", "@carbonenginejs/runtime-resource/formats/black"]);
   const forbidden = /(?:^|[/@_-])(?:engine|runtime-(?:engine|trinity|resource)|webgl|webgpu|shader-format|format-shader|dxbc|hlsl)(?:$|[/_-])/iu;
-  assert.deepEqual(specifiers.filter(specifier => forbidden.test(specifier)), []);
+  assert.deepEqual(specifiers.filter(specifier => forbidden.test(specifier) && !allowed.has(specifier)), []);
   assert.doesNotMatch(importDeclarations.join("\n"), /\b(?:CjsLibrary|CjsResMan)\b/u);
 });
 
@@ -5322,4 +5327,62 @@ test("SOF resFileIndex registration wires the synchronous existence oracle", () 
   new EveSOF().Register({ resFileIndex: new Map([["res:/a.dds", true]]) });
   new EveSOF().Register({ resFileIndex: { Has: () => true } });
   new EveSOF().Register({ resFileIndex: null });
+});
+
+test("EveSOF.Create instantiates from raw catalog inputs only", () => {
+  // The catalog is mandatory; garbage bytes propagate the black decoder's
+  // failure instead of silently producing an empty factory.
+  assert.throws(() => EveSOF.Create(), /requires the sof catalog/);
+  assert.throws(() => EveSOF.Create({}), /requires the sof catalog/);
+  assert.throws(() => EveSOF.Create({ black: new Uint8Array([1, 2, 3, 4]) }));
+
+  const makeData = () => {
+    const data = createData();
+    data.hull[0].opaqueAreas = [{
+      name: "hull",
+      index: 0,
+      count: 1,
+      areaType: 0,
+      shader: "ship.fx",
+      textures: [{ name: "DiffuseMap", resFilePath: "res:/x/ship_d.dds" }],
+      parameters: [],
+    }];
+    data.faction[0].resPathInsert = "insert";
+    data.generic.areaShaderLocation = "res:/effect";
+    data.generic.areaShaders = [{
+      shader: "ship.fx",
+      parameters: [],
+      defaultParameters: [],
+      defaultTextures: [],
+      doGenerateDepthArea: false,
+      transparencyTextureName: "",
+    }];
+    return data;
+  };
+
+  // No file list: one warning, inserts report missing, base paths emit.
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = message => warnings.push(String(message));
+  let bare;
+  try
+  {
+    bare = EveSOF.Create({ black: makeData() });
+  }
+  finally
+  {
+    console.warn = originalWarn;
+  }
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /resFileIndex/);
+  const bareDocument = bare.BuildFromDNA("rifter:minmatar:minmatar");
+  assert.equal(findTextureResourcePath(bareDocument, "DiffuseMap"), "res:/x/ship_d.dds");
+
+  // A plain (case-insensitive) file list is the whole existence oracle.
+  const indexed = EveSOF.Create({
+    black: makeData(),
+    resFileIndex: ["RES:/X/INSERT/SHIP_INSERT_D.DDS"],
+  });
+  const indexedDocument = indexed.BuildFromDNA("rifter:minmatar:minmatar");
+  assert.equal(findTextureResourcePath(indexedDocument, "DiffuseMap"), "res:/x/insert/ship_insert_d.dds");
 });
