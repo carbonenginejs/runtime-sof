@@ -967,3 +967,34 @@ test("SOF extension bucket exposes only Carbon's Blue-mapped fields", () => {
   assert.equal(bucket.enabled, false);
   assert.equal(bucket.IsBucket(), true);
 });
+
+test("SOF light-set records carry Carbon nominal identity with per-type Blue surfaces", async () => {
+  // Carbon derives both from EveSOFDataHullLightSetItem (EveSOFData.h:
+  // 1410-1429). Textured point lights re-map the base surface WITHOUT
+  // lightColor (color comes from the texture) plus texturePath; spot lights
+  // map the full base surface plus rotation and the two angles
+  // (EveSOFData_Blue.cpp:1057-1114).
+  const { EveSOFDataHullLightSetItem, EveSOFDataHullLightSetTexturedPointLight, EveSOFDataHullLightSetSpotLight } =
+    await import("../npm/dist/sof/hull/index.js");
+  const textured = new EveSOFDataHullLightSetTexturedPointLight();
+  const spot = new EveSOFDataHullLightSetSpotLight();
+  assert.equal(textured instanceof EveSOFDataHullLightSetItem, true);
+  assert.equal(spot instanceof EveSOFDataHullLightSetItem, true);
+  // Statics inherit through the real parent.
+  assert.equal(EveSOFDataHullLightSetTexturedPointLight.LightType.SPOT_LIGHT, EveSOFDataHullLightSetItem.LightType.SPOT_LIGHT);
+
+  // Textured point: no lightColor on the schema surface, texturePath added;
+  // the JavaScript property itself remains usable.
+  assert.equal(CjsSchema.getField(EveSOFDataHullLightSetTexturedPointLight, "lightColor"), null);
+  assert.ok(CjsSchema.getField(EveSOFDataHullLightSetTexturedPointLight, "texturePath"));
+  assert.ok(CjsSchema.getField(EveSOFDataHullLightSetTexturedPointLight, "brightness"));
+  assert.equal("lightColor" in textured.GetValues(), false);
+  textured.lightColor = 3;
+  assert.equal(textured.lightColor, 3);
+
+  // Spot: full base surface including lightColor, plus its own three fields.
+  for (const name of ["lightColor", "rotation", "innerAngle", "outerAngle", "noiseOctaves"])
+  {
+    assert.ok(CjsSchema.getField(EveSOFDataHullLightSetSpotLight, name), name);
+  }
+});
