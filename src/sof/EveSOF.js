@@ -75,7 +75,6 @@ const MIN_MESH_SCREEN_SIZE = 2.5;
 // runtime-sof stays free of a runtime-trinity dependency, so the enum value
 // from Tr2LodResource.h is mirrored here.
 const TR2_LOD_HIGH = 2;
-
 // EveChildInheritProperties field order (runtime-trinity is the authority for
 // these names); dna.GetColorSet() is index-aligned with this Carbon color-slot
 // order, so the authored color set projects onto named, persisted fields.
@@ -2802,27 +2801,38 @@ export class EveSOF extends CjsModel
             const ignoredScale = vec3.create();
             decomposeCarbonMatrix(transform, rotation, position, ignoredScale);
 
-            const lightData = {
+            // Flattened emission (2026-07-23 LightData flatten decision): the
+            // Tr2 light classes persist the Blue-mapped LightData members as
+            // flat fields, so hull lights emit Carbon's flat Blue shape. The
+            // packed-set light items above still emit nested lightData bags
+            // until their classes migrate. startTime is omitted: it is not
+            // Blue-persisted, and the JS build-time value is always zero.
+            const lightFields = {
+              flags: Number(item.flags ?? 1),
               position: Array.from(position),
+              rotation: Array.from(rotation),
+              boneIndex: Number(item.boneIndex ?? -1),
+              radius: Number(item.radius ?? 0),
+              innerRadius: Number(item.innerRadius ?? 0),
               color: Array.from(color),
               brightness: Number(item.brightness ?? 0),
               noiseAmplitude: Number(item.noiseAmplitude ?? 0),
               noiseFrequency: Number(item.noiseFrequency ?? 1),
               noiseOctaves: Number(item.noiseOctaves ?? 1),
-              radius: Number(item.radius ?? 0),
-              innerRadius: Number(item.innerRadius ?? 0),
-              rotation: Array.from(rotation),
-              outerAngle: Number(item.outerAngle ?? 0),
-              innerAngle: Number(item.innerAngle ?? 0),
-              texturePath: String(item.texturePath ?? ""),
-              boneIndex: Number(item.boneIndex ?? -1),
-              flags: Number(item.flags ?? 1),
-              startTime: 0,
               castsShadows: 0,
               isVolumetric: false
             };
+            if (lightKind.className === "Tr2SpotLight")
+            {
+              lightFields.innerAngle = Number(item.innerAngle ?? 0);
+              lightFields.outerAngle = Number(item.outerAngle ?? 0);
+            }
+            if (lightKind.className === "Tr2TexturedPointLight")
+            {
+              lightFields.texturePath = String(item.texturePath ?? "");
+            }
             rootFields.lights.push(document.AddNode(lightKind.className, {
-              lightData,
+              ...lightFields,
               type: lightKind.type,
               ...(lightKind.isDynamic ? { isDynamic: true } : {})
             }));

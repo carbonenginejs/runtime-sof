@@ -3174,19 +3174,24 @@ test("SOF emits and hydrates visible Carbon hull light types with cumulative hul
   assert.deepEqual(lights.map(node => node.fields.type), [1, 1, 2, 1]);
   assert.equal(lights[1].fields.isDynamic, true);
 
-  const pointData = lights[0].fields.lightData;
-  assert.deepEqual(pointData.position, [1, 2, 3]);
-  assert.deepEqual(pointData.color, [0.25, 0.5, 0.75, 1]);
-  assert.equal(pointData.radius, 4);
-  assert.equal(pointData.flags, 9);
-  assert.equal(pointData.boneIndex, 7);
-  const texturedData = lights[1].fields.lightData;
-  assert.equal(texturedData.texturePath, "res:/light.dds");
-  const spotData = lights[2].fields.lightData;
-  assert.equal(spotData.innerAngle, 0.4);
-  assert.equal(spotData.outerAngle, 0.8);
-  const secondHullData = lights[3].fields.lightData;
-  assert.deepEqual(secondHullData.position, [11, 0, 0]);
+  // Flattened emission (2026-07-23 decision): hull lights carry Carbon's
+  // flat Blue-persisted shape; no nested lightData bag.
+  const pointFields = lights[0].fields;
+  assert.equal(Object.hasOwn(pointFields, "lightData"), false, "hull lights emit the flattened Blue shape");
+  assert.deepEqual(pointFields.position, [1, 2, 3]);
+  assert.deepEqual(pointFields.color, [0.25, 0.5, 0.75, 1]);
+  assert.equal(pointFields.radius, 4);
+  assert.equal(pointFields.flags, 9);
+  assert.equal(pointFields.boneIndex, 7);
+  assert.equal(Object.hasOwn(pointFields, "innerAngle"), false, "point lights do not persist spot angles");
+  assert.equal(Object.hasOwn(pointFields, "texturePath"), false, "point lights do not persist a texture path");
+  const texturedFields = lights[1].fields;
+  assert.equal(texturedFields.texturePath, "res:/light.dds");
+  const spotFields = lights[2].fields;
+  assert.equal(spotFields.innerAngle, 0.4);
+  assert.equal(spotFields.outerAngle, 0.8);
+  const secondHullFields = lights[3].fields;
+  assert.deepEqual(secondHullFields.position, [11, 0, 0]);
 
   const trinity = await import(new URL("../../runtime-trinity/npm/dist/index.js", import.meta.url));
   const registry = CjsClassRegistry.fromMaps({ constructors: trinity });

@@ -18,8 +18,9 @@ includes multi-hull bounds and locators, the space-object type and core flags,
 custom masks, transparent depth clones, decal sets, and CPU-side impact overlay
 graphs with shield, armor, hull-particle, and flicker components. Authored hull
 light sets emit visible point, textured-point, and spot lights with faction
-colors and cumulative multi-hull transforms; their data is represented by
-referenced `LightData` nodes for typed hydration. Visible hull sprite sets also
+colors and cumulative multi-hull transforms; their photometric data is emitted
+as Carbon's flat Blue-persisted fields on the light nodes (2026-07-23
+LightData flatten decision). Visible hull sprite sets also
 emit shared-effect `EveSpriteSet` attachments, including Carbon saturation and
 SOF6 private sprite-light descriptors restored by the hydration adapter. Hull
 spotlight sets emit their cone/glow effects, legacy faction colors, SOF6 HSV
