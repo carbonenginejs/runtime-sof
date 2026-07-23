@@ -179,6 +179,13 @@ export class EveSOF extends CjsModel
   @type.boolean
   alphaCutoutShadowsEnabled = false;
 
+  // Carbon registers this as the global TRI setting "volumetricTrailPath"
+  // (EveSOF.cpp:64-65, default empty); the booster trail set takes its mesh
+  // resource path from it. Injected here per builder instead of a global.
+  @io.readwrite
+  @type.string
+  volumetricTrailPath = "";
+
   @io.read
   @type.objectRef("EveSOFDataMgr")
   dataMgr = new EveSOFDataMgr();
@@ -252,6 +259,10 @@ export class EveSOF extends CjsModel
     if (Object.prototype.hasOwnProperty.call(options, "alphaCutoutShadowsEnabled"))
     {
       this.alphaCutoutShadowsEnabled = Boolean(options.alphaCutoutShadowsEnabled);
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "volumetricTrailPath"))
+    {
+      this.volumetricTrailPath = String(options.volumetricTrailPath ?? "");
     }
     if (Object.prototype.hasOwnProperty.call(options, "editorMode"))
     {
@@ -1832,7 +1843,8 @@ export class EveSOF extends CjsModel
         samplerOverrides: []
       });
       trails = document.AddNode("EveTrailsSet", {
-        geometryResPath: "",
+        // Carbon: trail->SetMeshResPath(g_volumetricTrailPath) (EveSOF.cpp:2720).
+        geometryResPath: this.volumetricTrailPath,
         effect: trailEffect
       });
     }

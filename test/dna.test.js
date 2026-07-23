@@ -1513,6 +1513,57 @@ test("SOF6 child sets apply primary visibility and standalone filters", () => {
   assert.equal(child.fields.origin, 1);
 });
 
+test("SOF child sets hash authored empty visibility groups like Carbon", () => {
+  // Carbon hashes the authored string as-is: an explicitly authored empty
+  // string is its own visibility group. Only an absent value falls back to
+  // "primary" (the projections use nullish, not falsy, defaults).
+  const data = createData();
+  data.hull[0].sof6 = true;
+  data.hull[0].childSets = [
+    { visibilityGroup: "", items: [{ redFilePath: "res:/empty-group.red" }] },
+    { items: [{ redFilePath: "res:/default-group.red" }] },
+  ];
+  data.faction[0].visibilityGroupSet = { visibilityGroups: [{ str: "" }] };
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const resolved = [];
+  sof.SetChildResourceResolver(path => {
+    resolved.push(path);
+    return { kind: "EveChildRef", target: "effectChildren", fields: { resPath: path } };
+  });
+  assert.ok(sof.Build("rifter", "minmatar", "minmatar"));
+  // The faction authorizes only the empty-string group; the absent-value set
+  // still resolves to "primary" and stays unplaced.
+  assert.deepEqual(resolved, ["res:/empty-group.red"]);
+});
+
+test("SOF booster trails take the injected volumetric trail path", () => {
+  // Carbon: trail->SetMeshResPath(g_volumetricTrailPath), a TRI setting that
+  // defaults to the empty string (EveSOF.cpp:64-65,2720).
+  const makeData = () => {
+    const data = createData();
+    data.hull[0].booster = { hasTrails: true, alwaysOn: false, items: [{}] };
+    data.race[0].booster = { trailSize: [1, 2, 3, 4], trailColor: [5, 6, 7, 8] };
+    return data;
+  };
+  const findTrails = document => {
+    const boosters = referencedNode(document, rootNode(document).fields.boosters);
+    return boosters.fields.trails ? referencedNode(document, boosters.fields.trails) : null;
+  };
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(makeData()), true);
+  const trails = findTrails(sof.Build("rifter", "minmatar", "minmatar"));
+  assert.ok(trails);
+  assert.equal(trails.fields.geometryResPath, "");
+
+  const configured = new EveSOF().Register({ volumetricTrailPath: "res:/trail.gr2" });
+  assert.equal(configured.dataMgr.SetData(makeData()), true);
+  const configuredTrails = findTrails(configured.Build("rifter", "minmatar", "minmatar"));
+  assert.ok(configuredTrails);
+  assert.equal(configuredTrails.fields.geometryResPath, "res:/trail.gr2");
+});
+
 test("SOF child resolver is explicit and synchronous", () => {
   const data = createData();
   data.hull[0].children = [{ redFilePath: "res:/child.red" }];
@@ -2764,7 +2815,8 @@ test("SOF emits and operationally hydrates Carbon haze sets with SOF6 lights", {
   data.hull[0].sof6 = true;
   data.hull[0].hazeSets = [{
     hazeType: EveSOFDataHullHazeSet.HazeType.TYPE_SPHERICAL,
-    visibilityGroup: "",
+    // visibilityGroup deliberately absent: only a missing value defaults to
+    // "primary"; an authored empty string is its own group (Carbon hashes it).
     items: [{
       colorType: 0,
       boneIndex: 7,

@@ -376,7 +376,7 @@ function projectHullChildren(values)
 function projectHullChildSets(values)
 {
   return (Array.isArray(values) ? values : []).filter(Boolean).map(value => ({
-    visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+    visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
     items: (Array.isArray(value.items) ? value.items : []).filter(Boolean).map(item => ({
       redFilePath: String(item.redFilePath ?? ""),
       lowestLodVisible: Number(item.lowestLodVisible ?? 0),
@@ -538,7 +538,7 @@ function projectHullBanners(values)
     const light = value.lightOverride ?? {};
     groups.get(usage).items.push({
       item: projectBannerItem(value, reference++),
-      visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+      visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
       bannerLight: {
         radiusMultiplier: Number(light.radiusMultiplier ?? 1),
         brightness: Number(light.brightness ?? 1),
@@ -572,7 +572,7 @@ function projectHullBannerSets(values)
       });
     }
     result.push({
-      visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+      visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
       bannerTypes: new Map([...groups.entries()].sort(([left], [right]) => left - right))
     });
   }
@@ -597,7 +597,7 @@ function projectHullHazeSets(values)
   return (Array.isArray(values) ? values : []).filter(Boolean).map(value => ({
     hazeType: Number(value.hazeType ?? 0),
     skinned: value.skinned === true,
-    visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+    visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
     items: (Array.isArray(value.items) ? value.items : []).filter(Boolean).map(item => ({
       colorType: Number(item.colorType ?? 0),
       boneIndex: Number(item.boneIndex ?? -1),
@@ -619,7 +619,7 @@ function projectHullSpriteLineSets(values)
 {
   return (Array.isArray(values) ? values : []).filter(Boolean).map(value => ({
     skinned: value.skinned === true,
-    visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+    visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
     items: (Array.isArray(value.items) ? value.items : []).filter(Boolean).map(item => ({
       blinkPhaseShift: Number(item.blinkPhaseShift ?? 0),
       blinkPhase: Number(item.blinkPhase ?? 0),
@@ -647,7 +647,7 @@ function projectHullPlaneSets(values)
     layer1MapResPath: String(value.layer1MapResPath ?? ""),
     layer2MapResPath: String(value.layer2MapResPath ?? ""),
     maskMapResPath: String(value.maskMapResPath ?? ""),
-    visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+    visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
     atlasSize: Number(value.atlasSize ?? 1) >>> 0,
     atlasAspectRatio: copyArray(value.atlasAspectRatio, [1, 1]),
     skinned: value.skinned === true,
@@ -681,7 +681,7 @@ function projectHullSpotlightSets(values)
   return (Array.isArray(values) ? values : []).filter(Boolean).map(value => ({
     skinned: value.skinned === true,
     zOffset: Number(value.zOffset ?? 0),
-    visibilityGroup: fnv1(String(value.visibilityGroup || "primary")),
+    visibilityGroup: fnv1(String(value.visibilityGroup ?? "primary")),
     coneTextureResPath: String(value.coneTextureResPath ?? ""),
     glowTextureResPath: String(value.glowTextureResPath ?? ""),
     items: (Array.isArray(value.items) ? value.items : []).filter(Boolean).map(item => ({
