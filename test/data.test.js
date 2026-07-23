@@ -920,3 +920,50 @@ test("SOF manager projections copy authored vectors and per-application layers",
   const second = pattern.oldApplicationData.get("rifter2").layerAndProjection[0].layer;
   assert.notEqual(first, second, "each application owns an independent layer record");
 });
+
+test("SOF extension bucket exposes only Carbon's Blue-mapped fields", () => {
+  // Carbon Blue-maps only name, depletionCounters, and placements on Bucket
+  // (EveSOFData_Blue2.cpp:292-299) while really deriving it from the concrete
+  // Placement type (EveSOFData.h:2088-2104). schema.hideInherited removes the
+  // inherited placement fields from this class's schema surface without
+  // changing the JavaScript inheritance.
+  const hidden = [
+    "distributionConditions",
+    "extendsBoundingSphere",
+    "extendsShieldEllipsoid",
+    "isShared",
+    "isInstanced",
+    "enabled",
+    "distribution",
+    "descriptor",
+    "locatorSetName",
+    "offset",
+  ];
+  const bucket = new EveSOFDataHullExtensionBucket();
+  assert.equal(bucket instanceof EveSOFDataHullExtensionPlacement, true);
+  for (const name of ["name", "depletionCounters", "placements"])
+  {
+    assert.ok(CjsSchema.getField(EveSOFDataHullExtensionBucket, name), name);
+  }
+  for (const name of hidden)
+  {
+    assert.equal(CjsSchema.getField(EveSOFDataHullExtensionBucket, name), null, name);
+    // The parent class keeps its own full surface.
+    assert.ok(CjsSchema.getField(EveSOFDataHullExtensionPlacement, name), `parent ${name}`);
+  }
+
+  // GetValues carries only the Blue-mapped surface.
+  bucket.name = "bucket";
+  bucket.locatorSetName = "plain-js-value";
+  assert.deepEqual(Object.keys(bucket.GetValues()).sort(), ["depletionCounters", "name", "placements"]);
+
+  // Hidden fields on hydration input are ignored; direct JavaScript access
+  // to the inherited properties keeps working.
+  bucket.SetValues({ name: "updated", locatorSetName: "ignored", enabled: false });
+  assert.equal(bucket.name, "updated");
+  assert.equal(bucket.locatorSetName, "plain-js-value");
+  assert.equal(bucket.enabled, true);
+  bucket.enabled = false;
+  assert.equal(bucket.enabled, false);
+  assert.equal(bucket.IsBucket(), true);
+});
