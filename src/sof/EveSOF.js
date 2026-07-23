@@ -201,6 +201,11 @@ export class EveSOF extends CjsModel
 
   #dataLoadOperations = new Map();
 
+  // Build-scope counterpart of Carbon's CCP_LOGERR sites: records in
+  // layoutPlanner diagnostic shape ({ code, ...context }), reset by each
+  // BuildFromDNA and readable through GetBuildDiagnostics().
+  #buildDiagnostics = [];
+
   /** Add standalone SOF configuration or accept CjsLibrary topic forwarding. */
   Register(options = {})
   {
@@ -373,6 +378,12 @@ export class EveSOF extends CjsModel
   BuildAsync(hullName, factionName, raceName, options = {})
   {
     return this.BuildFromDNAAsync(`${hullName}:${factionName}:${raceName}`, options);
+  }
+
+  /** Returns the diagnostics recorded by the most recent BuildFromDNA call. */
+  GetBuildDiagnostics()
+  {
+    return this.#buildDiagnostics.map(entry => ({ ...entry }));
   }
 
   /** Builds plain model values from the three mandatory selections. */
@@ -563,6 +574,7 @@ export class EveSOF extends CjsModel
   @impl.implemented
   BuildFromDNA(dnaString, options = {})
   {
+    this.#buildDiagnostics = [];
     const dna = this.CreateDna(dnaString);
     if (!dna) return null;
 
@@ -726,7 +738,9 @@ export class EveSOF extends CjsModel
       depthAreas: []
     };
     const transparent = [];
-    if (!this.SetupShaders(dna, document, fields, transparent)) return null;
+    // Carbon's CreateMesh never fails: missing shader records degrade to
+    // partially filled area vectors with a build diagnostic (EveSOF.cpp:500-515).
+    this.SetupShaders(dna, document, fields, transparent);
     this.GenerateDepthFromAreaVector(document, fields.depthAreas, transparent, dna);
     return document.AddNode("Tr2Mesh", fields);
   }
@@ -750,7 +764,6 @@ export class EveSOF extends CjsModel
       for (const [target, batchType] of fills)
       {
         const result = this.FillMeshAreaVector(target, batchType, dna, hullIndex, meshIndexOffset, document);
-        if (!result) return false;
         count += result.count;
         if (batchType === TriBatchType.TRIBATCHTYPE_TRANSPARENT) transparent.push(...result.areas);
       }
@@ -764,13 +777,29 @@ export class EveSOF extends CjsModel
   @impl.implemented
   FillMeshAreaVector(target, batchType, dna, hullIndex, meshIndexOffset, document)
   {
+    // A missing source vector cannot occur in Carbon (hull area vectors always
+    // exist for a valid hull index); treat it as empty rather than diagnosing.
     const source = dna.GetHullMeshAreas(batchType, hullIndex);
-    if (!source) return null;
+    if (!source) return { count: 0, areas: [] };
     const pending = [];
     for (const area of source)
     {
       const shaderData = dna.GetGenericAreaShaderData(area.shader);
-      if (!shaderData) return null;
+      if (!shaderData)
+      {
+        // Carbon logs and returns zero for this source, keeping the areas it
+        // already appended and continuing with the remaining batches and
+        // hulls (EveSOF.cpp:564-569); the build itself never aborts.
+        this.#buildDiagnostics.push({
+          code: "missing-generic-shader",
+          batchType,
+          hullIndex,
+          shader: String(area.shader ?? ""),
+          area: String(area.name ?? "")
+        });
+        target.push(...pending.map(item => item.ref));
+        return { count: 0, areas: pending };
+      }
       const built = buildMeshArea(
         document,
         dna,

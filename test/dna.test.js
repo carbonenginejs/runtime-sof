@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
 import { CjsClassRegistry, CjsDocumentHydrator } from "@carbonenginejs/core-types/document";
+import { TriBatchType } from "@carbonenginejs/runtime-const/graphics";
 import {
   EveSOF,
   EveSOFDNA,
@@ -4079,7 +4080,55 @@ test("EveSOF emits and hydrates Carbon's extension-root placement branch", {
   assert.deepEqual(Array.from(inheritedColors[36]), [36, 136, 236, 1]);
 });
 
-test("EveSOF extension builds abort when the placed hull mesh cannot be created", () => {
+test("EveSOF degrades missing generic shaders to partial meshes with diagnostics", () => {
+  // Carbon never aborts the build on a missing generic shader record: it
+  // logs, returns zero for that source vector (keeping areas it already
+  // appended), and continues with the remaining batches and hulls
+  // (EveSOF.cpp:500-515,564-569,2131-2156).
+  const data = createData();
+  const area = (name, index, shader) => ({
+    name, index, count: 1, areaType: 0, blockedMaterials: 0, shader, textures: [], parameters: [],
+  });
+  data.hull[0].opaqueAreas = [area("Good", 0, "ship.fx"), area("Broken", 1, "missing.fx")];
+  data.hull[0].transparentAreas = [area("Glass", 2, "glass.fx")];
+  data.generic.areaShaderLocation = "res:/effect";
+  data.generic.areaShaders = [
+    {
+      shader: "ship.fx", parameters: [], defaultParameters: [], defaultTextures: [],
+      doGenerateDepthArea: false, transparencyTextureName: "",
+    },
+    {
+      shader: "glass.fx", parameters: [], defaultParameters: [], defaultTextures: [],
+      doGenerateDepthArea: true, transparencyTextureName: "",
+    },
+  ];
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const document = sof.Build("rifter", "minmatar", "minmatar");
+  assert.ok(document, "build continues despite the missing shader record");
+  const mesh = referencedNode(document, rootNode(document).fields.mesh);
+  // The area appended before the failure stays; the failed source stops there.
+  assert.equal(mesh.fields.opaqueAreas.length, 1);
+  assert.equal(referencedNode(document, mesh.fields.opaqueAreas[0]).fields.name, "Good");
+  // Later batch types still fill, including their depth clones.
+  assert.equal(mesh.fields.transparentAreas.length, 1);
+  assert.equal(mesh.fields.depthAreas.length, 1);
+  assert.deepEqual(sof.GetBuildDiagnostics(), [{
+    code: "missing-generic-shader",
+    batchType: TriBatchType.TRIBATCHTYPE_OPAQUE,
+    hullIndex: 0,
+    shader: "missing.fx",
+    area: "Broken",
+  }]);
+  // A clean rebuild resets the diagnostics.
+  data.hull[0].opaqueAreas = [area("Good", 0, "ship.fx")];
+  const clean = new EveSOF();
+  assert.equal(clean.dataMgr.SetData(data), true);
+  assert.ok(clean.Build("rifter", "minmatar", "minmatar"));
+  assert.deepEqual(clean.GetBuildDiagnostics(), []);
+});
+
+test("EveSOF extension builds continue when a placed hull shader is missing", () => {
   const data = createData();
   data.hull[0].buildClass = EveSOFDataHull.BuildClass.BUILDCLASS_EXTENSION;
   data.hull[0].opaqueAreas = [{
@@ -4095,7 +4144,12 @@ test("EveSOF extension builds abort when the placed hull mesh cannot be created"
   data.generic.areaShaders = [];
   const sof = new EveSOF();
   assert.equal(sof.dataMgr.SetData(data), true);
-  assert.equal(sof.Build("rifter", "minmatar", "minmatar"), null);
+  const document = sof.Build("rifter", "minmatar", "minmatar");
+  assert.ok(document, "Carbon-aligned extension build degrades instead of aborting");
+  assert.equal(
+    sof.GetBuildDiagnostics().some(entry => entry.code === "missing-generic-shader"),
+    true,
+  );
 });
 
 test("EveSOF placement routing preserves root transform children without a Solo container", () => {
