@@ -31,8 +31,8 @@
     "rollup": "^4.62.2"
   },
   "dependencies": {
-    "@carbonenginejs/core-math": "^0.1.5",
-    "@carbonenginejs/core-types": "^0.12.0",
+    "@carbonenginejs/core-math": "file:../core-math",
+    "@carbonenginejs/core-types": "file:../core-types",
     "@carbonenginejs/runtime-const": "file:../runtime-const"
   },
   "license": "MIT",
