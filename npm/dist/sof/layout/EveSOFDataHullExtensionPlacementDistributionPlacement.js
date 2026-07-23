@@ -2,13 +2,16 @@ import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBab
 import { io, type } from '@carbonenginejs/core-types/schema';
 import { quat } from '@carbonenginejs/core-math/quat';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
-import { IEveSOFDataHullExtensionPlacementDistribution as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacementDistribution.js';
+import { CjsModel } from '@carbonenginejs/core-types/model';
 
 let _initClass, _init_name, _init_extra_name, _init_randomScaleMin, _init_extra_randomScaleMin, _init_randomScaleMax, _init_extra_randomScaleMax, _init_centerBias, _init_extra_centerBias, _init_cap, _init_extra_cap, _init_completeness, _init_extra_completeness, _init_randomRotationMaxSteps, _init_extra_randomRotationMaxSteps, _init_randomRotationStepSizeYPR, _init_extra_randomRotationStepSizeYPR, _init_placementBias, _init_extra_placementBias, _init_occupyLocators, _init_extra_occupyLocators, _init_uniformScale, _init_extra_uniformScale;
 
 /** EveSOFDataHullExtensionPlacementDistributionPlacement (eve) - generated from schema shapeHash 1cff41f5.... */
+// Carbon derives this record directly from IRoot with its own m_name
+// (EveSOFData.h:1999-2021); it is NOT a distribution condition, despite the
+// name - the distribution conditions implement the separate BLUE_INTERFACE.
 let _EveSOFDataHullExtens;
-class EveSOFDataHullExtensionPlacementDistributionPlacement extends _IEveSOFDataHullExten {
+class EveSOFDataHullExtensionPlacementDistributionPlacement extends CjsModel {
   static {
     ({
       e: [_init_name, _init_extra_name, _init_randomScaleMin, _init_extra_randomScaleMin, _init_randomScaleMax, _init_extra_randomScaleMax, _init_centerBias, _init_extra_centerBias, _init_cap, _init_extra_cap, _init_completeness, _init_extra_completeness, _init_randomRotationMaxSteps, _init_extra_randomRotationMaxSteps, _init_randomRotationStepSizeYPR, _init_extra_randomRotationStepSizeYPR, _init_placementBias, _init_extra_placementBias, _init_occupyLocators, _init_extra_occupyLocators, _init_uniformScale, _init_extra_uniformScale],
@@ -16,7 +19,7 @@ class EveSOFDataHullExtensionPlacementDistributionPlacement extends _IEveSOFData
     } = _applyDecs2311(this, [type.define({
       className: "EveSOFDataHullExtensionPlacementDistributionPlacement",
       family: "eve"
-    })], [[[io, io.persist, type, type.string], 16, "name"], [[io, io.persist, type, type.vec3], 16, "randomScaleMin"], [[io, io.persist, type, type.vec3], 16, "randomScaleMax"], [[io, io.persist, type, type.float32], 16, "centerBias"], [[io, io.persist, type, type.int32], 16, "cap"], [[io, io.persist, type, type.float32], 16, "completeness"], [[io, io.persist, type, type.vec3], 16, "randomRotationMaxSteps"], [[io, io.persist, type, type.quat], 16, "randomRotationStepSizeYPR"], [[io, io.persist, type, type.vec3], 16, "placementBias"], [[io, io.persist, type, type.boolean], 16, "occupyLocators"], [[io, io.persist, type, type.boolean], 16, "uniformScale"]], 0, void 0, _IEveSOFDataHullExten));
+    })], [[[io, io.persist, type, type.string], 16, "name"], [[io, io.persist, type, type.vec3], 16, "randomScaleMin"], [[io, io.persist, type, type.vec3], 16, "randomScaleMax"], [[io, io.persist, type, type.float32], 16, "centerBias"], [[io, io.persist, type, type.int32], 16, "cap"], [[io, io.persist, type, type.float32], 16, "completeness"], [[io, io.persist, type, type.vec3], 16, "randomRotationMaxSteps"], [[io, io.persist, type, type.quat], 16, "randomRotationStepSizeYPR"], [[io, io.persist, type, type.vec3], 16, "placementBias"], [[io, io.persist, type, type.boolean], 16, "occupyLocators"], [[io, io.persist, type, type.boolean], 16, "uniformScale"]], 0, void 0, CjsModel));
   }
   constructor(...args) {
     super(...args);

@@ -4,11 +4,14 @@
 import { io, type } from "@carbonenginejs/core-types/schema";
 import { quat } from "@carbonenginejs/core-math/quat";
 import { vec3 } from "@carbonenginejs/core-math/vec3";
-import { IEveSOFDataHullExtensionPlacementDistribution } from "./IEveSOFDataHullExtensionPlacementDistribution.js";
+import { CjsModel } from "@carbonenginejs/core-types/model";
 
 /** EveSOFDataHullExtensionPlacementDistributionPlacement (eve) - generated from schema shapeHash 1cff41f5.... */
+// Carbon derives this record directly from IRoot with its own m_name
+// (EveSOFData.h:1999-2021); it is NOT a distribution condition, despite the
+// name - the distribution conditions implement the separate BLUE_INTERFACE.
 @type.define({ className: "EveSOFDataHullExtensionPlacementDistributionPlacement", family: "eve" })
-export class EveSOFDataHullExtensionPlacementDistributionPlacement extends IEveSOFDataHullExtensionPlacementDistribution
+export class EveSOFDataHullExtensionPlacementDistributionPlacement extends CjsModel
 {
 
   /** m_name (std::string) [READWRITE, PERSIST] */
