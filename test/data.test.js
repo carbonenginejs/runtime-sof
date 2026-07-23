@@ -886,3 +886,37 @@ test("SOF locator-set and extension-placement records carry Carbon nominal ident
   const { EveSOFDataDecalIndexBuffer } = await import("../npm/dist/sof/shared/index.js");
   assert.equal(new EveSOFDataDecalIndexBuffer().AddIndex(1), undefined);
 });
+
+test("SOF manager projections copy authored vectors and per-application layers", async () => {
+  // Carbon copies material parameter Vector4s by value into the map
+  // (EveSOFDataMgr.cpp:1845-1855) and copies the pattern layer struct into
+  // every application pair (EveSOFDataMgr.cpp:1538-1570); neither projection
+  // may alias its authored source or share records across applications.
+  const { EveSOFDataMgr } = await import("../npm/dist/sof/EveSOFDataMgr.js");
+  const data = {
+    hull: [{ name: "rifter", geometryResFilePath: "res:/model/rifter.gr2", opaqueAreas: [] }],
+    faction: [{ name: "minmatar" }],
+    race: [{ name: "minmatar" }],
+    material: [{ name: "rust", parameters: [{ name: "PaintColor", value: [1, 2, 3, 4] }] }],
+    pattern: [{
+      name: "stripes",
+      layer1: { textureName: "PatternTex" },
+      projections: [
+        { name: "rifter", transformLayer1: {} },
+        { name: "rifter2", transformLayer1: {} },
+      ],
+    }],
+    layout: [],
+    generic: { materialPrefixes: [{ str: "Mtl1" }], variants: [] },
+  };
+  const manager = new EveSOFDataMgr();
+  assert.equal(manager.SetData(data), true);
+
+  data.material[0].parameters[0].value[0] = 99;
+  assert.deepEqual(Array.from(manager.GetMaterialData("rust").parameters.get("PaintColor")), [1, 2, 3, 4]);
+
+  const pattern = manager.GetPatternData("stripes");
+  const first = pattern.oldApplicationData.get("rifter").layerAndProjection[0].layer;
+  const second = pattern.oldApplicationData.get("rifter2").layerAndProjection[0].layer;
+  assert.notEqual(first, second, "each application owns an independent layer record");
+});

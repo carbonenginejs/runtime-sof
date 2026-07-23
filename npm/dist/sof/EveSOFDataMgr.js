@@ -816,7 +816,9 @@ function projectTextureMap(values) {
 function projectMaterial(value) {
   const parameters = new Map();
   for (const parameter of Array.isArray(value.parameters) ? value.parameters : []) {
-    if (parameter) parameters.set(String(parameter.name), parameter.value);
+    // Carbon copies the Vector4 by value into the map
+    // (EveSOFDataMgr.cpp:1845-1855); do not alias the authored array.
+    if (parameter) parameters.set(String(parameter.name), copyArray(parameter.value, [0, 0, 0, 0]));
   }
   return {
     ...value,
@@ -826,33 +828,32 @@ function projectMaterial(value) {
 function projectPattern(value) {
   const oldApplicationData = new Map();
   const applicationData = new Map();
-  const baseLayer1 = projectPatternLayer(value.layer1, null);
-  const baseLayer2 = projectPatternLayer(value.layer2, null);
+  // Carbon copies the layer struct BY VALUE into every application pair
+  // (EveSOFDataMgr.cpp:1538-1570 push_back(make_pair(pld, ppd))), so each
+  // hull application owns an independent layer record.
   for (const hull of Array.isArray(value.projections) ? value.projections : []) {
     oldApplicationData.set(String(hull?.name ?? ""), {
       layerAndProjection: [{
-        layer: baseLayer1,
+        layer: projectPatternLayer(value.layer1, null),
         projection: projectPatternProjection(hull?.transformLayer1)
       }, {
-        layer: baseLayer2,
+        layer: projectPatternLayer(value.layer2, null),
         projection: projectPatternProjection(hull?.transformLayer2)
       }]
     });
   }
   for (const group of Array.isArray(value.applicationGroups) ? value.applicationGroups : []) {
-    const layer1 = projectPatternLayer(value.layer1, group?.layer1Properties);
-    const layer2 = projectPatternLayer(value.layer2, group?.layer2Properties);
     for (const hull of Array.isArray(group?.projections) ? group.projections : []) {
       const layerAndProjection = [];
       if (value.layer1 && group.layer1Properties && hull?.transformLayer1) {
         layerAndProjection.push({
-          layer: layer1,
+          layer: projectPatternLayer(value.layer1, group.layer1Properties),
           projection: projectPatternProjection(hull.transformLayer1)
         });
       }
       if (value.layer2 && group.layer2Properties && hull?.transformLayer2) {
         layerAndProjection.push({
-          layer: layer2,
+          layer: projectPatternLayer(value.layer2, group.layer2Properties),
           projection: projectPatternProjection(hull.transformLayer2)
         });
       }
