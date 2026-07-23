@@ -905,7 +905,7 @@ test("SOF emits and hydrates non-instanced, instanced, and shared layout placeme
   sof.SetObjectResourceResolver((path, context) => {
     if (path === "res:/layout-controller.red" && context.role === "controller")
     {
-      return { kind: "TriCurveSet", fields: { name: "layout-controller", curves: [], bindings: [] } };
+      return { kind: "Tr2ControllerReference", fields: { name: "layout-controller", curves: [], bindings: [] } };
     }
     return null;
   });
@@ -1729,10 +1729,92 @@ test("SOF async document requests deduplicate one normalized path across consume
   const root = rootNode(document);
   assert.equal(loads, 1);
   assert.equal(root.fields.children.length, 1);
-  assert.equal(root.fields.controllers.length, 1);
-  assert.notEqual(root.fields.children[0].$ref, root.fields.controllers[0].$ref);
   assert.equal(referencedNode(document, root.fields.children[0]).fields.name, "shared");
-  assert.equal(referencedNode(document, root.fields.controllers[0]).fields.name, "shared");
+  // The fetch deduplicates across roles, but the controller role then applies
+  // Carbon's typed-load gate: an EveTransform root is not an ITr2Controller,
+  // so the controller is skipped with a diagnostic (EveSOF.cpp:2024-2031).
+  assert.equal(root.fields.controllers.length, 0);
+  assert.deepEqual(sof.GetBuildDiagnostics(), [{
+    code: "object-resource-wrong-type",
+    role: "controller",
+    path: "res:/shared.red",
+    kind: "EveTransform",
+    expected: "ITr2Controller",
+  }]);
+});
+
+test("SOF enforces Carbon resource interfaces at the resolver boundary", () => {
+  // Children: a root that casts to neither EveTransform nor
+  // IEveSpaceObjectChild logs "not of correct type" and aborts the setup
+  // pass, skipping the remaining children AND the animation pass
+  // (EveSOF.cpp:1840-1844); SOF6 child sets abort identically (2000-2004).
+  const data = createData();
+  data.hull[0].children = [
+    { redFilePath: "res:/wrong.red" },
+    { redFilePath: "res:/after.red" },
+  ];
+  data.hull[0].animations = [{ id: -1, name: "anim", startRotationTime: 0, startRotationValue: [0, 0, 0, 1], endRotationTime: 1, endRotationValue: [0, 0, 0, 1], startRate: -1 }];
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  const resolved = [];
+  sof.SetChildResourceResolver(path => {
+    resolved.push(path);
+    return path === "res:/wrong.red"
+      ? { kind: "Tr2Effect", target: "effectChildren", fields: {} }
+      : { kind: "EveTransform", fields: {} };
+  });
+  const document = sof.Build("rifter", "minmatar", "minmatar");
+  const root = rootNode(document);
+  assert.deepEqual(resolved, ["res:/wrong.red"]);
+  assert.equal(root.fields.children.length, 0);
+  assert.equal(root.fields.effectChildren.length, 0);
+  assert.equal(root.fields.curveSets.length, 0, "animation pass is skipped like Carbon");
+  assert.deepEqual(sof.GetBuildDiagnostics(), [{
+    code: "child-resource-wrong-type",
+    path: "res:/wrong.red",
+    kind: "Tr2Effect",
+    target: "effectChildren",
+  }]);
+
+  // Model curves: Carbon's typed loads silently skip non-conforming roots
+  // (EveSOF.cpp:1672-1690); the builder records the same rejection as a
+  // diagnostic. A descriptor may claim interface conformance explicitly.
+  const curveData = createData();
+  curveData.hull[0].modelRotationCurvePath = "res:/rotation.red";
+  curveData.hull[0].modelTranslationCurvePath = "res:/translation.red";
+  const curveSof = new EveSOF();
+  assert.equal(curveSof.dataMgr.SetData(curveData), true);
+  curveSof.SetObjectResourceResolver(path => path.includes("rotation")
+    ? { kind: "Tr2CurveScalar", fields: {} }
+    : { kind: "CjsCustomCurve", implements: ["ITriVectorFunction"], fields: {} });
+  const curveDocument = curveSof.Build("rifter", "minmatar", "minmatar");
+  const curveRoot = rootNode(curveDocument);
+  assert.equal(curveRoot.fields.modelRotationCurve, null);
+  assert.ok(curveRoot.fields.modelTranslationCurve, "implements claim satisfies the gate");
+  assert.deepEqual(curveSof.GetBuildDiagnostics(), [{
+    code: "object-resource-wrong-type",
+    role: "modelRotationCurve",
+    path: "res:/rotation.red",
+    kind: "Tr2CurveScalar",
+    expected: "ITriQuaternionFunction",
+  }]);
+
+  // SOF6 child sets: the wrong-type return abandons the remaining sets.
+  const sof6Data = createData();
+  sof6Data.hull[0].sof6 = true;
+  sof6Data.hull[0].childSets = [
+    { items: [{ redFilePath: "res:/wrong.red" }] },
+    { items: [{ redFilePath: "res:/valid.red" }] },
+  ];
+  sof6Data.faction[0].visibilityGroupSet = { visibilityGroups: [{ str: "primary" }] };
+  const sof6 = new EveSOF();
+  assert.equal(sof6.dataMgr.SetData(sof6Data), true);
+  sof6.SetChildResourceResolver(path => path === "res:/wrong.red"
+    ? { kind: "Tr2Effect", target: "effectChildren", fields: {} }
+    : { kind: "EveChildMesh", fields: {} });
+  const sof6Root = rootNode(sof6.Build("rifter", "minmatar", "minmatar"));
+  assert.equal(sof6Root.fields.children.length, 0);
+  assert.equal(sof6Root.fields.effectChildren.length, 0);
 });
 
 test("SOF async builds isolate concurrent descriptor and existence results", async () => {
@@ -2077,7 +2159,7 @@ test("SOF emits first-hull audio, filtered controllers, and model curve resource
   const resolved = [];
   sof.SetObjectResourceResolver((path, context) => {
     resolved.push([path, context.role]);
-    if (context.role === "controller") return { kind: "TriCurveSet", fields: { name: "controller" } };
+    if (context.role === "controller") return { kind: "Tr2ControllerReference", fields: { name: "controller" } };
     if (context.role === "modelRotationCurve") return { kind: "Tr2RotationAdapter", fields: {} };
     return { kind: "Tr2TranslationAdapter", fields: {} };
   });
@@ -2102,7 +2184,7 @@ test("SOF emits first-hull audio, filtered controllers, and model curve resource
     position: [1, 2, 3],
     attenuationScalingFactor: 2.5,
   });
-  assert.equal(referencedNode(document, root.fields.controllers[0]).kind, "TriCurveSet");
+  assert.equal(referencedNode(document, root.fields.controllers[0]).kind, "Tr2ControllerReference");
   assert.equal(referencedNode(document, root.fields.modelRotationCurve).kind, "Tr2RotationAdapter");
   assert.equal(referencedNode(document, root.fields.modelTranslationCurve).kind, "Tr2TranslationAdapter");
   const animationSet = referencedNode(document, root.fields.curveSets[0]);
@@ -4291,7 +4373,7 @@ test("EveSOF routes animated extension children through Solo Placement", {
   });
   sof.SetObjectResourceResolver((path, context) => (
     path === "res:/extension-controller.red" && context.role === "controller"
-      ? { kind: "TriCurveSet", fields: { name: "extension-controller", curves: [], bindings: [] } }
+      ? { kind: "Tr2ControllerReference", fields: { name: "extension-controller", curves: [], bindings: [] } }
       : null
   ));
   assert.equal(sof.dataMgr.SetData(data), true);

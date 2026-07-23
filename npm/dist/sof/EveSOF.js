@@ -37,6 +37,37 @@ const MIN_MESH_SCREEN_SIZE = 2.5;
 // runtime-sof stays free of a runtime-trinity dependency, so the enum value
 // from Tr2LodResource.h is mirrored here.
 const TR2_LOD_HIGH = 2;
+
+// Carbon validates every resolved resource root against the interface its
+// role requires before attaching it: children must cast to EveTransform or
+// IEveSpaceObjectChild (EveSOF.cpp:1786-1844,1949-2004), controllers load as
+// ITr2Controller (2014-2033), and model curves load as ITriQuaternionFunction
+// / ITriVectorFunction (1668-1691). The GPU-free builder has no class
+// registry, so conformance comes from the descriptor's explicit `implements`
+// claim or from these Carbon-source kind inventories.
+const CHILD_TRANSFORM_KINDS = new Set(["EveTransform", "EveRootTransform", "EveMissileWarhead"]);
+const SPACE_OBJECT_CHILD_KINDS = new Set(["EveChildAudio", "EveChildBehaviorSystem", "EveChildBulletStorm", "EveChildCloud", "EveChildCloud2", "EveChildContainer", "EveChildEffectPropagator", "EveChildExplosion", "EveChildFogVolume", "EveChildInstanceContainer", "EveChildInstanceMeshRenderer", "EveChildInstancedMeshes", "EveChildLightingOverride", "EveChildLineSet", "EveChildLink", "EveChildMesh", "EveChildParticleSphere", "EveChildParticleSystem", "EveChildPlug", "EveChildPostProcessVolume", "EveChildProceduralContainer", "EveChildQuad", "EveChildRef", "EveChildSmartLightSet", "EveChildSocket", "EveChildSpherePin", "EveEllipseSet"]);
+const OBJECT_RESOURCE_ROLE_GATES = Object.freeze({
+  controller: {
+    interfaceName: "ITr2Controller",
+    kinds: new Set(["Tr2Controller", "Tr2ControllerReference", "Tr2TimelineController"])
+  },
+  modelRotationCurve: {
+    interfaceName: "ITriQuaternionFunction",
+    kinds: new Set(["Tr2CurveConstant", "Tr2CurveEulerRotation", "Tr2CurveEulerRotationExpression", "Tr2CurveQuaternion", "Tr2CurveRandomAxisRotation", "Tr2QuaternionLerpCurve", "Tr2RotationAdapter", "TriRigidOrientation"])
+  },
+  modelTranslationCurve: {
+    interfaceName: "ITriVectorFunction",
+    kinds: new Set(["EveLocalPositionCurve", "EveRemotePositionCurve", "Tr2CurveCombiner", "Tr2CurveConstant", "Tr2CurveVector3", "Tr2CurveVector3Expression", "Tr2CurveVector3Lerp", "Tr2FollowCurve", "Tr2TranslationAdapter", "Tr2VectorFunctionModifier", "TriVectorSequencer"])
+  }
+});
+
+// Sentinel returned when a resolved child root fails Carbon's type gate; the
+// callers mirror Carbon's early return rather than skipping one item.
+const WRONG_TYPE_CHILD = Symbol("wrong-type-child");
+function descriptorClaimsInterface(descriptor, interfaceName) {
+  return Array.isArray(descriptor.implements) && descriptor.implements.includes(interfaceName);
+}
 // EveChildInheritProperties field order (runtime-trinity is the authority for
 // these names); dna.GetColorSet() is index-aligned with this Carbon color-slot
 // order, so the authored color set projects onto named, persisted fields.
@@ -839,6 +870,10 @@ class EveSOF extends CjsModel {
       const factionChild = dna.GetFactionChildData(child.groupIndex);
       if (factionChild && !factionChild.isVisible) continue;
       const descriptor = this.#resolveChildResource(child.redFilePath, child, false);
+      // Carbon returns from SetupChildrenAndAnimations on a wrong-type child,
+      // skipping the remaining children AND the animation pass (EveSOF.cpp:
+      // 1840-1844); an unresolvable resource only skips the one child (1779-1783).
+      if (descriptor === WRONG_TYPE_CHILD) return;
       if (!descriptor) continue;
       for (const offset of offsets) {
         const animationId = Number(child.id ?? -1);
@@ -897,6 +932,9 @@ class EveSOF extends CjsModel {
       for (const child of childSet.items) {
         if ((Number(child.buildFilter) >>> 0 & Number(buildFlags) >>> 0) === 0) continue;
         const descriptor = this.#resolveChildResource(child.redFilePath, child, true);
+        // Carbon returns from SetupEffectChildren entirely on a wrong-type
+        // child, skipping the remaining child sets (EveSOF.cpp:2000-2004).
+        if (descriptor === WRONG_TYPE_CHILD) return;
         if (!descriptor) continue;
         for (const offset of offsets) {
           this.#addResolvedChild(document, objectFields, childOwnerFields, descriptor, child, offset);
@@ -934,9 +972,24 @@ class EveSOF extends CjsModel {
     if (typeof kind !== "string" || kind.length === 0) {
       throw new TypeError("EveSOF child resource descriptor requires a root kind");
     }
-    const target = descriptor.target ?? (kind === "EveTransform" ? "children" : "effectChildren");
+    const isTransform = CHILD_TRANSFORM_KINDS.has(kind) || descriptorClaimsInterface(descriptor, "EveTransform");
+    const isSpaceObjectChild = SPACE_OBJECT_CHILD_KINDS.has(kind) || descriptorClaimsInterface(descriptor, "IEveSpaceObjectChild");
+    const target = descriptor.target ?? (isTransform ? "children" : "effectChildren");
     if (target !== "children" && target !== "effectChildren") {
       throw new TypeError("EveSOF child resource target must be children or effectChildren");
+    }
+    // Carbon casts the loaded root: EveTransform joins the children list,
+    // IEveSpaceObjectChild joins the effect children, and anything else logs
+    // "not of correct type" and aborts the surrounding setup pass
+    // (EveSOF.cpp:1786-1844,1949-2004).
+    if (target === "children" ? !isTransform : !isSpaceObjectChild) {
+      this.#buildDiagnostics.push({
+        code: "child-resource-wrong-type",
+        path: String(redFilePath ?? ""),
+        kind,
+        target
+      });
+      return WRONG_TYPE_CHILD;
     }
     return {
       kind,
@@ -1479,6 +1532,20 @@ class EveSOF extends CjsModel {
     }
     if (typeof kind !== "string" || kind.length === 0) {
       throw new TypeError("EveSOF object resource descriptor requires a root kind");
+    }
+    // Carbon loads these roles through typed LoadObject calls, so a root that
+    // does not implement the role's interface never attaches: controllers log
+    // and skip (EveSOF.cpp:2024-2031); model curves skip (1672-1690).
+    const gate = OBJECT_RESOURCE_ROLE_GATES[role];
+    if (gate && !gate.kinds.has(kind) && !descriptorClaimsInterface(descriptor, gate.interfaceName)) {
+      this.#buildDiagnostics.push({
+        code: "object-resource-wrong-type",
+        role,
+        path: String(path ?? ""),
+        kind,
+        expected: gate.interfaceName
+      });
+      return null;
     }
     return {
       kind,
