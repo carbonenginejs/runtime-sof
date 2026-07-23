@@ -1,5 +1,5 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { type } from '@carbonenginejs/core-types/schema';
+import { io, type } from '@carbonenginejs/core-types/schema';
 import { CjsModel } from '@carbonenginejs/core-types/model';
 import { quat } from '@carbonenginejs/core-math/quat';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
@@ -16,7 +16,7 @@ class EveSofDataMeshInstance extends CjsModel {
     } = _applyDecs2311(this, [type.define({
       className: "EveSofDataMeshInstance",
       family: "eve"
-    })], [[[type, type.quat], 16, "rotation"], [[type, type.vec3], 16, "scaling"], [[type, type.vec3], 16, "translation"], [[type, type.int32], 16, "boneIndex"]], 0, void 0, CjsModel));
+    })], [[[io, io.persist, type, type.quat], 16, "rotation"], [[io, io.persist, type, type.vec3], 16, "scaling"], [[io, io.persist, type, type.vec3], 16, "translation"], [[io, io.persist, type, type.int32], 16, "boneIndex"]], 0, void 0, CjsModel));
   }
   constructor(...args) {
     super(...args);
