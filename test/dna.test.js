@@ -2215,8 +2215,14 @@ test("SOF object resource resolution is explicit and synchronous", () => {
   }];
   const sof = new EveSOF();
   assert.equal(sof.dataMgr.SetData(data), true);
-  const unresolved = rootNode(sof.Build("rifter", "minmatar", "minmatar"));
-  assert.deepEqual(unresolved.fields.controllers, []);
+  const unresolvedDocument = sof.Build("rifter", "minmatar", "minmatar");
+  const unresolved = rootNode(unresolvedDocument);
+  // Without a resolver the controller defers through Carbon's own
+  // Tr2ControllerReference node instead of dropping silently.
+  assert.equal(unresolved.fields.controllers.length, 1);
+  const controllerRef = referencedNode(unresolvedDocument, unresolved.fields.controllers[0]);
+  assert.equal(controllerRef.kind, "Tr2ControllerReference");
+  assert.equal(controllerRef.fields.path, "res:/controller.red");
   assert.equal(unresolved.fields.modelRotationCurve.$ref > 0, true);
   assert.equal(sof.CreateDna("rifter:minmatar:minmatar").GetModelTranslationCurvePath(), null);
   assert.throws(() => sof.SetObjectResourceResolver(false), /function or null/);
@@ -5260,20 +5266,33 @@ test("values projection keeps parity while deferred audio raw stays document-onl
   );
 });
 
-test("SOF sync builds diagnose unresolved resource references", () => {
-  // The sync build is the pure-data path: it cannot self-resolve like
-  // Carbon's BeResMan-backed build, so unwired or failed references are
-  // recorded instead of silently emitting an incomplete document.
+test("SOF sync builds defer references and diagnose failed resolution", () => {
+  // Without resolvers the build stays complete AS DATA: children and
+  // controllers defer through Carbon's own reference nodes (EveChildRef,
+  // Tr2ControllerReference) carrying the authored res path and the computed
+  // placement; only bindings that would reach into unloaded graphs are
+  // diagnosed. Model curves have no Carbon reference node and diagnose.
   const data = createData();
-  data.hull[0].children = [{ redFilePath: "res:/child.red" }];
+  data.hull[0].children = [{ redFilePath: "res:/child.red", id: 3, translation: [1, 2, 3] }];
   data.hull[0].controllers = [{ path: "res:/controller.red" }];
+  data.hull[0].modelTranslationCurvePath = "res:/translation.red";
   const sof = new EveSOF();
   assert.equal(sof.dataMgr.SetData(data), true);
-  assert.ok(sof.Build("rifter", "minmatar", "minmatar"));
-  const unwired = sof.GetBuildDiagnostics().sort((a, b) => a.code.localeCompare(b.code));
-  assert.deepEqual(unwired, [
-    { code: "unresolved-child-resource", reason: "no-resolver", path: "res:/child.red" },
-    { code: "unresolved-object-resource", reason: "no-resolver", role: "controller", path: "res:/controller.red" },
+  const document = sof.Build("rifter", "minmatar", "minmatar");
+  const root = rootNode(document);
+  assert.equal(root.fields.children.length, 0);
+  assert.equal(root.fields.effectChildren.length, 1);
+  const childRef = referencedNode(document, root.fields.effectChildren[0]);
+  assert.equal(childRef.kind, "EveChildRef");
+  assert.equal(childRef.fields.resPath, "res:/child.red");
+  assert.equal(childRef.fields.loadChildAutomatically, true);
+  assert.deepEqual(childRef.fields.translation, [1, 2, 3]);
+  assert.equal(root.fields.controllers.length, 1);
+  assert.equal(referencedNode(document, root.fields.controllers[0]).kind, "Tr2ControllerReference");
+  const codes = sof.GetBuildDiagnostics().sort((a, b) => a.code.localeCompare(b.code));
+  assert.deepEqual(codes, [
+    { code: "deferred-child-animation-binding", path: "res:/child.red", id: 3 },
+    { code: "unresolved-object-resource", reason: "no-resolver", role: "modelTranslationCurve", path: "res:/translation.red" },
   ]);
 
   // A configured resolver that cannot resolve matches Carbon's logged
@@ -5282,9 +5301,23 @@ test("SOF sync builds diagnose unresolved resource references", () => {
   assert.equal(resolving.dataMgr.SetData(data), true);
   resolving.SetChildResourceResolver(() => null);
   resolving.SetObjectResourceResolver(() => null);
-  assert.ok(resolving.Build("rifter", "minmatar", "minmatar"));
+  const resolved = rootNode(resolving.Build("rifter", "minmatar", "minmatar"));
+  assert.equal(resolved.fields.effectChildren.length, 0);
+  assert.equal(resolved.fields.controllers.length, 0);
   assert.deepEqual(
     resolving.GetBuildDiagnostics().map(entry => entry.reason),
-    ["not-resolved", "not-resolved"],
+    ["not-resolved", "not-resolved", "not-resolved"],
   );
+});
+
+test("SOF resFileIndex registration wires the synchronous existence oracle", () => {
+  const sof = new EveSOF();
+  assert.throws(() => sof.Register({ resFileIndex: 5 }), /resFileIndex/);
+  const seen = [];
+  sof.Register({ resFileIndex: path => { seen.push(path); return path.endsWith("_d.dds"); } });
+  // Set/Map/Has surfaces are accepted equivalently.
+  new EveSOF().Register({ resFileIndex: new Set(["res:/a.dds"]) });
+  new EveSOF().Register({ resFileIndex: new Map([["res:/a.dds", true]]) });
+  new EveSOF().Register({ resFileIndex: { Has: () => true } });
+  new EveSOF().Register({ resFileIndex: null });
 });

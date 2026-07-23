@@ -355,6 +355,22 @@ export class EveSOF extends CjsModel
     {
       this.volumetricTrailPath = String(options.volumetricTrailPath ?? "");
     }
+    if (Object.prototype.hasOwnProperty.call(options, "resFileIndex"))
+    {
+      // The resfileindex is the synchronous existence oracle Carbon gets from
+      // its file system: authored res paths either appear in the index or do
+      // not. Texture resPathInsert selection needs only this membership test,
+      // so providing the index keeps the sync build pure while matching
+      // Carbon's existence-driven path rewriting. Accepts the tools-browser
+      // CjsFileIndex surface (Has), a Set/Map, a predicate, or null to clear.
+      const index = options.resFileIndex;
+      if (index === null) this.SetResourceExistsResolver(null);
+      else if (typeof index === "function") this.SetResourceExistsResolver(path => Boolean(index(path)));
+      else if (index instanceof Set || index instanceof Map) this.SetResourceExistsResolver(path => index.has(path));
+      else if (typeof index?.Has === "function") this.SetResourceExistsResolver(path => Boolean(index.Has(path)));
+      else if (typeof index?.has === "function") this.SetResourceExistsResolver(path => Boolean(index.has(path)));
+      else throw new TypeError("EveSOF resFileIndex must expose Has/has, be a predicate, a Set, a Map, or null");
+    }
     if (Object.prototype.hasOwnProperty.call(options, "editorMode"))
     {
       this.editorMode = Boolean(options.editorMode);
@@ -1197,6 +1213,18 @@ export class EveSOF extends CjsModel
       // 1840-1844); an unresolvable resource only skips the one child (1779-1783).
       if (descriptor === WRONG_TYPE_CHILD) return;
       if (!descriptor) continue;
+      // Emitter rate bindings reach INTO the loaded child's graph; a deferred
+      // EveChildRef has no graph to bind yet, so the binding is recorded as a
+      // diagnostic instead of silently dropped. Embedding resolvers keep the
+      // full Carbon binding behavior.
+      if (descriptor.reference && Number(child.id ?? -1) !== -1)
+      {
+        this.#buildDiagnostics.push({
+          code: "deferred-child-animation-binding",
+          path: String(child.redFilePath ?? ""),
+          id: Number(child.id)
+        });
+      }
       for (const offset of offsets)
       {
         const animationId = Number(child.id ?? -1);
@@ -1287,18 +1315,27 @@ export class EveSOF extends CjsModel
 
   #resolveChildResource(redFilePath, child, sof6)
   {
-    // The synchronous build is the pure-data path: it cannot self-resolve
-    // like Carbon's BeResMan-backed build, so an unresolved reference is
-    // diagnosed instead of silently emitting an incomplete document. The
-    // async Build entry points pre-resolve through the injected provider.
+    // Without a resolver the build stays complete AS DATA through Carbon's
+    // own deferred-loading node: EveChildRef persists resPath, placement, and
+    // loadChildAutomatically, and the runtime loads and attaches the child
+    // when it pleases (EveChildRef_Blue.cpp:22-34). The type-based
+    // children/effectChildren routing then happens at load time, where the
+    // real root type is known. A configured resolver instead embeds the
+    // child inline (the resolver supplies the type Carbon's cast would see).
     if (!this.#childResourceResolver)
     {
-      this.#buildDiagnostics.push({
-        code: "unresolved-child-resource",
-        reason: "no-resolver",
-        path: String(redFilePath ?? "")
-      });
-      return null;
+      return {
+        kind: "EveChildRef",
+        target: "effectChildren",
+        reference: true,
+        fields: {
+          resPath: String(redFilePath ?? ""),
+          loadChildAutomatically: true
+        },
+        raw: {},
+        fragment: null,
+        rootRef: null
+      };
     }
     let descriptor = this.#childResourceResolver(String(redFilePath ?? ""), { child, sof6 });
     if (descriptor && typeof descriptor.then === "function")
@@ -2015,10 +2052,24 @@ export class EveSOF extends CjsModel
 
   #resolveObjectResource(path, role)
   {
-    // Same contract as #resolveChildResource: sync builds diagnose what
-    // Carbon's self-resolving build would have loaded.
     if (!this.#objectResourceResolver)
     {
+      // Controllers have Carbon's own deferred node: Tr2ControllerReference
+      // persists the path and loads the controller at runtime
+      // (Tr2ControllerReference_Blue.cpp:16-23).
+      if (role === "controller")
+      {
+        return {
+          kind: "Tr2ControllerReference",
+          reference: true,
+          fields: { path: String(path ?? "") },
+          raw: {},
+          fragment: null,
+          rootRef: null
+        };
+      }
+      // Model curves have no Carbon reference node; the sync build diagnoses
+      // what Carbon's self-resolving build would have loaded.
       this.#buildDiagnostics.push({
         code: "unresolved-object-resource",
         reason: "no-resolver",

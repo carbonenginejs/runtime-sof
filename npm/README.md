@@ -177,18 +177,32 @@ Resolver failures reject the complete operation with code
 partial document is returned. A resolved `null` remains an optional missing
 dependency and follows the synchronous omission behavior.
 
-The async Build methods are the runtime API. Carbon's synchronous build is
+The async Build methods are the embedding API. Carbon's synchronous build is
 self-resolving only because C++ blocks on its global resource manager; the
 authored `res:/...red` references resolve to compiled `.black` payloads that
 only a resource layer (in this organization, `@carbonenginejs/runtime-resource`
-and its `CjsResMan`) can fetch and decode. The synchronous Build methods are
-therefore the pure-data path for tests and preloaded tools: any child,
-controller, or model-curve reference encountered without a configured resolver
-- or that a configured resolver declines - records an
-`unresolved-child-resource` / `unresolved-object-resource` diagnostic
-(readable through `GetBuildDiagnostics()`) and continues, mirroring Carbon's
-logged invalid-resource skip. A synchronous build with an empty diagnostics
-list is complete; one with unresolved entries is knowingly partial.
+and its `CjsResMan`) can fetch and decode.
+
+Without resolvers, the synchronous Build methods stay complete AS DATA through
+Carbon's own deferred-loading nodes: hull children emit `EveChildRef`
+(persisted `resPath`, placement, `loadChildAutomatically`) and controllers
+emit `Tr2ControllerReference` (persisted `path`), exactly the nodes Carbon
+ships for runtime-loaded references. The consuming runtime loads each
+reference when it pleases and routes the loaded root by its real type. The
+emitted document doubles as its own dependency manifest. Two things cannot
+defer: emitter rate bindings that reach into an unloaded child's graph record
+a `deferred-child-animation-binding` diagnostic, and model curves (no Carbon
+reference node exists) record `unresolved-object-resource`. A configured
+resolver that declines a path records the same diagnostic with reason
+`not-resolved`, mirroring Carbon's logged invalid-resource skip. Diagnostics
+for the most recent build are readable through `GetBuildDiagnostics()`.
+
+Texture `resPathInsert` selection is existence-driven at build time in Carbon.
+Provide the resfileindex as the synchronous existence oracle -
+`Register({ resFileIndex })` accepts the tools-browser `CjsFileIndex` surface
+(`Has`), a `Set`/`Map`, or a predicate - or supply an async `exists` callback
+(for example backed by a remote index service) and use the async Build
+methods.
 
 ## Checks
 
