@@ -1,6 +1,6 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
 import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { IEveSOFDataHullExtensionPlacement as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacement.js';
 import { EveSOFDNADescriptor as _EveSOFDNADescriptor } from '../shared/EveSOFDNADescriptor.js';
 import { EveSOFDataHullExtensionPlacementDistributionPlacement as _EveSOFDataHullExtens$1 } from './EveSOFDataHullExtensionPlacementDistributionPlacement.js';
 import { vec3 } from '@carbonenginejs/core-math/vec3';
@@ -9,7 +9,7 @@ let _initClass, _init_distributionConditions, _init_extra_distributionConditions
 
 /** EveSOFDataHullExtensionPlacement (eve) - generated from schema shapeHash 9f4b8ceb.... */
 let _EveSOFDataHullExtens;
-class EveSOFDataHullExtensionPlacement extends CjsModel {
+class EveSOFDataHullExtensionPlacement extends _IEveSOFDataHullExten {
   static {
     ({
       e: [_init_distributionConditions, _init_extra_distributionConditions, _init_extendsBoundingSphere, _init_extra_extendsBoundingSphere, _init_extendsShieldEllipsoid, _init_extra_extendsShieldEllipsoid, _init_isShared, _init_extra_isShared, _init_isInstanced, _init_extra_isInstanced, _init_enabled, _init_extra_enabled, _init_distribution, _init_extra_distribution, _init_descriptor, _init_extra_descriptor, _init_locatorSetName, _init_extra_locatorSetName, _init_name, _init_extra_name, _init_offset, _init_extra_offset],
@@ -17,7 +17,7 @@ class EveSOFDataHullExtensionPlacement extends CjsModel {
     } = _applyDecs2311(this, [type.define({
       className: "EveSOFDataHullExtensionPlacement",
       family: "eve"
-    })], [[[io, io.persist, void 0, type.list("IEveSOFDataHullExtensionPlacementDistribution")], 16, "distributionConditions"], [[io, io.persist, type, type.boolean], 16, "extendsBoundingSphere"], [[io, io.persist, type, type.boolean], 16, "extendsShieldEllipsoid"], [[io, io.persist, type, type.boolean], 16, "isShared"], [[io, io.persist, type, type.boolean], 16, "isInstanced"], [[io, io.persist, type, type.boolean], 16, "enabled"], [[io, io.persist, void 0, type.objectRef("EveSOFDataHullExtensionPlacementDistributionPlacement")], 16, "distribution"], [[io, io.persist, void 0, type.objectRef("EveSOFDNADescriptor")], 16, "descriptor"], [[io, io.persist, type, type.string], 16, "locatorSetName"], [[io, io.persist, type, type.string], 16, "name"], [[io, io.persist, type, type.vec3], 16, "offset"]], 0, void 0, CjsModel));
+    })], [[[io, io.persist, void 0, type.list("IEveSOFDataHullExtensionPlacementDistribution")], 16, "distributionConditions"], [[io, io.persist, type, type.boolean], 16, "extendsBoundingSphere"], [[io, io.persist, type, type.boolean], 16, "extendsShieldEllipsoid"], [[io, io.persist, type, type.boolean], 16, "isShared"], [[io, io.persist, type, type.boolean], 16, "isInstanced"], [[io, io.persist, type, type.boolean], 16, "enabled"], [[io, io.persist, void 0, type.objectRef("EveSOFDataHullExtensionPlacementDistributionPlacement")], 16, "distribution"], [[io, io.persist, void 0, type.objectRef("EveSOFDNADescriptor")], 16, "descriptor"], [[io, io.persist, type, type.string], 16, "locatorSetName"], [[io, io.persist, type, type.string], 16, "name"], [[io, io.persist, type, type.vec3], 16, "offset"]], 0, void 0, _IEveSOFDataHullExten));
   }
   constructor(...args) {
     super(...args);

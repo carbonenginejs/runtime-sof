@@ -30,7 +30,7 @@ class EveSOFDataDecalIndexBuffer extends CjsModel {
     next.set(source);
     next[source.length] = Number(index) >>> 0;
     this.indexBuffer = next;
-    return true;
+    // Carbon: void AddIndex(uint32_t) (EveSOFData.h:1276) - no return value.
   }
 
   /** Carbon method GetIndices (MAP_METHOD_AND_WRAP). */

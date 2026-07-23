@@ -864,3 +864,20 @@ test("SOF derived GetName helpers mirror Carbon path stripping", () => {
   assert.equal(new EveSOFDataHullChildSet().GetName(), "primary");
   assert.equal(new EveSOFDataHullBannerSet().GetName(), "primary");
 });
+
+test("SOF locator-set and extension-placement records carry Carbon nominal identity", async () => {
+  // Carbon declares both as empty BLUE_INTERFACE markers over IRoot
+  // (EveSOFData.h:1107-1111,1911-1915); the concrete classes implement them.
+  const { EveSOFDataHullLocatorSet, EveSOFDataHullLocatorSetGroup, IEveSOFDataHullLocatorSet } =
+    await import("../npm/dist/sof/hull/index.js");
+  const { IEveSOFDataHullExtensionPlacement } =
+    await import("../npm/dist/sof/layout/IEveSOFDataHullExtensionPlacement.js");
+  assert.equal(new EveSOFDataHullLocatorSet() instanceof IEveSOFDataHullLocatorSet, true);
+  assert.equal(new EveSOFDataHullLocatorSetGroup() instanceof IEveSOFDataHullLocatorSet, true);
+  assert.equal(new EveSOFDataHullExtensionPlacement() instanceof IEveSOFDataHullExtensionPlacement, true);
+  // Buckets reach the marker interface through their real Carbon parent.
+  assert.equal(new EveSOFDataHullExtensionBucket() instanceof IEveSOFDataHullExtensionPlacement, true);
+  // Carbon: void AddIndex(uint32_t) (EveSOFData.h:1276).
+  const { EveSOFDataDecalIndexBuffer } = await import("../npm/dist/sof/shared/index.js");
+  assert.equal(new EveSOFDataDecalIndexBuffer().AddIndex(1), undefined);
+});

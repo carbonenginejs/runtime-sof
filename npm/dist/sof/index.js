@@ -42,6 +42,7 @@ export { EveSOFDataHullLightSetItem } from './hull/EveSOFDataHullLightSetItem.js
 export { EveSOFDataHullLightSetSpotLight } from './hull/EveSOFDataHullLightSetSpotLight.js';
 export { EveSOFDataHullLightSetTexturedPointLight } from './hull/EveSOFDataHullLightSetTexturedPointLight.js';
 export { EveSOFDataHullLocator } from './hull/EveSOFDataHullLocator.js';
+export { IEveSOFDataHullLocatorSet } from './hull/IEveSOFDataHullLocatorSet.js';
 export { EveSOFDataHullLocatorSet } from './hull/EveSOFDataHullLocatorSet.js';
 export { EveSOFDataHullLocatorSetGroup } from './hull/EveSOFDataHullLocatorSetGroup.js';
 export { EveSOFDataHullPlaneSet } from './hull/EveSOFDataHullPlaneSet.js';
@@ -64,6 +65,7 @@ export { EveSOFDataHullExtensionPlacementDistributionPlacement } from './layout/
 export { EveSOFDataHullExtensionPlacementDistributionRandomChance } from './layout/EveSOFDataHullExtensionPlacementDistributionRandomChance.js';
 export { EveSOFDataHullExtensionPlacementGroup } from './layout/EveSOFDataHullExtensionPlacementGroup.js';
 export { EveSOFDataLayout } from './layout/EveSOFDataLayout.js';
+export { IEveSOFDataHullExtensionPlacement } from './layout/IEveSOFDataHullExtensionPlacement.js';
 export { IEveSOFDataHullExtensionPlacementDistribution } from './layout/IEveSOFDataHullExtensionPlacementDistribution.js';
 export { ErrSOFProjectionNotFound, EveSOFDataPattern } from './pattern/EveSOFDataPattern.js';
 export { EveSOFDataPatternApplicationGroup } from './pattern/EveSOFDataPatternApplicationGroup.js';

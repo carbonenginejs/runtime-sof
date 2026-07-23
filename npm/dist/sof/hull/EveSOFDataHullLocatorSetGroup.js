@@ -1,12 +1,12 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
 import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { IEveSOFDataHullLocatorSet as _IEveSOFDataHullLocat } from './IEveSOFDataHullLocatorSet.js';
 
 let _initClass, _init_locatorSets, _init_extra_locatorSets, _init_name, _init_extra_name;
 
 /** EveSOFDataHullLocatorSetGroup (eve) - generated from schema shapeHash 0b9a4431.... */
 let _EveSOFDataHullLocato;
-class EveSOFDataHullLocatorSetGroup extends CjsModel {
+class EveSOFDataHullLocatorSetGroup extends _IEveSOFDataHullLocat {
   static {
     ({
       e: [_init_locatorSets, _init_extra_locatorSets, _init_name, _init_extra_name],
@@ -14,7 +14,7 @@ class EveSOFDataHullLocatorSetGroup extends CjsModel {
     } = _applyDecs2311(this, [type.define({
       className: "EveSOFDataHullLocatorSetGroup",
       family: "eve"
-    })], [[[io, io.persist, void 0, type.list("IEveSOFDataHullLocatorSet")], 16, "locatorSets"], [[io, io.persist, type, type.string], 16, "name"]], 0, void 0, CjsModel));
+    })], [[[io, io.persist, void 0, type.list("IEveSOFDataHullLocatorSet")], 16, "locatorSets"], [[io, io.persist, type, type.string], 16, "name"]], 0, void 0, _IEveSOFDataHullLocat));
   }
   constructor(...args) {
     super(...args);

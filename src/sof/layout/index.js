@@ -8,4 +8,5 @@ export { EveSOFDataHullExtensionPlacementDistributionPlacement } from "./EveSOFD
 export { EveSOFDataHullExtensionPlacementDistributionRandomChance } from "./EveSOFDataHullExtensionPlacementDistributionRandomChance.js";
 export { EveSOFDataHullExtensionPlacementGroup } from "./EveSOFDataHullExtensionPlacementGroup.js";
 export { EveSOFDataLayout } from "./EveSOFDataLayout.js";
+export { IEveSOFDataHullExtensionPlacement } from "./IEveSOFDataHullExtensionPlacement.js";
 export { IEveSOFDataHullExtensionPlacementDistribution } from "./IEveSOFDataHullExtensionPlacementDistribution.js";

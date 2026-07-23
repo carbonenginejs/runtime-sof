@@ -20,6 +20,7 @@ export { EveSOFDataHullLightSetItem } from './EveSOFDataHullLightSetItem.js';
 export { EveSOFDataHullLightSetSpotLight } from './EveSOFDataHullLightSetSpotLight.js';
 export { EveSOFDataHullLightSetTexturedPointLight } from './EveSOFDataHullLightSetTexturedPointLight.js';
 export { EveSOFDataHullLocator } from './EveSOFDataHullLocator.js';
+export { IEveSOFDataHullLocatorSet } from './IEveSOFDataHullLocatorSet.js';
 export { EveSOFDataHullLocatorSet } from './EveSOFDataHullLocatorSet.js';
 export { EveSOFDataHullLocatorSetGroup } from './EveSOFDataHullLocatorSetGroup.js';
 export { EveSOFDataHullPlaneSet } from './EveSOFDataHullPlaneSet.js';
