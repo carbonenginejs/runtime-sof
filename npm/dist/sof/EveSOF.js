@@ -21,7 +21,7 @@ import { EveSOFDataMgr as _EveSOFDataMgr } from './EveSOFDataMgr.js';
 import { createSofHydrationAdapter } from './createSofHydrationAdapter.js';
 import { planSofLayouts } from './layoutPlanner.js';
 
-let _initProto, _initClass, _init_allowFileCaching, _init_extra_allowFileCaching, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode;
+let _initProto, _initClass, _init_allowFileCaching, _init_extra_allowFileCaching, _init_alphaCutoutShadowsEnabled, _init_extra_alphaCutoutShadowsEnabled, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode;
 const BUILD_CLASS_TYPES = Object.freeze({
   [_EveSOFDataHull.BuildClass.BUILDCLASS_SHIP]: "EveShip2",
   [_EveSOFDataHull.BuildClass.BUILDCLASS_MOBILE]: "EveMobile",
@@ -32,6 +32,11 @@ const BUILD_CLASS_TYPES = Object.freeze({
 const DECAL_EFFECT_NAMES = Object.freeze(["decalv5.fx", "decalcounterv5.fx", "decalholev5.fx", "decalcylindricv5.fx", "decalglowcylindricv5.fx", "decalglowv5.fx", "decalv5.fx"]);
 const BANNER_EXTERNAL_PARAMETER_NAMES = Object.freeze(["AllianceLogoResPath", "CorpLogoResPath", "CeoPortraitResPath", "VerticalBannerResPath", "HorizontalBannerResPath", "TargetSystemAllianceLogoResPath", "TargetSystemVerticalBannerResPath", "TargetSystemHorizontalBannerResPath", "TargetSystemInfo0ResPath", "TargetSystemInfo1ResPath", "TargetSystemInfo2ResPath", "TargetSystemInfo3ResPath", "TargetSystemInfo4ResPath", "TargetSystemStatusResPath", "CurrentSystemAllianceLogoResPath", "CurrentSystemVerticalBannerResPath", "CurrentSystemHorizontalBannerResPath", "PublicityPosterResPath", "PublicityPortraitResPath", "RecruitmentInformation0ResPath", "RecruitmentInformation1ResPath", "RecruitmentInformation2ResPath", "RecruitmentInformation3ResPath", "RecruitmentInformation4ResPath"]);
 const MIN_MESH_SCREEN_SIZE = 2.5;
+
+// Tr2Lod value stamped on distortion areas after fill (EveSOF.cpp:2149-2153);
+// runtime-sof stays free of a runtime-trinity dependency, so the enum value
+// from Tr2LodResource.h is mirrored here.
+const TR2_LOD_HIGH = 2;
 
 // EveChildInheritProperties field order (runtime-trinity is the authority for
 // these names); dna.GetColorSet() is index-aligned with this Carbon color-slot
@@ -80,15 +85,20 @@ let _EveSOF;
 class EveSOF extends CjsModel {
   static {
     ({
-      e: [_init_allowFileCaching, _init_extra_allowFileCaching, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode, _initProto],
+      e: [_init_allowFileCaching, _init_extra_allowFileCaching, _init_alphaCutoutShadowsEnabled, _init_extra_alphaCutoutShadowsEnabled, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode, _initProto],
       c: [_EveSOF, _initClass]
     } = _applyDecs2311(this, [type.define({
       className: "EveSOF",
       family: "eve"
-    })], [[[io, io.readwrite, type, type.boolean], 16, "allowFileCaching"], [[io, io.read, void 0, type.objectRef("EveSOFDataMgr")], 16, "dataMgr"], [[io, io.readwrite, type, type.boolean], 16, "editorMode"], [[carbon, carbon.method, impl, impl.implemented], 18, "LoadData"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateDna"], [[carbon, carbon.method, impl, impl.implemented], 18, "ValidateDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "Build"], [[carbon, carbon.method, impl, impl.adapted], 18, "PlanLayoutFromDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "BuildFromDNA"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupExtensionBuild"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateMesh"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupShaders"], [[carbon, carbon.method, impl, impl.implemented], 18, "FillMeshAreaVector"], [[carbon, carbon.method, impl, impl.implemented], 18, "GenerateDepthFromAreaVector"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupCustomMask"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupDecalSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupImpactEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupChildrenAndAnimations"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffectChildren"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAudio"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupControllers"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupModelCurves"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupInstancedMeshes"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLayout"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateSharedLayoutAreas"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateLayoutInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBoosters"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAttachments"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpotlightSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupPlaneSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteLineSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupHazeSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBanners"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBannerSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLights"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocatorSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromFaction"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromDNA"]], 0, void 0, CjsModel));
+    })], [[[io, io.readwrite, type, type.boolean], 16, "allowFileCaching"], [[io, io.readwrite, type, type.boolean], 16, "alphaCutoutShadowsEnabled"], [[io, io.read, void 0, type.objectRef("EveSOFDataMgr")], 16, "dataMgr"], [[io, io.readwrite, type, type.boolean], 16, "editorMode"], [[carbon, carbon.method, impl, impl.implemented], 18, "LoadData"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateDna"], [[carbon, carbon.method, impl, impl.implemented], 18, "ValidateDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "Build"], [[carbon, carbon.method, impl, impl.adapted], 18, "PlanLayoutFromDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "BuildFromDNA"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupExtensionBuild"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateMesh"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupShaders"], [[carbon, carbon.method, impl, impl.implemented], 18, "FillMeshAreaVector"], [[carbon, carbon.method, impl, impl.implemented], 18, "GenerateDepthFromAreaVector"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupCustomMask"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupDecalSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupImpactEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupChildrenAndAnimations"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffectChildren"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAudio"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupControllers"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupModelCurves"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupInstancedMeshes"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLayout"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateSharedLayoutAreas"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateLayoutInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBoosters"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAttachments"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpotlightSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupPlaneSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteLineSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupHazeSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBanners"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBannerSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLights"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocatorSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromFaction"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromDNA"]], 0, void 0, CjsModel));
   }
   allowFileCaching = (_initProto(this), _init_allowFileCaching(this, true));
-  dataMgr = (_init_extra_allowFileCaching(this), _init_dataMgr(this, new _EveSOFDataMgr()));
+
+  // Carbon registers this as the global TRI setting "alphaCutoutShadowsEnabled"
+  // (EveSOF.cpp:61-62, default false); decal (alpha-cutout) areas take their
+  // castsShadows state from it. Injected here per builder instead of a global.
+  alphaCutoutShadowsEnabled = (_init_extra_allowFileCaching(this), _init_alphaCutoutShadowsEnabled(this, false));
+  dataMgr = (_init_extra_alphaCutoutShadowsEnabled(this), _init_dataMgr(this, new _EveSOFDataMgr()));
   editorMode = (_init_extra_dataMgr(this), _init_editorMode(this, false));
   #resourceExists = (_init_extra_editorMode(this), null);
   #childResourceResolver = null;
@@ -130,6 +140,9 @@ class EveSOF extends CjsModel {
     }
     if (Object.prototype.hasOwnProperty.call(options, "allowFileCaching")) {
       this.allowFileCaching = Boolean(options.allowFileCaching);
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "alphaCutoutShadowsEnabled")) {
+      this.alphaCutoutShadowsEnabled = Boolean(options.alphaCutoutShadowsEnabled);
     }
     if (Object.prototype.hasOwnProperty.call(options, "editorMode")) {
       this.editorMode = Boolean(options.editorMode);
@@ -545,7 +558,7 @@ class EveSOF extends CjsModel {
     for (const area of source) {
       const shaderData = dna.GetGenericAreaShaderData(area.shader);
       if (!shaderData) return null;
-      const built = buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffset, path => dna.ModifyTextureResPath(path, this.#resourceExists, this.allowFileCaching ? this.#existingFilesCache : null));
+      const built = buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffset, path => dna.ModifyTextureResPath(path, this.#resourceExists, this.allowFileCaching ? this.#existingFilesCache : null), this.alphaCutoutShadowsEnabled);
       pending.push(built);
     }
     target.push(...pending.map(item => item.ref));
@@ -1228,7 +1241,7 @@ class EveSOF extends CjsModel {
       for (const area of source) {
         const shaderData = dna.GetGenericAreaShaderData(area.shader);
         if (!shaderData) continue;
-        const built = buildMeshArea(document, dna, area, shaderData, batchType, 0, path => dna.ModifyTextureResPath(path, this.#resourceExists, this.allowFileCaching ? this.#existingFilesCache : null), false);
+        const built = buildMeshArea(document, dna, area, shaderData, batchType, 0, path => dna.ModifyTextureResPath(path, this.#resourceExists, this.allowFileCaching ? this.#existingFilesCache : null), this.alphaCutoutShadowsEnabled, false);
         addEffectShaderOption(document, built.effect, "SPACE_OBJECT_INSTANCED_ATTACHMENT", "SOIA_SHARED");
         result.push(document.AddNode("EveChildInstancedMeshArea", {
           effect: built.effect,
@@ -2554,7 +2567,12 @@ function addBannerSet(document, rootFields, dna, usage, banners, lights, usageCo
     destinationAttribute: "resourcePath"
   }));
 }
-function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffset, resolveTexturePath, emitArea = true) {
+function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffset, resolveTexturePath, alphaCutoutShadowsEnabled = false, emitArea = true) {
+  // FillMeshAreaVector's runtime state (EveSOF.cpp:576-592,668-672): opaque
+  // areas cast shadows, decal areas follow the alpha-cutout setting, all other
+  // batch types do not; depth generation comes from the generic shader data.
+  let castsShadows = false;
+  if (batchType === TriBatchType.TRIBATCHTYPE_OPAQUE) castsShadows = true;else if (batchType === TriBatchType.TRIBATCHTYPE_DECAL) castsShadows = alphaCutoutShadowsEnabled;
   const options = [];
   if (batchType === TriBatchType.TRIBATCHTYPE_DECAL) {
     options.push(document.AddNode("Tr2ShaderOption", {
@@ -2660,6 +2678,10 @@ function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffs
     count: area.count,
     reversed: false,
     useSHLighting: false,
+    castsShadows,
+    generateDepthArea: Boolean(shaderData.doGenerateDepthArea),
+    // Carbon limits distortion areas to high LOD after fill (EveSOF.cpp:2149-2153).
+    minLod: batchType === TriBatchType.TRIBATCHTYPE_DISTORTION ? TR2_LOD_HIGH : -1,
     effect
   };
   return {

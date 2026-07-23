@@ -3453,6 +3453,64 @@ test("EveSOF emits the minimal GPU-free Trinity graph slice", () => {
   assert.equal(sof.BuildFromDNA("missing:minmatar:minmatar"), null);
 });
 
+test("EveSOF stamps Carbon mesh-area shadow, depth, and LOD state", () => {
+  // FillMeshAreaVector runtime state (Carbon EveSOF.cpp:576-592,668-672,
+  // 2149-2153): opaque areas cast shadows, decals follow the injected
+  // alphaCutoutShadowsEnabled setting (Carbon default false), other batch
+  // types never cast; depth generation comes from the generic shader data;
+  // distortion areas are limited to TR2_LOD_HIGH.
+  const makeData = () => {
+    const data = createData();
+    const area = (name, index, shader) => ({
+      name, index, count: 1, areaType: 0, shader, textures: [], parameters: [],
+    });
+    data.hull[0].opaqueAreas = [area("hull", 0, "ship.fx")];
+    data.hull[0].decalAreas = [area("decal", 1, "ship.fx")];
+    data.hull[0].transparentAreas = [area("glass", 2, "glass.fx")];
+    data.hull[0].distortionAreas = [area("warp", 3, "ship.fx")];
+    data.generic.areaShaderLocation = "res:/effect";
+    const shaderData = shader => ({
+      shader, parameters: [], defaultParameters: [], defaultTextures: [],
+      doGenerateDepthArea: shader === "glass.fx", transparencyTextureName: "",
+    });
+    data.generic.areaShaders = [shaderData("ship.fx"), shaderData("glass.fx")];
+    return data;
+  };
+
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(makeData()), true);
+  const document = sof.BuildFromDNA("rifter:minmatar:minmatar");
+  const mesh = referencedNode(document, rootNode(document).fields.mesh);
+  const areaFields = (list, index = 0) => referencedNode(document, mesh.fields[list][index]).fields;
+
+  const opaque = areaFields("opaqueAreas", 0);
+  assert.equal(opaque.castsShadows, true);
+  assert.equal(opaque.generateDepthArea, false);
+  assert.equal(opaque.minLod, -1);
+  // Decal areas append to the opaque vector; the setting defaults to false.
+  const decal = areaFields("opaqueAreas", 1);
+  assert.equal(decal.castsShadows, false);
+  const glass = areaFields("transparentAreas");
+  assert.equal(glass.castsShadows, false);
+  assert.equal(glass.generateDepthArea, true);
+  assert.equal(glass.minLod, -1);
+  const warp = areaFields("distortionAreas");
+  assert.equal(warp.castsShadows, false);
+  assert.equal(warp.minLod, 2);
+  // Carbon depth clones copy the transparent source area's runtime state.
+  const depth = areaFields("depthAreas");
+  assert.equal(depth.castsShadows, false);
+  assert.equal(depth.generateDepthArea, true);
+
+  const enabled = new EveSOF().Register({ alphaCutoutShadowsEnabled: true });
+  assert.equal(enabled.dataMgr.SetData(makeData()), true);
+  const enabledDocument = enabled.BuildFromDNA("rifter:minmatar:minmatar");
+  const enabledMesh = referencedNode(enabledDocument, rootNode(enabledDocument).fields.mesh);
+  const enabledDecal = referencedNode(enabledDocument, enabledMesh.fields.opaqueAreas[1]).fields;
+  assert.equal(enabledDecal.castsShadows, true);
+  assert.equal(referencedNode(enabledDocument, enabledMesh.fields.opaqueAreas[0]).fields.castsShadows, true);
+});
+
 test("EveSOF composes multi-hull bounds, mesh indices, and locator graphs", () => {
   const data = createData();
   const identity = [

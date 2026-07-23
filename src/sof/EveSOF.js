@@ -71,6 +71,11 @@ const BANNER_EXTERNAL_PARAMETER_NAMES = Object.freeze([
 
 const MIN_MESH_SCREEN_SIZE = 2.5;
 
+// Tr2Lod value stamped on distortion areas after fill (EveSOF.cpp:2149-2153);
+// runtime-sof stays free of a runtime-trinity dependency, so the enum value
+// from Tr2LodResource.h is mirrored here.
+const TR2_LOD_HIGH = 2;
+
 // EveChildInheritProperties field order (runtime-trinity is the authority for
 // these names); dna.GetColorSet() is index-aligned with this Carbon color-slot
 // order, so the authored color set projects onto named, persisted fields.
@@ -167,6 +172,13 @@ export class EveSOF extends CjsModel
   @type.boolean
   allowFileCaching = true;
 
+  // Carbon registers this as the global TRI setting "alphaCutoutShadowsEnabled"
+  // (EveSOF.cpp:61-62, default false); decal (alpha-cutout) areas take their
+  // castsShadows state from it. Injected here per builder instead of a global.
+  @io.readwrite
+  @type.boolean
+  alphaCutoutShadowsEnabled = false;
+
   @io.read
   @type.objectRef("EveSOFDataMgr")
   dataMgr = new EveSOFDataMgr();
@@ -231,6 +243,10 @@ export class EveSOF extends CjsModel
     if (Object.prototype.hasOwnProperty.call(options, "allowFileCaching"))
     {
       this.allowFileCaching = Boolean(options.allowFileCaching);
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "alphaCutoutShadowsEnabled"))
+    {
+      this.alphaCutoutShadowsEnabled = Boolean(options.alphaCutoutShadowsEnabled);
     }
     if (Object.prototype.hasOwnProperty.call(options, "editorMode"))
     {
@@ -767,6 +783,7 @@ export class EveSOF extends CjsModel
           this.#resourceExists,
           this.allowFileCaching ? this.#existingFilesCache : null,
         ),
+        this.alphaCutoutShadowsEnabled,
       );
       pending.push(built);
     }
@@ -1630,6 +1647,7 @@ export class EveSOF extends CjsModel
             this.#resourceExists,
             this.allowFileCaching ? this.#existingFilesCache : null,
           ),
+          this.alphaCutoutShadowsEnabled,
           false
         );
         addEffectShaderOption(document, built.effect, "SPACE_OBJECT_INSTANCED_ATTACHMENT", "SOIA_SHARED");
@@ -3349,8 +3367,14 @@ function addBannerSet(document, rootFields, dna, usage, banners, lights, usageCo
   }));
 }
 
-function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffset, resolveTexturePath, emitArea = true)
+function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffset, resolveTexturePath, alphaCutoutShadowsEnabled = false, emitArea = true)
 {
+  // FillMeshAreaVector's runtime state (EveSOF.cpp:576-592,668-672): opaque
+  // areas cast shadows, decal areas follow the alpha-cutout setting, all other
+  // batch types do not; depth generation comes from the generic shader data.
+  let castsShadows = false;
+  if (batchType === TriBatchType.TRIBATCHTYPE_OPAQUE) castsShadows = true;
+  else if (batchType === TriBatchType.TRIBATCHTYPE_DECAL) castsShadows = alphaCutoutShadowsEnabled;
   const options = [];
   if (batchType === TriBatchType.TRIBATCHTYPE_DECAL)
   {
@@ -3473,6 +3497,10 @@ function buildMeshArea(document, dna, area, shaderData, batchType, meshIndexOffs
     count: area.count,
     reversed: false,
     useSHLighting: false,
+    castsShadows,
+    generateDepthArea: Boolean(shaderData.doGenerateDepthArea),
+    // Carbon limits distortion areas to high LOD after fill (EveSOF.cpp:2149-2153).
+    minLod: batchType === TriBatchType.TRIBATCHTYPE_DISTORTION ? TR2_LOD_HIGH : -1,
     effect
   };
   return {
