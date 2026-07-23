@@ -22,7 +22,7 @@ import { EveSOFDataMgr as _EveSOFDataMgr } from './EveSOFDataMgr.js';
 import { createSofHydrationAdapter } from './createSofHydrationAdapter.js';
 import { planSofLayouts } from './layoutPlanner.js';
 
-let _initProto, _initClass, _init_allowFileCaching, _init_extra_allowFileCaching, _init_alphaCutoutShadowsEnabled, _init_extra_alphaCutoutShadowsEnabled, _init_volumetricTrailPath, _init_extra_volumetricTrailPath, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode;
+let _initProto, _initClass, _init_allowFileCaching, _init_extra_allowFileCaching, _init_alphaCutoutShadowsEnabled, _init_extra_alphaCutoutShadowsEnabled, _init_volumetricTrailPath, _init_extra_volumetricTrailPath, _init_buildTime, _init_extra_buildTime, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode;
 const BUILD_CLASS_TYPES = Object.freeze({
   [_EveSOFDataHull.BuildClass.BUILDCLASS_SHIP]: "EveShip2",
   [_EveSOFDataHull.BuildClass.BUILDCLASS_MOBILE]: "EveMobile",
@@ -116,12 +116,12 @@ let _EveSOF;
 class EveSOF extends CjsModel {
   static {
     ({
-      e: [_init_allowFileCaching, _init_extra_allowFileCaching, _init_alphaCutoutShadowsEnabled, _init_extra_alphaCutoutShadowsEnabled, _init_volumetricTrailPath, _init_extra_volumetricTrailPath, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode, _initProto],
+      e: [_init_allowFileCaching, _init_extra_allowFileCaching, _init_alphaCutoutShadowsEnabled, _init_extra_alphaCutoutShadowsEnabled, _init_volumetricTrailPath, _init_extra_volumetricTrailPath, _init_buildTime, _init_extra_buildTime, _init_dataMgr, _init_extra_dataMgr, _init_editorMode, _init_extra_editorMode, _initProto],
       c: [_EveSOF, _initClass]
     } = _applyDecs2311(this, [type.define({
       className: "EveSOF",
       family: "eve"
-    })], [[[io, io.readwrite, type, type.boolean], 16, "allowFileCaching"], [[io, io.readwrite, type, type.boolean], 16, "alphaCutoutShadowsEnabled"], [[io, io.readwrite, type, type.string], 16, "volumetricTrailPath"], [[io, io.read, void 0, type.objectRef("EveSOFDataMgr")], 16, "dataMgr"], [[io, io.readwrite, type, type.boolean], 16, "editorMode"], [[carbon, carbon.method, impl, impl.implemented], 18, "LoadData"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateDna"], [[carbon, carbon.method, impl, impl.implemented], 18, "ValidateDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "Build"], [[carbon, carbon.method, impl, impl.adapted], 18, "PlanLayoutFromDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "BuildFromDNA"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupExtensionBuild"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateMesh"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupShaders"], [[carbon, carbon.method, impl, impl.implemented], 18, "FillMeshAreaVector"], [[carbon, carbon.method, impl, impl.implemented], 18, "GenerateDepthFromAreaVector"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupCustomMask"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupDecalSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupImpactEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupChildrenAndAnimations"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffectChildren"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAudio"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupControllers"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupModelCurves"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupInstancedMeshes"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLayout"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateSharedLayoutAreas"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateLayoutInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBoosters"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAttachments"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpotlightSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupPlaneSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteLineSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupHazeSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBanners"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBannerSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLights"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocatorSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromFaction"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromDNA"]], 0, void 0, CjsModel));
+    })], [[[io, io.readwrite, type, type.boolean], 16, "allowFileCaching"], [[io, io.readwrite, type, type.boolean], 16, "alphaCutoutShadowsEnabled"], [[io, io.readwrite, type, type.string], 16, "volumetricTrailPath"], [[io, io.readwrite, type, type.float64], 16, "buildTime"], [[io, io.read, void 0, type.objectRef("EveSOFDataMgr")], 16, "dataMgr"], [[io, io.readwrite, type, type.boolean], 16, "editorMode"], [[carbon, carbon.method, impl, impl.implemented], 18, "LoadData"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateDna"], [[carbon, carbon.method, impl, impl.implemented], 18, "ValidateDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "Build"], [[carbon, carbon.method, impl, impl.adapted], 18, "PlanLayoutFromDNA"], [[carbon, carbon.method, impl, impl.implemented], 18, "BuildFromDNA"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupExtensionBuild"], [[carbon, carbon.method, impl, impl.implemented], 18, "CreateMesh"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupShaders"], [[carbon, carbon.method, impl, impl.implemented], 18, "FillMeshAreaVector"], [[carbon, carbon.method, impl, impl.implemented], 18, "GenerateDepthFromAreaVector"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupCustomMask"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupDecalSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupImpactEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffects"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupChildrenAndAnimations"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupEffectChildren"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAudio"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupControllers"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupModelCurves"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupInstancedMeshes"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLayout"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateSharedLayoutAreas"], [[carbon, carbon.method, impl, impl.adapted], 18, "CreateLayoutInstancedMesh"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBoosters"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupAttachments"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpotlightSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupPlaneSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupSpriteLineSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupHazeSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBanners"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupBannerSets"], [[carbon, carbon.method, impl, impl.adapted], 18, "SetupLights"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocators"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupLocatorSets"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromFaction"], [[carbon, carbon.method, impl, impl.implemented], 18, "SetupTurretMaterialFromDNA"]], 0, void 0, CjsModel));
   }
   allowFileCaching = (_initProto(this), _init_allowFileCaching(this, true));
 
@@ -134,7 +134,13 @@ class EveSOF extends CjsModel {
   // (EveSOF.cpp:64-65, default empty); the booster trail set takes its mesh
   // resource path from it. Injected here per builder instead of a global.
   volumetricTrailPath = (_init_extra_alphaCutoutShadowsEnabled(this), _init_volumetricTrailPath(this, ""));
-  dataMgr = (_init_extra_volumetricTrailPath(this), _init_dataMgr(this, new _EveSOFDataMgr()));
+
+  // Carbon initializes each light's startTime from the current frame time,
+  // phase-offsetting noise flicker by when the object was built. Injected
+  // here per builder (default 0 keeps builds deterministic); the engine
+  // passes its clock when it wants Carbon's de-synced flicker.
+  buildTime = (_init_extra_volumetricTrailPath(this), _init_buildTime(this, 0));
+  dataMgr = (_init_extra_buildTime(this), _init_dataMgr(this, new _EveSOFDataMgr()));
   editorMode = (_init_extra_dataMgr(this), _init_editorMode(this, false));
   #resourceExists = (_init_extra_editorMode(this), null);
   #childResourceResolver = null;
@@ -187,6 +193,9 @@ class EveSOF extends CjsModel {
     }
     if (Object.prototype.hasOwnProperty.call(options, "volumetricTrailPath")) {
       this.volumetricTrailPath = String(options.volumetricTrailPath ?? "");
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "buildTime")) {
+      this.buildTime = Number(options.buildTime ?? 0);
     }
     if (Object.prototype.hasOwnProperty.call(options, "resFileIndex")) {
       // The resfileindex is the synchronous existence oracle Carbon gets from
@@ -1767,7 +1776,7 @@ class EveSOF extends CjsModel {
                     noiseOctaves: Number(item.light.noiseOctaves ?? 1),
                     boneIndex: Number(item.boneIndex ?? 0),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -1885,7 +1894,7 @@ class EveSOF extends CjsModel {
                     texturePath: String(item.light.lightProfilePath ?? ""),
                     boneIndex: Number(item.boneIndex ?? 0),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2013,7 +2022,7 @@ class EveSOF extends CjsModel {
                     noiseOctaves: Number(light.noiseOctaves ?? 1),
                     boneIndex: Number(item.boneIndex ?? -1),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2112,7 +2121,7 @@ class EveSOF extends CjsModel {
                       noiseOctaves: Number(item.light.noiseOctaves ?? 1),
                       boneIndex: Number(item.boneIndex ?? 0),
                       flags: 1,
-                      startTime: 0,
+                      startTime: this.buildTime,
                       castsShadows: 0,
                       isVolumetric: false
                     },
@@ -2208,7 +2217,7 @@ class EveSOF extends CjsModel {
                     noiseOctaves: Number(light.noiseOctaves ?? 1),
                     boneIndex: Number(item.boneIndex ?? -1),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2262,7 +2271,7 @@ class EveSOF extends CjsModel {
                 noiseOctaves: Number(light.noiseOctaves ?? 1),
                 boneIndex: -1,
                 flags: 1,
-                startTime: 0,
+                startTime: this.buildTime,
                 castsShadows: 0,
                 isVolumetric: false
               },
@@ -2315,7 +2324,7 @@ class EveSOF extends CjsModel {
                     noiseOctaves: Number(light.noiseOctaves ?? 1),
                     boneIndex: -1,
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2359,9 +2368,10 @@ class EveSOF extends CjsModel {
             // Tr2 light classes persist the Blue-mapped LightData members as
             // flat fields, so hull lights emit Carbon's flat Blue shape. The
             // packed-set light items above still emit nested lightData bags
-            // until their classes migrate. startTime is omitted: it is not
-            // Blue-persisted, and the JS build-time value is always zero.
+            // until their classes migrate. startTime carries the injected
+            // buildTime, matching Carbon's GetCurrentTime() stamp at build.
             const lightFields = {
+              startTime: this.buildTime,
               flags: Number(item.flags ?? 1),
               position: Array.from(position),
               rotation: Array.from(rotation),

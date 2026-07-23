@@ -278,6 +278,14 @@ export class EveSOF extends CjsModel
   @type.string
   volumetricTrailPath = "";
 
+  // Carbon initializes each light's startTime from the current frame time,
+  // phase-offsetting noise flicker by when the object was built. Injected
+  // here per builder (default 0 keeps builds deterministic); the engine
+  // passes its clock when it wants Carbon's de-synced flicker.
+  @io.readwrite
+  @type.float64
+  buildTime = 0;
+
   @io.read
   @type.objectRef("EveSOFDataMgr")
   dataMgr = new EveSOFDataMgr();
@@ -355,6 +363,10 @@ export class EveSOF extends CjsModel
     if (Object.prototype.hasOwnProperty.call(options, "volumetricTrailPath"))
     {
       this.volumetricTrailPath = String(options.volumetricTrailPath ?? "");
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "buildTime"))
+    {
+      this.buildTime = Number(options.buildTime ?? 0);
     }
     if (Object.prototype.hasOwnProperty.call(options, "resFileIndex"))
     {
@@ -2305,7 +2317,7 @@ export class EveSOF extends CjsModel
                     noiseOctaves: Number(item.light.noiseOctaves ?? 1),
                     boneIndex: Number(item.boneIndex ?? 0),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2450,7 +2462,7 @@ export class EveSOF extends CjsModel
                     texturePath: String(item.light.lightProfilePath ?? ""),
                     boneIndex: Number(item.boneIndex ?? 0),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2628,7 +2640,7 @@ export class EveSOF extends CjsModel
                     noiseOctaves: Number(light.noiseOctaves ?? 1),
                     boneIndex: Number(item.boneIndex ?? -1),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2755,7 +2767,7 @@ export class EveSOF extends CjsModel
                       noiseOctaves: Number(item.light.noiseOctaves ?? 1),
                       boneIndex: Number(item.boneIndex ?? 0),
                       flags: 1,
-                      startTime: 0,
+                      startTime: this.buildTime,
                       castsShadows: 0,
                       isVolumetric: false
                     },
@@ -2896,7 +2908,7 @@ export class EveSOF extends CjsModel
                     noiseOctaves: Number(light.noiseOctaves ?? 1),
                     boneIndex: Number(item.boneIndex ?? -1),
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -2958,7 +2970,7 @@ export class EveSOF extends CjsModel
                 noiseOctaves: Number(light.noiseOctaves ?? 1),
                 boneIndex: -1,
                 flags: 1,
-                startTime: 0,
+                startTime: this.buildTime,
                 castsShadows: 0,
                 isVolumetric: false
               },
@@ -3032,7 +3044,7 @@ export class EveSOF extends CjsModel
                     noiseOctaves: Number(light.noiseOctaves ?? 1),
                     boneIndex: -1,
                     flags: 1,
-                    startTime: 0,
+                    startTime: this.buildTime,
                     castsShadows: 0,
                     isVolumetric: false
                   },
@@ -3094,9 +3106,10 @@ export class EveSOF extends CjsModel
             // Tr2 light classes persist the Blue-mapped LightData members as
             // flat fields, so hull lights emit Carbon's flat Blue shape. The
             // packed-set light items above still emit nested lightData bags
-            // until their classes migrate. startTime is omitted: it is not
-            // Blue-persisted, and the JS build-time value is always zero.
+            // until their classes migrate. startTime carries the injected
+            // buildTime, matching Carbon's GetCurrentTime() stamp at build.
             const lightFields = {
+              startTime: this.buildTime,
               flags: Number(item.flags ?? 1),
               position: Array.from(position),
               rotation: Array.from(rotation),

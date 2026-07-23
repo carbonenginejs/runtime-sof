@@ -5386,3 +5386,53 @@ test("EveSOF.Create instantiates from raw catalog inputs only", () => {
   const indexedDocument = indexed.BuildFromDNA("rifter:minmatar:minmatar");
   assert.equal(findTextureResourcePath(indexedDocument, "DiffuseMap"), "res:/x/insert/ship_insert_d.dds");
 });
+
+test("SOF stamps the injected buildTime as every light's startTime", () => {
+  // Carbon initializes m_lightData.startTime from GetCurrentTime() at build,
+  // phase-offsetting noise flicker; the injected buildTime seam reproduces
+  // that with a deterministic default of zero.
+  const makeData = () => {
+    const data = createData();
+    data.hull[0].spriteSets = [{
+      name: "blinkers",
+      visibilityGroup: "primary",
+      skinned: false,
+      items: [{
+        name: "s1", groupIndex: -1, position: [1, 0, 0], blinkRate: 0.1, blinkPhase: 0,
+        minScale: 1, maxScale: 1, falloff: 1, intensity: 1, color: [1, 1, 1, 1],
+        light: { intensity: 2, outerScaleMultiplier: 2, innerScaleMultiplier: 1 },
+      }],
+    }];
+    data.hull[0].lightSets = [{
+      visibilityGroup: "primary",
+      items: [{ name: "p1", type: 0, position: [0, 1, 0], radius: 5, brightness: 1, flags: 1 }],
+    }];
+    data.faction[0].visibilityGroupSet = { visibilityGroups: [{ str: "primary" }] };
+    return data;
+  };
+
+  const findStartTimes = document => {
+    const times = [];
+    for (const node of document.nodes)
+    {
+      if (node.fields && "startTime" in node.fields) times.push([node.kind, node.fields.startTime]);
+      if (node.fields?.lightData && typeof node.fields.lightData === "object" && "startTime" in node.fields.lightData)
+      {
+        times.push([`${node.kind}.lightData`, node.fields.lightData.startTime]);
+      }
+    }
+    return times;
+  };
+
+  const deterministic = new EveSOF();
+  assert.equal(deterministic.dataMgr.SetData(makeData()), true);
+  const zeroTimes = findStartTimes(deterministic.BuildFromDNA("rifter:minmatar:minmatar"));
+  assert.ok(zeroTimes.length >= 1, "expected light emissions with startTime");
+  assert.ok(zeroTimes.every(([, value]) => value === 0));
+
+  const clocked = new EveSOF().Register({ buildTime: 42.5 });
+  assert.equal(clocked.dataMgr.SetData(makeData()), true);
+  const stamped = findStartTimes(clocked.BuildFromDNA("rifter:minmatar:minmatar"));
+  assert.equal(stamped.length, zeroTimes.length);
+  assert.ok(stamped.every(([, value]) => value === 42.5), JSON.stringify(stamped));
+});

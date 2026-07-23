@@ -231,6 +231,16 @@ Provide the resfileindex as the synchronous existence oracle -
 (for example backed by a remote index service) and use the async Build
 methods.
 
+## Read-only contract
+
+Carbon's manager and DNA getters return const references; JavaScript cannot.
+Every structure returned by `EveSOFDataMgr`/`EveSOFDNA` getters
+(`GetHullData`, `GetMaterialData`, `GetPatternData`, projected maps and
+arrays, ...) is read-only by contract: mutating returned data is undefined
+behavior and may corrupt later builds. Projections copy authored inputs at
+`SetData` time (so mutating YOUR source data after handing it over is safe),
+but they do not defensively copy on every getter call.
+
 ## Checks
 
 ```sh
