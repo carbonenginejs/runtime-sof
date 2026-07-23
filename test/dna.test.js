@@ -5259,3 +5259,32 @@ test("values projection keeps parity while deferred audio raw stays document-onl
     hydrated.root.GetValues({ refs: true, typeTags: true })
   );
 });
+
+test("SOF sync builds diagnose unresolved resource references", () => {
+  // The sync build is the pure-data path: it cannot self-resolve like
+  // Carbon's BeResMan-backed build, so unwired or failed references are
+  // recorded instead of silently emitting an incomplete document.
+  const data = createData();
+  data.hull[0].children = [{ redFilePath: "res:/child.red" }];
+  data.hull[0].controllers = [{ path: "res:/controller.red" }];
+  const sof = new EveSOF();
+  assert.equal(sof.dataMgr.SetData(data), true);
+  assert.ok(sof.Build("rifter", "minmatar", "minmatar"));
+  const unwired = sof.GetBuildDiagnostics().sort((a, b) => a.code.localeCompare(b.code));
+  assert.deepEqual(unwired, [
+    { code: "unresolved-child-resource", reason: "no-resolver", path: "res:/child.red" },
+    { code: "unresolved-object-resource", reason: "no-resolver", role: "controller", path: "res:/controller.red" },
+  ]);
+
+  // A configured resolver that cannot resolve matches Carbon's logged
+  // invalid-resource skip (EveSOF.cpp:1779-1783,2028-2031).
+  const resolving = new EveSOF();
+  assert.equal(resolving.dataMgr.SetData(data), true);
+  resolving.SetChildResourceResolver(() => null);
+  resolving.SetObjectResourceResolver(() => null);
+  assert.ok(resolving.Build("rifter", "minmatar", "minmatar"));
+  assert.deepEqual(
+    resolving.GetBuildDiagnostics().map(entry => entry.reason),
+    ["not-resolved", "not-resolved"],
+  );
+});

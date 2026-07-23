@@ -943,7 +943,18 @@ class EveSOF extends CjsModel {
     }
   }
   #resolveChildResource(redFilePath, child, sof6) {
-    if (!this.#childResourceResolver) return null;
+    // The synchronous build is the pure-data path: it cannot self-resolve
+    // like Carbon's BeResMan-backed build, so an unresolved reference is
+    // diagnosed instead of silently emitting an incomplete document. The
+    // async Build entry points pre-resolve through the injected provider.
+    if (!this.#childResourceResolver) {
+      this.#buildDiagnostics.push({
+        code: "unresolved-child-resource",
+        reason: "no-resolver",
+        path: String(redFilePath ?? "")
+      });
+      return null;
+    }
     let descriptor = this.#childResourceResolver(String(redFilePath ?? ""), {
       child,
       sof6
@@ -951,7 +962,16 @@ class EveSOF extends CjsModel {
     if (descriptor && typeof descriptor.then === "function") {
       throw new TypeError("EveSOF child resource resolver must be synchronous");
     }
-    if (descriptor === null || descriptor === undefined) return null;
+    if (descriptor === null || descriptor === undefined) {
+      // Carbon: CCP_LOGERR("resource file %s is invalid!") and the child is
+      // skipped (EveSOF.cpp:1779-1783,1942-1946).
+      this.#buildDiagnostics.push({
+        code: "unresolved-child-resource",
+        reason: "not-resolved",
+        path: String(redFilePath ?? "")
+      });
+      return null;
+    }
     if (!descriptor || typeof descriptor !== "object") {
       throw new TypeError("EveSOF child resource resolver must return a child descriptor or null");
     }
@@ -1505,14 +1525,34 @@ class EveSOF extends CjsModel {
     return rootFields.boosters;
   }
   #resolveObjectResource(path, role) {
-    if (!this.#objectResourceResolver) return null;
+    // Same contract as #resolveChildResource: sync builds diagnose what
+    // Carbon's self-resolving build would have loaded.
+    if (!this.#objectResourceResolver) {
+      this.#buildDiagnostics.push({
+        code: "unresolved-object-resource",
+        reason: "no-resolver",
+        role,
+        path: String(path ?? "")
+      });
+      return null;
+    }
     let descriptor = this.#objectResourceResolver(String(path ?? ""), {
       role
     });
     if (descriptor && typeof descriptor.then === "function") {
       throw new TypeError("EveSOF object resource resolver must be synchronous");
     }
-    if (descriptor === null || descriptor === undefined) return null;
+    if (descriptor === null || descriptor === undefined) {
+      // Carbon: controllers log "controller resource file %s is invalid!"
+      // (EveSOF.cpp:2028-2031); model curves skip silently (1672-1690).
+      this.#buildDiagnostics.push({
+        code: "unresolved-object-resource",
+        reason: "not-resolved",
+        role,
+        path: String(path ?? "")
+      });
+      return null;
+    }
     if (!descriptor || typeof descriptor !== "object") {
       throw new TypeError("EveSOF object resource resolver must return an object descriptor or null");
     }

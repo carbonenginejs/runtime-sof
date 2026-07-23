@@ -177,6 +177,19 @@ Resolver failures reject the complete operation with code
 partial document is returned. A resolved `null` remains an optional missing
 dependency and follows the synchronous omission behavior.
 
+The async Build methods are the runtime API. Carbon's synchronous build is
+self-resolving only because C++ blocks on its global resource manager; the
+authored `res:/...red` references resolve to compiled `.black` payloads that
+only a resource layer (in this organization, `@carbonenginejs/runtime-resource`
+and its `CjsResMan`) can fetch and decode. The synchronous Build methods are
+therefore the pure-data path for tests and preloaded tools: any child,
+controller, or model-curve reference encountered without a configured resolver
+- or that a configured resolver declines - records an
+`unresolved-child-resource` / `unresolved-object-resource` diagnostic
+(readable through `GetBuildDiagnostics()`) and continues, mirroring Carbon's
+logged invalid-resource skip. A synchronous build with an empty diagnostics
+list is complete; one with unresolved entries is knowingly partial.
+
 ## Checks
 
 ```sh
