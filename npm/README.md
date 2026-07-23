@@ -189,13 +189,17 @@ Carbon's own deferred-loading nodes: hull children emit `EveChildRef`
 emit `Tr2ControllerReference` (persisted `path`), exactly the nodes Carbon
 ships for runtime-loaded references. The consuming runtime loads each
 reference when it pleases and routes the loaded root by its real type. The
-emitted document doubles as its own dependency manifest. Two things cannot
-defer: emitter rate bindings that reach into an unloaded child's graph record
-a `deferred-child-animation-binding` diagnostic, and model curves (no Carbon
-reference node exists) record `unresolved-object-resource`. A configured
-resolver that declines a path records the same diagnostic with reason
-`not-resolved`, mirroring Carbon's logged invalid-resource skip. Diagnostics
-for the most recent build are readable through `GetBuildDiagnostics()`.
+emitted document doubles as its own dependency manifest. Model curves have no
+Carbon reference class - Carbon inline-loads them only because its blocking
+resource manager made that free - so they defer through the
+CarbonEngineJS-original `CjsExternalRef` node, which carries the authored res
+path and the Carbon interface the loaded root must implement. The one thing
+that cannot defer: emitter rate bindings that reach into an unloaded child's
+graph record a `deferred-child-animation-binding` diagnostic. A configured
+resolver that declines a path records `unresolved-child-resource` /
+`unresolved-object-resource` with reason `not-resolved`, mirroring Carbon's
+logged invalid-resource skip. Diagnostics for the most recent build are
+readable through `GetBuildDiagnostics()`.
 
 Texture `resPathInsert` selection is existence-driven at build time in Carbon.
 Provide the resfileindex as the synchronous existence oracle -

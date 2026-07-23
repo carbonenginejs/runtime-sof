@@ -2068,15 +2068,23 @@ export class EveSOF extends CjsModel
           rootRef: null
         };
       }
-      // Model curves have no Carbon reference node; the sync build diagnoses
-      // what Carbon's self-resolving build would have loaded.
-      this.#buildDiagnostics.push({
-        code: "unresolved-object-resource",
-        reason: "no-resolver",
-        role,
-        path: String(path ?? "")
-      });
-      return null;
+      // Model curves have no Carbon reference node - Carbon inline-loads
+      // them only because its blocking BeResMan made that free; nothing
+      // about the loaded curve feeds back into composition. They defer
+      // through the CarbonEngineJS-original CjsExternalRef, carrying the
+      // interface gate for the loader to enforce at splice time.
+      const gate = OBJECT_RESOURCE_ROLE_GATES[role];
+      return {
+        kind: "CjsExternalRef",
+        reference: true,
+        fields: {
+          resPath: String(path ?? ""),
+          expects: gate ? gate.interfaceName : ""
+        },
+        raw: {},
+        fragment: null,
+        rootRef: null
+      };
     }
     let descriptor = this.#objectResourceResolver(String(path ?? ""), { role });
     if (descriptor && typeof descriptor.then === "function")

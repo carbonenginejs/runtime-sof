@@ -76,6 +76,7 @@ export { EveSOFDataPatternPerHull } from './sof/pattern/EveSOFDataPatternPerHull
 export { EveSOFDataPatternTransform } from './sof/pattern/EveSOFDataPatternTransform.js';
 export { EveSOFDataRace } from './sof/race/EveSOFDataRace.js';
 export { EveSOFDataRaceDamage } from './sof/race/EveSOFDataRaceDamage.js';
+export { CjsExternalRef } from './sof/shared/CjsExternalRef.js';
 export { ErrSOFAreaTypeNotFound, EveSOFDataArea } from './sof/shared/EveSOFDataArea.js';
 export { EveSOFDataAreaMaterial } from './sof/shared/EveSOFDataAreaMaterial.js';
 export { EveSOFDataBooster } from './sof/shared/EveSOFDataBooster.js';

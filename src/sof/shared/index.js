@@ -1,3 +1,4 @@
+export { CjsExternalRef } from "./CjsExternalRef.js";
 export { ErrSOFAreaTypeNotFound, EveSOFDataArea } from "./EveSOFDataArea.js";
 export { EveSOFDataAreaMaterial } from "./EveSOFDataAreaMaterial.js";
 export { EveSOFDataBooster } from "./EveSOFDataBooster.js";

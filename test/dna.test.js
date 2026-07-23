@@ -5269,9 +5269,9 @@ test("values projection keeps parity while deferred audio raw stays document-onl
 test("SOF sync builds defer references and diagnose failed resolution", () => {
   // Without resolvers the build stays complete AS DATA: children and
   // controllers defer through Carbon's own reference nodes (EveChildRef,
-  // Tr2ControllerReference) carrying the authored res path and the computed
-  // placement; only bindings that would reach into unloaded graphs are
-  // diagnosed. Model curves have no Carbon reference node and diagnose.
+  // Tr2ControllerReference) and model curves through the CarbonEngineJS
+  // CjsExternalRef, each carrying the authored res path; only bindings that
+  // would reach into unloaded graphs are diagnosed.
   const data = createData();
   data.hull[0].children = [{ redFilePath: "res:/child.red", id: 3, translation: [1, 2, 3] }];
   data.hull[0].controllers = [{ path: "res:/controller.red" }];
@@ -5289,10 +5289,12 @@ test("SOF sync builds defer references and diagnose failed resolution", () => {
   assert.deepEqual(childRef.fields.translation, [1, 2, 3]);
   assert.equal(root.fields.controllers.length, 1);
   assert.equal(referencedNode(document, root.fields.controllers[0]).kind, "Tr2ControllerReference");
-  const codes = sof.GetBuildDiagnostics().sort((a, b) => a.code.localeCompare(b.code));
-  assert.deepEqual(codes, [
+  const curveRef = referencedNode(document, root.fields.modelTranslationCurve);
+  assert.equal(curveRef.kind, "CjsExternalRef");
+  assert.equal(curveRef.fields.resPath, "res:/translation.red");
+  assert.equal(curveRef.fields.expects, "ITriVectorFunction");
+  assert.deepEqual(sof.GetBuildDiagnostics(), [
     { code: "deferred-child-animation-binding", path: "res:/child.red", id: 3 },
-    { code: "unresolved-object-resource", reason: "no-resolver", role: "modelTranslationCurve", path: "res:/translation.red" },
   ]);
 
   // A configured resolver that cannot resolve matches Carbon's logged

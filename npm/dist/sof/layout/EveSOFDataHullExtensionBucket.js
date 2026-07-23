@@ -1,10 +1,15 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
+import { io, type, schema } from '@carbonenginejs/core-types/schema';
 import { EveSOFDataHullExtensionPlacement as _EveSOFDataHullExtens$1 } from './EveSOFDataHullExtensionPlacement.js';
 
 let _initClass, _init_depletionCounters, _init_extra_depletionCounters, _init_name, _init_extra_name, _init_placements, _init_extra_placements;
 
 /** EveSOFDataHullExtensionBucket (eve) - generated from schema shapeHash af31c426.... */
+// Carbon really does declare Bucket as a subclass of the concrete Placement
+// type (EveSOFData.h:2088-2104) but Blue-maps ONLY name, depletionCounters,
+// and placements (EveSOFData_Blue2.cpp:292-299): the base placement surface
+// is not exposed for this type. The JavaScript inheritance stays real; the
+// inherited fields are hidden from this class's schema surface only.
 let _EveSOFDataHullExtens;
 class EveSOFDataHullExtensionBucket extends _EveSOFDataHullExtens$1 {
   static {
@@ -14,7 +19,7 @@ class EveSOFDataHullExtensionBucket extends _EveSOFDataHullExtens$1 {
     } = _applyDecs2311(this, [type.define({
       className: "EveSOFDataHullExtensionBucket",
       family: "eve"
-    })], [[[io, io.persist, void 0, type.list("EveSOFDataDistributionDepletionCounter")], 16, "depletionCounters"], [[io, io.persist, type, type.string], 16, "name"], [[io, io.persist, void 0, type.list("EveSOFDataHullExtensionPlacement")], 16, "placements"]], 0, void 0, _EveSOFDataHullExtens$1));
+    }), schema.hideInherited(["distributionConditions", "extendsBoundingSphere", "extendsShieldEllipsoid", "isShared", "isInstanced", "enabled", "distribution", "descriptor", "locatorSetName", "offset"])], [[[io, io.persist, void 0, type.list("EveSOFDataDistributionDepletionCounter")], 16, "depletionCounters"], [[io, io.persist, type, type.string], 16, "name"], [[io, io.persist, void 0, type.list("EveSOFDataHullExtensionPlacement")], 16, "placements"]], 0, void 0, _EveSOFDataHullExtens$1));
   }
   constructor(...args) {
     super(...args);
