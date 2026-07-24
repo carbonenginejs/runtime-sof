@@ -1,10 +1,10 @@
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDataMgr.h
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDataMgr.cpp
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDataMgr_Blue.cpp
-import { CjsModel } from "@carbonenginejs/core-types/model";
-import { CjsSchema, carbon, impl, type } from "@carbonenginejs/core-types/schema";
-import { mat4 } from "@carbonenginejs/core-math/mat4";
-import { vec3 } from "@carbonenginejs/core-math/vec3";
+import { CjsModel } from "@carbonenginejs/runtime-utils/model";
+import { CjsSchema, carbon, impl, type } from "@carbonenginejs/runtime-utils/schema";
+import { mat4 } from "@carbonenginejs/runtime-utils/mat4";
+import { vec3 } from "@carbonenginejs/runtime-utils/vec3";
 
 const LOGO_KEYS = Object.freeze(["Primary", "Secondary", "Tertiary", "Marking_01", "Marking_02"]);
 

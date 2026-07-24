@@ -1,6 +1,6 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 import { EveSOFDataBooster as _EveSOFDataBooster } from '../shared/EveSOFDataBooster.js';
 import { EveSOFDataRaceDamage as _EveSOFDataRaceDamage } from './EveSOFDataRaceDamage.js';
 

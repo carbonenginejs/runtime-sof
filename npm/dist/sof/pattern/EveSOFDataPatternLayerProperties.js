@@ -1,6 +1,6 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 
 let _initClass, _init_projectionTypeU, _init_extra_projectionTypeU, _init_projectionTypeV, _init_extra_projectionTypeV, _init_Primary, _init_extra_Primary, _init_Glass, _init_extra_Glass, _init_Sails, _init_extra_Sails, _init_Reactor, _init_extra_Reactor, _init_Darkhull, _init_extra_Darkhull, _init_Rock, _init_extra_Rock, _init_Monument, _init_extra_Monument, _init_Ornament, _init_extra_Ornament, _init_SimplePrimary, _init_extra_SimplePrimary, _init_isTargetMtl, _init_extra_isTargetMtl, _init_isTargetMtl2, _init_extra_isTargetMtl2, _init_isTargetMtl3, _init_extra_isTargetMtl3, _init_isTargetMtl4, _init_extra_isTargetMtl4;
 

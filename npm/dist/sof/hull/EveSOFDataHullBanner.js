@@ -1,9 +1,9 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { mat4 } from '@carbonenginejs/core-math/mat4';
-import { quat } from '@carbonenginejs/core-math/quat';
-import { vec3 } from '@carbonenginejs/core-math/vec3';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { mat4 } from '@carbonenginejs/runtime-utils/mat4';
+import { quat } from '@carbonenginejs/runtime-utils/quat';
+import { vec3 } from '@carbonenginejs/runtime-utils/vec3';
 import { EveSOFDataHullBannerLight as _EveSOFDataHullBanner$1 } from './EveSOFDataHullBannerLight.js';
 
 let _initClass, _init_usage, _init_extra_usage, _init_boneIndex, _init_extra_boneIndex, _init_scaling, _init_extra_scaling, _init_angleX, _init_extra_angleX, _init_angleY, _init_extra_angleY, _init_lightOverride, _init_extra_lightOverride, _init_name, _init_extra_name, _init_position, _init_extra_position, _init_rotation, _init_extra_rotation, _init_maintainAspectRatio, _init_extra_maintainAspectRatio, _init_visibilityGroup, _init_extra_visibilityGroup;

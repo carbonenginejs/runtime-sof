@@ -1,6 +1,6 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 import { EveSOFDataLogo as _EveSOFDataLogo } from './EveSOFDataLogo.js';
 
 let _initClass, _init_Primary, _init_extra_Primary, _init_Secondary, _init_extra_Secondary, _init_Tertiary, _init_extra_Tertiary, _init_Marking_, _init_extra_Marking_, _init_Marking_2, _init_extra_Marking_2;

@@ -1,6 +1,6 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 
 let _initClass, _init_areaTypes, _init_extra_areaTypes, _init_colorSet, _init_extra_colorSet, _init_logoSet, _init_extra_logoSet, _init_description, _init_extra_description, _init_children, _init_extra_children, _init_planeSets, _init_extra_planeSets, _init_spotlightSets, _init_extra_spotlightSets, _init_visibilityGroupSet, _init_extra_visibilityGroupSet, _init_resPathInsert, _init_extra_resPathInsert, _init_materialUsageMtl, _init_extra_materialUsageMtl, _init_materialUsageMtl2, _init_extra_materialUsageMtl2, _init_materialUsageMtl3, _init_extra_materialUsageMtl3, _init_materialUsageMtl4, _init_extra_materialUsageMtl4, _init_defaultPattern, _init_extra_defaultPattern, _init_defaultPatternLayer1MaterialName, _init_extra_defaultPatternLayer1MaterialName, _init_defaultPatternLayer2MaterialName, _init_extra_defaultPatternLayer2MaterialName, _init_defaultPatternName, _init_extra_defaultPatternName, _init_name, _init_extra_name;
 

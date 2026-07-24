@@ -1,8 +1,8 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { vec3 } from '@carbonenginejs/core-math/vec3';
-import { vec4 } from '@carbonenginejs/core-math/vec4';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { vec3 } from '@carbonenginejs/runtime-utils/vec3';
+import { vec4 } from '@carbonenginejs/runtime-utils/vec4';
 
 let _initClass, _init_buildClass, _init_extra_buildClass, _init_impactEffectType, _init_extra_impactEffectType, _init_banners, _init_extra_banners, _init_soundEmitters, _init_extra_soundEmitters, _init_category, _init_extra_category, _init_description, _init_extra_description, _init_locatorSets, _init_extra_locatorSets, _init_isSkinned, _init_extra_isSkinned, _init_animations, _init_extra_animations, _init_children, _init_extra_children, _init_controllers, _init_extra_controllers, _init_instancedMeshes, _init_extra_instancedMeshes, _init_modelRotationCurvePath, _init_extra_modelRotationCurvePath, _init_modelTranslationCurvePath, _init_extra_modelTranslationCurvePath, _init_childSets, _init_extra_childSets, _init_boundingSphere, _init_extra_boundingSphere, _init_additiveAreas, _init_extra_additiveAreas, _init_audioPosition, _init_extra_audioPosition, _init_bannerSets, _init_extra_bannerSets, _init_booster, _init_extra_booster, _init_decalAreas, _init_extra_decalAreas, _init_decalSets, _init_extra_decalSets, _init_defaultPattern, _init_extra_defaultPattern, _init_distortionAreas, _init_extra_distortionAreas, _init_shapeEllipsoidCenter, _init_extra_shapeEllipsoidCenter, _init_shapeEllipsoidRadius, _init_extra_shapeEllipsoidRadius, _init_hazeSets, _init_extra_hazeSets, _init_name, _init_extra_name, _init_lightSets, _init_extra_lightSets, _init_opaqueAreas, _init_extra_opaqueAreas, _init_planeSets, _init_extra_planeSets, _init_geometryResFilePath, _init_extra_geometryResFilePath, _init_spotlightSets, _init_extra_spotlightSets, _init_spriteLineSets, _init_extra_spriteLineSets, _init_spriteSets, _init_extra_spriteSets, _init_transparentAreas, _init_extra_transparentAreas, _init_locatorTurrets, _init_extra_locatorTurrets, _init_sof, _init_extra_sof, _init_enableDynamicBoundingSphere, _init_extra_enableDynamicBoundingSphere, _init_castShadow, _init_extra_castShadow;
 

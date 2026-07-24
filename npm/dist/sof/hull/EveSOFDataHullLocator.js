@@ -1,7 +1,7 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { mat4 } from '@carbonenginejs/core-math/mat4';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { mat4 } from '@carbonenginejs/runtime-utils/mat4';
 
 let _initClass, _init_name, _init_extra_name, _init_transform, _init_extra_transform;
 

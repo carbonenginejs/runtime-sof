@@ -1,9 +1,9 @@
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDNA.h
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDNA.cpp
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDNA_Blue.cpp
-import { CjsModel } from "@carbonenginejs/core-types/model";
-import { carbon, impl, type } from "@carbonenginejs/core-types/schema";
-import { ReflectionMode, TriBatchType } from "@carbonenginejs/runtime-const/graphics";
+import { CjsModel } from "@carbonenginejs/runtime-utils/model";
+import { carbon, impl, type } from "@carbonenginejs/runtime-utils/schema";
+import { ReflectionMode, TriBatchType } from "@carbonenginejs/runtime-utils/graphics";
 import { EveSOFDataHull } from "./hull/EveSOFDataHull.js";
 import { EveSOFDataArea } from "./shared/EveSOFDataArea.js";
 import { EveSOFUtilsParameterName } from "./shared/EveSOFUtilsParameterName.js";

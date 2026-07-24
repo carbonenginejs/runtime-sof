@@ -1,6 +1,6 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 
 let _initClass, _init_Blink, _init_extra_Blink, _init_FadeIn, _init_extra_FadeIn, _init_FadeOut, _init_extra_FadeOut, _init_Cycle, _init_extra_Cycle;
 

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { test } from "node:test";
-import { CjsClassRegistry, CjsDocumentHydrator } from "@carbonenginejs/core-types/document";
-import { TriBatchType } from "@carbonenginejs/runtime-const/graphics";
+import { CjsClassRegistry, CjsDocumentHydrator } from "@carbonenginejs/runtime-utils/document";
+import { TriBatchType } from "@carbonenginejs/runtime-utils/graphics";
 import {
   EveSOF,
   EveSOFDNA,

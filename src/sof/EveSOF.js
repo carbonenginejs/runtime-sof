@@ -1,12 +1,12 @@
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOF.h
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOF.cpp
 // Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOF_Blue.cpp
-import { CjsModel } from "@carbonenginejs/core-types/model";
-import { carbon, impl, io, type } from "@carbonenginejs/core-types/schema";
-import { mat4 } from "@carbonenginejs/core-math/mat4";
-import { quat } from "@carbonenginejs/core-math/quat";
-import { vec3 } from "@carbonenginejs/core-math/vec3";
-import { TriBatchType } from "@carbonenginejs/runtime-const/graphics";
+import { CjsModel } from "@carbonenginejs/runtime-utils/model";
+import { carbon, impl, io, type } from "@carbonenginejs/runtime-utils/schema";
+import { mat4 } from "@carbonenginejs/runtime-utils/mat4";
+import { quat } from "@carbonenginejs/runtime-utils/quat";
+import { vec3 } from "@carbonenginejs/runtime-utils/vec3";
+import { TriBatchType } from "@carbonenginejs/runtime-utils/graphics";
 import { CjsBlackFormat } from "@carbonenginejs/runtime-resource/formats/black";
 import { EveSOFDataHullDecalSetItem } from "./hull/EveSOFDataHullDecalSetItem.js";
 import { EveSOFDataHullBanner } from "./hull/EveSOFDataHullBanner.js";
@@ -18,7 +18,7 @@ import { EveSOFDataHull } from "./hull/EveSOFDataHull.js";
 import { EveSOFDataArea } from "./shared/EveSOFDataArea.js";
 import { EveSOFDataInstancedMesh } from "./shared/EveSOFDataInstancedMesh.js";
 import { EveSOFUtilsParameterName } from "./shared/EveSOFUtilsParameterName.js";
-import { CjsDocumentHydrator } from "@carbonenginejs/core-types/document";
+import { CjsDocumentHydrator } from "@carbonenginejs/runtime-utils/document";
 import { EveSOFDNA } from "./EveSOFDNA.js";
 import { EveSOFDataMgr } from "./EveSOFDataMgr.js";
 import { createSofHydrationAdapter } from "./createSofHydrationAdapter.js";

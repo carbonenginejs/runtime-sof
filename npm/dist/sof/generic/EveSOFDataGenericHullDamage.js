@@ -1,8 +1,8 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { vec2 } from '@carbonenginejs/core-math/vec2';
-import { vec4 } from '@carbonenginejs/core-math/vec4';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { vec2 } from '@carbonenginejs/runtime-utils/vec2';
+import { vec4 } from '@carbonenginejs/runtime-utils/vec4';
 
 let _initClass, _init_hullParticleRate, _init_extra_hullParticleRate, _init_hullParticleAngle, _init_extra_hullParticleAngle, _init_hullParticleColorMidpoint, _init_extra_hullParticleColorMidpoint, _init_hullParticleInnerAngle, _init_extra_hullParticleInnerAngle, _init_hullParticleMinMaxSpeed, _init_extra_hullParticleMinMaxSpeed, _init_hullParticleMinMaxLifeTime, _init_extra_hullParticleMinMaxLifeTime, _init_hullParticleSizes, _init_extra_hullParticleSizes, _init_hullParticleColor, _init_extra_hullParticleColor, _init_hullParticleColor2, _init_extra_hullParticleColor2, _init_hullParticleColor3, _init_extra_hullParticleColor3, _init_hullParticleColor4, _init_extra_hullParticleColor4, _init_hullParticleTextureIndex, _init_extra_hullParticleTextureIndex, _init_hullParticleVelocityStretchRotation, _init_extra_hullParticleVelocityStretchRotation, _init_hullParticleDrag, _init_extra_hullParticleDrag, _init_hullParticleTurbulenceAmplitude, _init_extra_hullParticleTurbulenceAmplitude, _init_hullParticleTurbulenceFrequency, _init_extra_hullParticleTurbulenceFrequency;
 

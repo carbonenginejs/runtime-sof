@@ -1,7 +1,7 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { vec4 } from '@carbonenginejs/core-math/vec4';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { vec4 } from '@carbonenginejs/runtime-utils/vec4';
 import { EveSOFDataBoosterShape as _EveSOFDataBoosterSha } from './EveSOFDataBoosterShape.js';
 
 let _initClass, _init_scale, _init_extra_scale, _init_glowColor, _init_extra_glowColor, _init_warpGlowColor, _init_extra_warpGlowColor, _init_glowScale, _init_extra_glowScale, _init_haloColor, _init_extra_haloColor, _init_warpHalpColor, _init_extra_warpHalpColor, _init_haloScaleX, _init_extra_haloScaleX, _init_haloScaleY, _init_extra_haloScaleY, _init_symHaloScale, _init_extra_symHaloScale, _init_trailColor, _init_extra_trailColor, _init_trailSize, _init_extra_trailSize, _init_shape, _init_extra_shape, _init_shape2, _init_extra_shape2, _init_warpShape, _init_extra_warpShape, _init_warpShape2, _init_extra_warpShape2, _init_shapeAtlasResPath, _init_extra_shapeAtlasResPath, _init_gradient0ResPath, _init_extra_gradient0ResPath, _init_gradient1ResPath, _init_extra_gradient1ResPath, _init_shapeAtlasHeight, _init_extra_shapeAtlasHeight, _init_shapeAtlasCount, _init_extra_shapeAtlasCount, _init_lightOffset, _init_extra_lightOffset, _init_lightRadius, _init_extra_lightRadius, _init_lightWarpRadius, _init_extra_lightWarpRadius, _init_lightFlickerAmplitude, _init_extra_lightFlickerAmplitude, _init_lightFlickerFrequency, _init_extra_lightFlickerFrequency, _init_lightColor, _init_extra_lightColor, _init_lightWarpColor, _init_extra_lightWarpColor;

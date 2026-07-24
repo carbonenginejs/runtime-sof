@@ -1,6 +1,6 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 
 let _initClass, _init_anchorRadius, _init_extra_anchorRadius, _init_anchorRadius2, _init_extra_anchorRadius2, _init_weightCohesion, _init_extra_weightCohesion, _init_wanderFluctuation, _init_extra_wanderFluctuation, _init_separationDistance, _init_extra_separationDistance, _init_formationDistance, _init_extra_formationDistance, _init_wanderDistance, _init_extra_wanderDistance, _init_speed, _init_extra_speed, _init_maxDistance, _init_extra_maxDistance, _init_maxDistance2, _init_extra_maxDistance2, _init_speedMultiplier, _init_extra_speedMultiplier, _init_speedMinimum, _init_extra_speedMinimum, _init_maxDeceleration, _init_extra_maxDeceleration, _init_maxTime, _init_extra_maxTime, _init_wanderRadius, _init_extra_wanderRadius, _init_weightAlign, _init_extra_weightAlign, _init_speed2, _init_extra_speed2, _init_weightDeceleration, _init_extra_weightDeceleration, _init_weightSeparation, _init_extra_weightSeparation, _init_weightAnchor, _init_extra_weightAnchor, _init_weightFormation, _init_extra_weightFormation, _init_weightWander, _init_extra_weightWander;
 

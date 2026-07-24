@@ -1,7 +1,7 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { vec2 } from '@carbonenginejs/core-math/vec2';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { vec2 } from '@carbonenginejs/runtime-utils/vec2';
 
 let _initClass, _init_usage, _init_extra_usage, _init_name, _init_extra_name, _init_layer1MapResPath, _init_extra_layer1MapResPath, _init_layer2MapResPath, _init_extra_layer2MapResPath, _init_maskMapResPath, _init_extra_maskMapResPath, _init_skinned, _init_extra_skinned, _init_atlasAspectRatio, _init_extra_atlasAspectRatio, _init_visibilityGroup, _init_extra_visibilityGroup, _init_atlasSize, _init_extra_atlasSize, _init_items, _init_extra_items;
 

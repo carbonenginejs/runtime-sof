@@ -1,6 +1,6 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
 import { EveSOFDataParameter as _EveSOFDataParameter } from '../shared/EveSOFDataParameter.js';
 import { EveSOFDataTexture as _EveSOFDataTexture } from '../shared/EveSOFDataTexture.js';
 

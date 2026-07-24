@@ -1,5 +1,5 @@
-import { io, type } from "@carbonenginejs/core-types/schema";
-import { CjsModel } from "@carbonenginejs/core-types/model";
+import { io, type } from "@carbonenginejs/runtime-utils/schema";
+import { CjsModel } from "@carbonenginejs/runtime-utils/model";
 
 /**
  * CarbonEngineJS-original external document reference.

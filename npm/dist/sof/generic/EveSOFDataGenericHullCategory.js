@@ -1,7 +1,7 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { ReflectionMode } from '@carbonenginejs/runtime-const/graphics';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { ReflectionMode } from '@carbonenginejs/runtime-utils/graphics';
 
 let _initClass, _init_reflectionMode, _init_extra_reflectionMode, _init_name, _init_extra_name;
 

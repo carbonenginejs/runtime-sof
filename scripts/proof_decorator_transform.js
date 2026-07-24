@@ -30,7 +30,7 @@ function entryText(kind) {
   const hullBase = `${sofBase}/hull`;
   const sharedBase = hullBase.replace("/hull", "/shared");
   return `
-import { CjsSchema } from "@carbonenginejs/core-types/schema";
+import { CjsSchema } from "@carbonenginejs/runtime-utils/schema";
 import { EveSOFDataTransform } from "${sharedBase}/EveSOFDataTransform.js";
 import { EveSOFDataMgr } from "${sofBase}/EveSOFDataMgr.js";
 import { EveSOFDataHullLightSetItem } from "${hullBase}/EveSOFDataHullLightSetItem.js";

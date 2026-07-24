@@ -1,5 +1,5 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
 import { IEveSOFDataHullExtensionPlacementDistribution as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacementDistribution.js';
 
 let _initClass, _init_depletionCounters, _init_extra_depletionCounters, _init_name, _init_extra_name;

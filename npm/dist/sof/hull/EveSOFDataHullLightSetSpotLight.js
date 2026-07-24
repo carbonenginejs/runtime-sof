@@ -1,6 +1,6 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { quat } from '@carbonenginejs/core-math/quat';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { quat } from '@carbonenginejs/runtime-utils/quat';
 import { EveSOFDataHullLightSetItem as _EveSOFDataHullLightS$1 } from './EveSOFDataHullLightSetItem.js';
 
 let _initClass, _init_rotation, _init_extra_rotation, _init_innerAngle, _init_extra_innerAngle, _init_outerAngle, _init_extra_outerAngle;

@@ -1,9 +1,9 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { quat } from '@carbonenginejs/core-math/quat';
-import { vec3 } from '@carbonenginejs/core-math/vec3';
-import { vec4 } from '@carbonenginejs/core-math/vec4';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { quat } from '@carbonenginejs/runtime-utils/quat';
+import { vec3 } from '@carbonenginejs/runtime-utils/vec3';
+import { vec4 } from '@carbonenginejs/runtime-utils/vec4';
 
 let _initClass, _init_blinkMode, _init_extra_blinkMode, _init_colorType, _init_extra_colorType, _init_boneIndex, _init_extra_boneIndex, _init_position, _init_extra_position, _init_rotation, _init_extra_rotation, _init_scaling, _init_extra_scaling, _init_color, _init_extra_color, _init_layer1Transform, _init_extra_layer1Transform, _init_layer1Scroll, _init_extra_layer1Scroll, _init_layer2Transform, _init_extra_layer2Transform, _init_layer2Scroll, _init_extra_layer2Scroll, _init_groupIndex, _init_extra_groupIndex, _init_maskMapAtlasIndex, _init_extra_maskMapAtlasIndex, _init_blinkPhase, _init_extra_blinkPhase, _init_blinkRate, _init_extra_blinkRate, _init_lights, _init_extra_lights, _init_intensity, _init_extra_intensity, _init_saturation, _init_extra_saturation;
 

@@ -1,7 +1,7 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../_virtual/_rollupPluginBabelHelpers.js';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { type, carbon, impl } from '@carbonenginejs/core-types/schema';
-import { TriBatchType, ReflectionMode } from '@carbonenginejs/runtime-const/graphics';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { type, carbon, impl } from '@carbonenginejs/runtime-utils/schema';
+import { TriBatchType, ReflectionMode } from '@carbonenginejs/runtime-utils/graphics';
 import { EveSOFDataHull as _EveSOFDataHull } from './hull/EveSOFDataHull.js';
 import { EveSOFDataArea as _EveSOFDataArea } from './shared/EveSOFDataArea.js';
 import { EveSOFUtilsParameterName } from './shared/EveSOFUtilsParameterName.js';

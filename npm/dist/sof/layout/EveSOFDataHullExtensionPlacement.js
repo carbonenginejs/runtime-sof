@@ -1,9 +1,9 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
 import { IEveSOFDataHullExtensionPlacement as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacement.js';
 import { EveSOFDNADescriptor as _EveSOFDNADescriptor } from '../shared/EveSOFDNADescriptor.js';
 import { EveSOFDataHullExtensionPlacementDistributionPlacement as _EveSOFDataHullExtens$1 } from './EveSOFDataHullExtensionPlacementDistributionPlacement.js';
-import { vec3 } from '@carbonenginejs/core-math/vec3';
+import { vec3 } from '@carbonenginejs/runtime-utils/vec3';
 
 let _initClass, _init_distributionConditions, _init_extra_distributionConditions, _init_extendsBoundingSphere, _init_extra_extendsBoundingSphere, _init_extendsShieldEllipsoid, _init_extra_extendsShieldEllipsoid, _init_isShared, _init_extra_isShared, _init_isInstanced, _init_extra_isInstanced, _init_enabled, _init_extra_enabled, _init_distribution, _init_extra_distribution, _init_descriptor, _init_extra_descriptor, _init_locatorSetName, _init_extra_locatorSetName, _init_name, _init_extra_name, _init_offset, _init_extra_offset;
 

@@ -1,5 +1,5 @@
-import { mat4 } from "@carbonenginejs/core-math/mat4";
-import { quat } from "@carbonenginejs/core-math/quat";
+import { mat4 } from "@carbonenginejs/runtime-utils/mat4";
+import { quat } from "@carbonenginejs/runtime-utils/quat";
 import { EveSOFDNA } from "./EveSOFDNA.js";
 
 

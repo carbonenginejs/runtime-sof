@@ -1,5 +1,5 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
 import { EveSOFDataHullLightSetItem as _EveSOFDataHullLightS$1 } from './EveSOFDataHullLightSetItem.js';
 
 let _initClass, _init_texturePath, _init_extra_texturePath;

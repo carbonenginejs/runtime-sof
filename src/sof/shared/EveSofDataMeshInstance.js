@@ -1,9 +1,9 @@
 // Ported from CarbonEngine (MIT, (c) 2026 CCP Games) - https://github.com/carbonengine/trinity
 //   trinity/trinity/Eve/SpaceObjectFactory/EveSOFData.h
-import { io, type } from "@carbonenginejs/core-types/schema";
-import { CjsModel } from "@carbonenginejs/core-types/model";
-import { quat } from "@carbonenginejs/core-math/quat";
-import { vec3 } from "@carbonenginejs/core-math/vec3";
+import { io, type } from "@carbonenginejs/runtime-utils/schema";
+import { CjsModel } from "@carbonenginejs/runtime-utils/model";
+import { quat } from "@carbonenginejs/runtime-utils/quat";
+import { vec3 } from "@carbonenginejs/runtime-utils/vec3";
 
 /** Runtime representation of Carbon's 44-byte EveSofDataMeshInstance structure. */
 @type.define({ className: "EveSofDataMeshInstance", family: "eve" })

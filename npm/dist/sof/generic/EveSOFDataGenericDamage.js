@@ -1,8 +1,8 @@
 import { applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type } from '@carbonenginejs/core-types/schema';
-import { CjsModel } from '@carbonenginejs/core-types/model';
-import { vec2 } from '@carbonenginejs/core-math/vec2';
-import { vec4 } from '@carbonenginejs/core-math/vec4';
+import { io, type } from '@carbonenginejs/runtime-utils/schema';
+import { CjsModel } from '@carbonenginejs/runtime-utils/model';
+import { vec2 } from '@carbonenginejs/runtime-utils/vec2';
+import { vec4 } from '@carbonenginejs/runtime-utils/vec4';
 
 let _initClass, _init_armorParticleRate, _init_extra_armorParticleRate, _init_armorParticleAngle, _init_extra_armorParticleAngle, _init_armorParticleMinMaxSpeed, _init_extra_armorParticleMinMaxSpeed, _init_armorParticleMinMaxLifeTime, _init_extra_armorParticleMinMaxLifeTime, _init_armorParticleSizes, _init_extra_armorParticleSizes, _init_armorParticleColor, _init_extra_armorParticleColor, _init_armorParticleColor2, _init_extra_armorParticleColor2, _init_armorParticleColor3, _init_extra_armorParticleColor3, _init_armorParticleColor4, _init_extra_armorParticleColor4, _init_armorParticleTextureIndex, _init_extra_armorParticleTextureIndex, _init_armorParticleVelocityStretchRotation, _init_extra_armorParticleVelocityStretchRotation, _init_armorParticleDrag, _init_extra_armorParticleDrag, _init_armorParticleTurbulenceAmplitude, _init_extra_armorParticleTurbulenceAmplitude, _init_armorParticleTurbulenceFrequency, _init_extra_armorParticleTurbulenceFrequency, _init_armorParticleColorMidPoint, _init_extra_armorParticleColorMidPoint, _init_shieldGeometryResFilePath, _init_extra_shieldGeometryResFilePath, _init_flickerPerlinSpeed, _init_extra_flickerPerlinSpeed, _init_flickerPerlinAlpha, _init_extra_flickerPerlinAlpha, _init_flickerPerlinBeta, _init_extra_flickerPerlinBeta, _init_flickerPerlinN, _init_extra_flickerPerlinN, _init_armorShader, _init_extra_armorShader, _init_shieldShaderEllipsoid, _init_extra_shieldShaderEllipsoid, _init_shieldShaderHull, _init_extra_shieldShaderHull;
 

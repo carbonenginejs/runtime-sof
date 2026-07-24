@@ -1,5 +1,5 @@
 import { identity as _identity, applyDecs2311 as _applyDecs2311 } from '../../_virtual/_rollupPluginBabelHelpers.js';
-import { io, type, schema } from '@carbonenginejs/core-types/schema';
+import { io, type, schema } from '@carbonenginejs/runtime-utils/schema';
 import { IEveSOFDataHullExtensionPlacementDistribution as _IEveSOFDataHullExten } from './IEveSOFDataHullExtensionPlacementDistribution.js';
 
 let _initClass, _init_displayFilter, _init_extra_displayFilter, _init_name, _init_extra_name;
