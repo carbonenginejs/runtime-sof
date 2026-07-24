@@ -295,6 +295,19 @@ class EveSOF extends CjsModel {
     return dna.IsValid() ? dna : null;
   }
 
+  /** Inspects one DNA selection without creating a graph or runtime values. */
+  InspectDna(dnaString) {
+    const dna = new _EveSOFDNA();
+    dna.Setup(dnaString, this.dataMgr);
+    const buildable = dna.IsValid();
+    const valid = buildable && dna.ValidateContent();
+    return Object.freeze({
+      buildable,
+      valid,
+      error: dna.GetParseError() ?? (valid ? null : "invalid-content")
+    });
+  }
+
   /** Performs Carbon's separate slow/offline DNA validation path. */
   ValidateDNA(dnaString) {
     const dna = this.CreateDna(dnaString);

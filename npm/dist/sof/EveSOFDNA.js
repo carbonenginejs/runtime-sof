@@ -57,6 +57,11 @@ new class extends _identity {
       return this.hullDatas.length > 0 && this.factionData !== null && this.raceData !== null;
     }
 
+    /** Returns the stable parse failure used by non-rendering adapters. */
+    GetParseError() {
+      return this.#parseError;
+    }
+
     /** Performs Carbon's slow command validation with unsafe C++ cases guarded. */
     ValidateContent() {
       if (!this.IsValid() || this.#parseError) return false;

@@ -921,6 +921,90 @@ test("SOF manager projections copy authored vectors and per-application layers",
   assert.notEqual(first, second, "each application owns an independent layer record");
 });
 
+test("SOF manager exposes deterministic detached JSON catalogs", async () => {
+  const { EveSOFDataMgr } = await import("../npm/dist/sof/EveSOFDataMgr.js");
+  const model = new EveSOFDataTransform();
+  model.position.set([3, 4, 5]);
+  const data = {
+    hull: [
+      { name: "Zeta", opaqueAreas: [] },
+      { name: "Ab1_T1", opaqueAreas: [], typed: new Uint16Array([7, 8]), model },
+    ],
+    faction: [
+      { name: "Amarr" },
+      { name: "amarr" },
+    ],
+    race: [{ name: "Amarr" }],
+    material: [{
+      name: "Gold",
+      parameters: [{ name: "PaintColor", value: new Float32Array([1, 2, 3, 4]) }],
+    }],
+    pattern: [
+      {
+        name: "Stripes",
+        layer1: { textureName: "PatternTex" },
+        projections: [
+          { name: "Ab1_T1", transformLayer1: { position: [1, 2, 3] } },
+          { name: "Zeta", transformLayer1: {} },
+        ],
+      },
+      {
+        name: "NoMatch",
+        projections: [{ name: "Zeta", transformLayer1: {} }],
+      },
+      {
+        name: "Alpha",
+        sof6: true,
+        layer1: { textureName: "PatternTex" },
+        applicationGroups: [{
+          layer1Properties: {},
+          projections: [{ name: "AB1_T1", transformLayer1: {} }],
+        }],
+      },
+    ],
+    layout: [{ name: "ANTENNAE" }],
+    generic: { materialPrefixes: [], variants: [] },
+  };
+  const manager = new EveSOFDataMgr();
+
+  assert.equal(manager.SetData(data), true);
+  assert.deepEqual(manager.ListHullDataNames(), ["ab1_t1", "zeta"]);
+  assert.deepEqual(manager.ListFactionDataNames(), ["amarr"]);
+  assert.deepEqual(manager.ListRaceDataNames(), ["amarr"]);
+  assert.deepEqual(manager.ListMaterialDataNames(), ["gold"]);
+  assert.deepEqual(manager.ListPatternDataNames(), ["alpha", "nomatch", "stripes"]);
+  assert.deepEqual(
+    manager.ListPatternDataNamesForHull("AB1_t1"),
+    ["alpha", "stripes"],
+  );
+  assert.deepEqual(
+    manager.ListPatternDataNamesForHull("zeta"),
+    ["nomatch", "stripes"],
+  );
+  assert.equal(manager.ListPatternDataNamesForHull("missing"), null);
+  assert.equal(Object.isFrozen(manager.ListPatternDataNamesForHull("ab1_t1")), true);
+  assert.deepEqual(manager.ListLayoutDataNames(), ["antennae"]);
+
+  const hull = manager.GetHullDataJson("AB1_t1");
+  assert.equal(hull.name, "Ab1_T1");
+  assert.deepEqual(hull.typed, [7, 8]);
+  assert.deepEqual(hull.model.position, [3, 4, 5]);
+  assert.deepEqual(
+    manager.GetMaterialDataJson("GOLD").parameters.PaintColor,
+    [1, 2, 3, 4],
+  );
+  assert.notEqual(hull, manager.GetHullData("Ab1_T1"));
+  hull.typed[0] = 99;
+  assert.equal(manager.GetHullData("Ab1_T1").typed[0], 7);
+
+  const application = manager.GetPatternHullDataJson("STRIPES", "ab1_t1");
+  assert.equal(application.layerAndProjection.length, 2);
+  assert.deepEqual(application.layerAndProjection[0].projection.position, [1, 2, 3]);
+  assert.equal(Object.hasOwn(application, "oldApplicationData"), false);
+  assert.equal(manager.GetPatternHullDataJson("stripes", "missing"), null);
+  assert.equal(manager.GetHullDataJson("missing"), null);
+});
+
 test("SOF extension bucket exposes only Carbon's Blue-mapped fields", () => {
   // Carbon Blue-maps only name, depletionCounters, and placements on Bucket
   // (EveSOFData_Blue2.cpp:292-299) while really deriving it from the concrete

@@ -93,6 +93,32 @@ test("EveSOFDataMgr indexes every top-level SOF catalog", () => {
   assert.equal(manager.GetGenericData().variants.has("transparent"), true);
 });
 
+test("EveSOF DNA inspection distinguishes malformed and unknown selections", () => {
+  const sof = new EveSOF();
+  sof.dataMgr.SetData(createData());
+
+  assert.deepEqual(sof.InspectDna("rifter:minmatar:minmatar"), {
+    buildable: true,
+    valid: true,
+    error: null,
+  });
+  assert.deepEqual(sof.InspectDna("rifter:minmatar"), {
+    buildable: false,
+    valid: false,
+    error: "not-enough-parts",
+  });
+  assert.deepEqual(sof.InspectDna("missing:minmatar:minmatar"), {
+    buildable: false,
+    valid: false,
+    error: "unknown-hull",
+  });
+  assert.deepEqual(sof.InspectDna("rifter:minmatar:minmatar:pattern"), {
+    buildable: false,
+    valid: false,
+    error: "malformed-command",
+  });
+});
+
 test("a fresh EveSOFDataMgr exposes Carbon zero-valued damage records", () => {
   const generic = new EveSOFDataMgr().GetGenericData();
   assert.equal(generic.damage.armorParticleColorMidPoint, 0);

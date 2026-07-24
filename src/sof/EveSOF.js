@@ -1,6 +1,6 @@
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOF.h
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOF.cpp
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOF_Blue.cpp
+// Source: trinity/trinity/Eve/SpaceObjectFactory/EveSOF.h
+// Source: trinity/trinity/Eve/SpaceObjectFactory/EveSOF.cpp
+// Source: trinity/trinity/Eve/SpaceObjectFactory/EveSOF_Blue.cpp
 import { CjsModel } from "@carbonenginejs/runtime-utils/model";
 import { carbon, impl, io, type } from "@carbonenginejs/runtime-utils/schema";
 import { mat4 } from "@carbonenginejs/runtime-utils/mat4";
@@ -494,6 +494,20 @@ export class EveSOF extends CjsModel
     const dna = new EveSOFDNA();
     dna.Setup(dnaString, this.dataMgr);
     return dna.IsValid() ? dna : null;
+  }
+
+  /** Inspects one DNA selection without creating a graph or runtime values. */
+  InspectDna(dnaString)
+  {
+    const dna = new EveSOFDNA();
+    dna.Setup(dnaString, this.dataMgr);
+    const buildable = dna.IsValid();
+    const valid = buildable && dna.ValidateContent();
+    return Object.freeze({
+      buildable,
+      valid,
+      error: dna.GetParseError() ?? (valid ? null : "invalid-content")
+    });
   }
 
   /** Performs Carbon's separate slow/offline DNA validation path. */

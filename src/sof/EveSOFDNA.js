@@ -1,6 +1,6 @@
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDNA.h
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDNA.cpp
-// Source: E:\carbonengine\trinity\trinity\Eve\SpaceObjectFactory\EveSOFDNA_Blue.cpp
+// Source: trinity/trinity/Eve/SpaceObjectFactory/EveSOFDNA.h
+// Source: trinity/trinity/Eve/SpaceObjectFactory/EveSOFDNA.cpp
+// Source: trinity/trinity/Eve/SpaceObjectFactory/EveSOFDNA_Blue.cpp
 import { CjsModel } from "@carbonenginejs/runtime-utils/model";
 import { carbon, impl, type } from "@carbonenginejs/runtime-utils/schema";
 import { ReflectionMode, TriBatchType } from "@carbonenginejs/runtime-utils/graphics";
@@ -115,6 +115,12 @@ export class EveSOFDNA extends CjsModel
   IsValid()
   {
     return this.hullDatas.length > 0 && this.factionData !== null && this.raceData !== null;
+  }
+
+  /** Returns the stable parse failure used by non-rendering adapters. */
+  GetParseError()
+  {
+    return this.#parseError;
   }
 
   /** Performs Carbon's slow command validation with unsafe C++ cases guarded. */

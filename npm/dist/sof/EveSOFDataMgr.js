@@ -133,6 +133,81 @@ new class extends _identity {
     GetGenericData() {
       return this.#genericData;
     }
+
+    /** Lists canonical hull names for read-only catalog consumers. */
+    ListHullDataNames() {
+      return listCatalogNames(this.#hullData);
+    }
+
+    /** Lists canonical faction names for read-only catalog consumers. */
+    ListFactionDataNames() {
+      return listCatalogNames(this.#factionData);
+    }
+
+    /** Lists canonical race names for read-only catalog consumers. */
+    ListRaceDataNames() {
+      return listCatalogNames(this.#raceData);
+    }
+
+    /** Lists canonical material names for read-only catalog consumers. */
+    ListMaterialDataNames() {
+      return listCatalogNames(this.#materialData);
+    }
+
+    /** Lists canonical pattern names for read-only catalog consumers. */
+    ListPatternDataNames() {
+      return listCatalogNames(this.#patternData);
+    }
+
+    /** Lists canonical pattern names with an application for one known hull. */
+    ListPatternDataNamesForHull(hullName) {
+      if (!getCatalogValue(this.#hullData, hullName)) return null;
+      const result = [];
+      for (const [name, pattern] of this.#patternData) {
+        if (getMapValue(getPatternApplications(pattern), hullName)) {
+          result.push(normalizeCatalogName(name));
+        }
+      }
+      return Object.freeze([...new Set(result.filter(Boolean))].sort((left, right) => left.localeCompare(right)));
+    }
+
+    /** Lists canonical layout names for read-only catalog consumers. */
+    ListLayoutDataNames() {
+      return listCatalogNames(this.#layoutData);
+    }
+
+    /** Returns one detached JSON-compatible hull projection, case-insensitively. */
+    GetHullDataJson(name) {
+      return getCatalogJson(this.#hullData, name);
+    }
+
+    /** Returns one detached JSON-compatible faction projection, case-insensitively. */
+    GetFactionDataJson(name) {
+      return getCatalogJson(this.#factionData, name);
+    }
+
+    /** Returns one detached JSON-compatible race projection, case-insensitively. */
+    GetRaceDataJson(name) {
+      return getCatalogJson(this.#raceData, name);
+    }
+
+    /** Returns one detached JSON-compatible material projection, case-insensitively. */
+    GetMaterialDataJson(name) {
+      return getCatalogJson(this.#materialData, name);
+    }
+
+    /** Returns one detached JSON-compatible layout projection, case-insensitively. */
+    GetLayoutDataJson(name) {
+      return getCatalogJson(this.#layoutData, name);
+    }
+
+    /** Returns only one pattern's detached application for one hull. */
+    GetPatternHullDataJson(patternName, hullName) {
+      const pattern = getCatalogValue(this.#patternData, patternName);
+      if (!pattern) return null;
+      const application = getMapValue(getPatternApplications(pattern), hullName);
+      return application ? projectJsonValue(application) : null;
+    }
     UpdateHull(name, value) {
       return updateNamed(this.#hullData, name, value, projectHull);
     }
@@ -187,6 +262,104 @@ function indexNamed(values, target, projector) {
     target.set(String(value.name), projector(value));
   }
   return true;
+}
+function listCatalogNames(values) {
+  return Object.freeze([...new Set([...values.keys()].map(normalizeCatalogName).filter(Boolean))].sort((left, right) => left.localeCompare(right)));
+}
+function getCatalogValue(values, name) {
+  const requested = normalizeCatalogName(name);
+  if (!requested) return null;
+  for (const [key, value] of values) {
+    if (normalizeCatalogName(key) === requested) return value;
+  }
+  return null;
+}
+function getCatalogJson(values, name) {
+  const value = getCatalogValue(values, name);
+  return value ? projectJsonValue(value) : null;
+}
+function getMapValue(values, name) {
+  if (!(values instanceof Map)) return null;
+  const requested = normalizeCatalogName(name);
+  if (!requested) return null;
+  for (const [key, value] of values) {
+    if (normalizeCatalogName(key) === requested) return value;
+  }
+  return null;
+}
+function getPatternApplications(pattern) {
+  return pattern?.sof6 === true ? pattern.applicationData : pattern?.oldApplicationData;
+}
+function normalizeCatalogName(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+const OMIT_JSON_VALUE = Symbol("omitJsonValue");
+function projectJsonValue(value, stack = new Set()) {
+  if (value === undefined || typeof value === "function" || typeof value === "symbol") {
+    return OMIT_JSON_VALUE;
+  }
+  if (value === null || typeof value === "string" || typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === "bigint") {
+    return String(value);
+  }
+  if (value instanceof ArrayBuffer) {
+    return Array.from(new Uint8Array(value));
+  }
+  if (value instanceof DataView) {
+    return Array.from(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+  }
+  if (ArrayBuffer.isView(value)) {
+    return Array.from(value, item => {
+      const projected = projectJsonValue(item, stack);
+      return projected === OMIT_JSON_VALUE ? null : projected;
+    });
+  }
+  if (stack.has(value)) {
+    throw new TypeError("SOF catalog JSON projection cannot contain circular values");
+  }
+  stack.add(value);
+  try {
+    if (value instanceof Map) {
+      const result = {};
+      const entries = [...value.entries()].map(([key, item]) => [String(key), item]).sort(([left], [right]) => left.localeCompare(right));
+      for (const [key, item] of entries) {
+        const projected = projectJsonValue(item, stack);
+        if (projected !== OMIT_JSON_VALUE) result[key] = projected;
+      }
+      return result;
+    }
+    if (value instanceof Set) {
+      return [...value].map(item => projectJsonValue(item, stack)).filter(item => item !== OMIT_JSON_VALUE).sort(compareJsonValues);
+    }
+    if (Array.isArray(value)) {
+      return value.map(item => {
+        const projected = projectJsonValue(item, stack);
+        return projected === OMIT_JSON_VALUE ? null : projected;
+      });
+    }
+    if (typeof value.GetValues === "function") {
+      return projectJsonValue(value.GetValues({
+        refs: true,
+        typeTags: true
+      }), stack);
+    }
+    const result = {};
+    for (const key of Object.keys(value).sort((left, right) => left.localeCompare(right))) {
+      const projected = projectJsonValue(value[key], stack);
+      if (projected !== OMIT_JSON_VALUE) result[key] = projected;
+    }
+    return result;
+  } finally {
+    stack.delete(value);
+  }
+}
+function compareJsonValues(left, right) {
+  return JSON.stringify(left).localeCompare(JSON.stringify(right));
 }
 function updateNamed(target, name, value, projector) {
   if (!value) return false;
