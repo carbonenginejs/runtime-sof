@@ -1,5 +1,9 @@
 # @carbonenginejs/runtime-sof
 
+> **Retired donor.** Maintained source now lives in
+> `@carbonenginejs/runtime/sof` under `runtime/src/sof`. This checkout is
+> historical evidence only; do not install or publish it.
+
 GPU-free Space Object Factory data model and Carbon-first ship DNA builder.
 
 Part of the CarbonEngineJS runtime/engine tier (decorated JavaScript, WebGPU-first).

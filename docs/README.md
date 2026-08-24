@@ -1,5 +1,9 @@
 # Runtime SOF documentation
 
+> **Historical donor documentation.** Current SOF documentation is in
+> `runtime/docs/sof` and current source is exported by
+> `@carbonenginejs/runtime/sof`.
+
 Status: Evolving
 Scope: `@carbonenginejs/runtime-sof`
 Audience: Users and maintainers building Space Object Factory values
