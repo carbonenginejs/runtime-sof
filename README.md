@@ -1,3 +1,13 @@
+> [!IMPORTANT]
+> **Deprecated. This repository is no longer maintained.**
+>
+> Its source was merged into the combined
+> [`@carbonenginejs/runtime`](https://github.com/carbonenginejs/runtime)
+> package on 2026-08-23 and is maintained there. Use
+> `@carbonenginejs/runtime/sof` instead.
+>
+> This repository is retained for history only.
+
 # @carbonenginejs/runtime-sof
 
 > **Retired donor.** Maintained source now lives in
